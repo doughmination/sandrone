@@ -1,0 +1,28 @@
+[project]
+name = "python-bot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Clove Twilight", email = "admin@doughmination.win" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "asyncpraw>=8.0.3",
+    "discord-py>=2.7.1",
+    "pygithub>=2.9.1",
+    "python-dotenvx>=2.0.0",
+    "ruff>=0.16.3",
+    "ty>=0.0.72",
+    "watchfiles>=1.2.0",
+]
+
+[tool.uv]
+package=false
+
+[project.scripts]
+python-bot = "python_bot:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"

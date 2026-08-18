@@ -1,7 +1,7 @@
 [project]
 name = "python-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "Bot that I'm coding to relearn Python"
 readme = "README.md"
 authors = [
     { name = "Clove Twilight", email = "admin@doughmination.win" }
@@ -13,6 +13,7 @@ dependencies = [
     "pygithub>=2.9.1",
     "python-dotenvx>=2.0.0",
     "ruff>=0.16.3",
+    "toml>=0.10.2",
     "ty>=0.0.72",
     "watchfiles>=1.2.0",
 ]

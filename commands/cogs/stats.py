@@ -1,8 +1,20 @@
 import datetime
+from pathlib import Path
+import toml
+
 
 import discord
 from discord import app_commands
 from discord.ext import commands
+
+version = "unknown"
+# adopt path to your pyproject.toml
+pyproject_toml_file = Path(__file__).parent / ".." / ".." / "pyproject.toml"
+if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
+    data = toml.load(pyproject_toml_file)
+    # check project.version
+    if "project" in data and "version" in data["project"]:
+        version = data["project"]["version"]
 
 
 class Stats(commands.Cog):
@@ -28,7 +40,8 @@ class Stats(commands.Cog):
         embed = discord.Embed(title=f"{self.bot.user.name}'s stats", color=discord.Color.blurple())
         embed.add_field(name="Ping:", value=f"{latency}ms")
         embed.add_field(name="Uptime:", value=f"{days}d, {hours}h, {minutes}m, {seconds}s")
-        embed.add_field(name="Region", value="Manchester, UK")
+        embed.add_field(name="Region:", value="London, UK")
+        embed.add_field(name="Version:", value=version)
         await interaction.response.send_message(embed=embed)
 
 

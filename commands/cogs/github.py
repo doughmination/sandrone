@@ -8,8 +8,8 @@ from github import Auth, Github, GithubException
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-EMBED_COLOR = discord.Color.blurple()
-ERROR_COLOR = discord.Color.red()
+embedColor = discord.Color.blurple()
+errorColor = discord.Color.red()
 
 
 class GitHub(commands.Cog):
@@ -18,24 +18,24 @@ class GitHub(commands.Cog):
 
     @app_commands.command(name="github", description="Look up a GitHub user")
     @app_commands.describe(username="The GitHub username to fetch information on")
-    async def github_slash(self, interaction: discord.Interaction, username: str) -> None:
+    async def githubSlash(self, interaction: discord.Interaction, username: str) -> None:
         await interaction.response.defer()
-        embed = await self.fetch_user_embed(username)
+        embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="gh", description="Look up a GitHub user (alias for /github)")
     @app_commands.describe(username="The GitHub username to fetch information on")
-    async def gh_slash(self, interaction: discord.Interaction, username: str) -> None:
+    async def ghSlash(self, interaction: discord.Interaction, username: str) -> None:
         await interaction.response.defer()
-        embed = await self.fetch_user_embed(username)
+        embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
-    async def fetch_user_embed(self, username: str) -> discord.Embed:
+    async def fetchUserEmbed(self, username: str) -> discord.Embed:
         username = username.removeprefix("@")
-        return await asyncio.to_thread(self._build_embed, username)
+        return await asyncio.to_thread(self._buildEmbed, username)
 
-    def _build_embed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=EMBED_COLOR, title=username, description="")
+    def _buildEmbed(self, username: str) -> discord.Embed:
+        embed = discord.Embed(color=embedColor, title=username, description="")
         gh = Github(auth=Auth.Token(GITHUB_TOKEN))
         try:
             try:
@@ -43,7 +43,7 @@ class GitHub(commands.Cog):
                 _ = user.id  # forces the request now, so a missing user raises here
             except GithubException:
                 embed.title = None
-                embed.color = ERROR_COLOR
+                embed.color = errorColor
                 embed.description = ":x: That GitHub account does not exist."
                 return embed
 

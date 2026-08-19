@@ -8,14 +8,12 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "asyncpraw>=8.0.3",
     "discord-py>=2.7.1",
     "pygithub>=2.9.1",
     "python-dotenvx>=2.0.0",
     "ruff>=0.16.3",
     "toml>=0.10.2",
     "ty>=0.0.72",
-    "watchfiles>=1.2.0",
 ]
 
 [tool.uv]

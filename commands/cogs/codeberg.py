@@ -5,8 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-EMBED_COLOR = discord.Color.blurple()
-ERROR_COLOR = discord.Color.red()
+embedColor = discord.Color.blurple()
+errorColor = discord.Color.red()
 
 
 class Codeberg(commands.Cog):
@@ -19,25 +19,25 @@ class Codeberg(commands.Cog):
 
     @app_commands.command(name="codeberg", description="Look up a Codeberg user")
     @app_commands.describe(username="The Codeberg username to fetch information on")
-    async def codeberg_slash(self, interaction: discord.Interaction, username: str) -> None:
+    async def codebergSlash(self, interaction: discord.Interaction, username: str) -> None:
         await interaction.response.defer()
-        embed = await self.fetch_user_embed(username)
+        embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="cb", description="Look up a Codeberg user (alias for /codeberg)")
     @app_commands.describe(username="The Codeberg username to fetch information on")
-    async def cb_slash(self, interaction: discord.Interaction, username: str) -> None:
+    async def cbSlash(self, interaction: discord.Interaction, username: str) -> None:
         await interaction.response.defer()
-        embed = await self.fetch_user_embed(username)
+        embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
-    async def fetch_user_embed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=EMBED_COLOR, title=username, description="")
+    async def fetchUserEmbed(self, username: str) -> discord.Embed:
+        embed = discord.Embed(color=embedColor, title=username, description="")
 
         async with self.session.get(f"https://codeberg.org/api/v1/users/{username}") as resp:
             if resp.status != 200:
                 embed.title = None
-                embed.color = ERROR_COLOR
+                embed.color = errorColor
                 embed.description = ":x: That Codeberg account does not exist."
                 return embed
             data = await resp.json()

@@ -4,15 +4,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-COGS_PACKAGE = "commands.cogs"
-COGS_DIR = Path(__file__).parent / "cogs"
+cogsPackage = "commands.cogs"
+cogsDir = Path(__file__).parent / "cogs"
 
 
-def discover_cog_names() -> list[str]:
-    return sorted(path.stem for path in COGS_DIR.glob("*.py") if path.stem != "__init__")
+def discoverCogNames() -> list[str]:
+    return sorted(path.stem for path in cogsDir.glob("*.py") if path.stem != "__init__")
 
 
-def owner_only():
+def ownerOnly():
     async def predicate(interaction: discord.Interaction) -> bool:
         return await interaction.client.is_owner(interaction.user)
 
@@ -24,27 +24,27 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         self.bot = bot
         super().__init__()
 
-    async def name_autocomplete(
+    async def nameAutocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
         return [
             app_commands.Choice(name=name, value=name)
-            for name in discover_cog_names()
+            for name in discoverCogNames()
             if current.lower() in name.lower()
         ][:25]
 
     @app_commands.command(name="load", description="Load a cog from commands.cogs")
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
-    @app_commands.autocomplete(name=name_autocomplete)
-    @owner_only()
+    @app_commands.autocomplete(name=nameAutocomplete)
+    @ownerOnly()
     async def load(self, interaction: discord.Interaction, name: str) -> None:
-        if name not in discover_cog_names():
+        if name not in discoverCogNames():
             await interaction.response.send_message(
-                f"No cog named `{name}` in `{COGS_PACKAGE}`.", ephemeral=True
+                f"No cog named `{name}` in `{cogsPackage}`.", ephemeral=True
             )
             return
 
-        extension = f"{COGS_PACKAGE}.{name}"
+        extension = f"{cogsPackage}.{name}"
         if extension in self.bot.extensions:
             await interaction.response.send_message(f"`{name}` is already loaded.", ephemeral=True)
             return
@@ -62,10 +62,10 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
 
     @app_commands.command(name="unload", description="Unload a cog from commands.cogs")
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
-    @app_commands.autocomplete(name=name_autocomplete)
-    @owner_only()
+    @app_commands.autocomplete(name=nameAutocomplete)
+    @ownerOnly()
     async def unload(self, interaction: discord.Interaction, name: str) -> None:
-        extension = f"{COGS_PACKAGE}.{name}"
+        extension = f"{cogsPackage}.{name}"
         if extension not in self.bot.extensions:
             await interaction.response.send_message(f"`{name}` is not loaded.", ephemeral=True)
             return

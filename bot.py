@@ -12,13 +12,13 @@ from watchfiles import Change, awatch
 load_dotenv()
 
 TOKEN = os.getenv('BOT_TOKEN')
-PREFIX = os.getenv('BOT_PREFIX', '!')
-DEV_MODE = os.getenv('DEV_MODE', 'false').lower() == 'true'
+prefix = os.getenv('BOT_PREFIX', '!')
+devMode = os.getenv('DEV_MODE', 'false').lower() == 'true'
 
-COMMANDS_DIR = Path(__file__).parent / "commands"
-COGS_DIR = COMMANDS_DIR / "cogs"
+commandsDir = Path(__file__).parent / "commands"
+cogsDir = commandsDir / "cogs"
 
-def discover_extensions(directory: Path, package: str) -> list[str]:
+def discoverExtensions(directory: Path, package: str) -> list[str]:
     return sorted(
         f"{package}.{path.stem}"
         for path in directory.glob("*.py")
@@ -27,8 +27,8 @@ def discover_extensions(directory: Path, package: str) -> list[str]:
 
 class Bot(commands.Bot):
     async def setup_hook(self) -> None:
-        extensions = discover_extensions(COMMANDS_DIR, "commands") + discover_extensions(
-            COGS_DIR, "commands.cogs"
+        extensions = discoverExtensions(commandsDir, "commands") + discoverExtensions(
+            cogsDir, "commands.cogs"
         )
         for extension in extensions:
             try:
@@ -39,12 +39,12 @@ class Bot(commands.Bot):
 
         await self.tree.sync()
 
-        if DEV_MODE:
-            self.loop.create_task(self.watch_cogs())
+        if devMode:
+            self.loop.create_task(self.watchCogs())
             print("[dev-reload] watching commands/cogs for changes")
 
-    async def watch_cogs(self) -> None:
-        async for changes in awatch(COGS_DIR):
+    async def watchCogs(self) -> None:
+        async for changes in awatch(cogsDir):
             reloaded = False
             for change, path in changes:
                 if change == Change.deleted or not path.endswith(".py"):
@@ -65,7 +65,7 @@ class Bot(commands.Bot):
                 await self.tree.sync()
 
 intents = discord.Intents.default()
-bot = Bot(command_prefix=PREFIX, intents=intents)
+bot = Bot(command_prefix=prefix, intents=intents)
 
 @bot.event
 async def on_ready():
@@ -76,12 +76,12 @@ async def main():
         loop = asyncio.get_running_loop()
         stop_event = asyncio.Event()
 
-        def request_shutdown() -> None:
+        def requestShutdown() -> None:
             print("\n[shutdown] signal received, closing bot...")
             stop_event.set()
 
         for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, request_shutdown)
+            loop.add_signal_handler(sig, requestShutdown)
 
         start_task = asyncio.create_task(bot.start(TOKEN))
         stop_task = asyncio.create_task(stop_event.wait())

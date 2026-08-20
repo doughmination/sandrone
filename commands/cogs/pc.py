@@ -3,23 +3,23 @@ from discord import app_commands
 from discord.ext import commands
 
 mainSpecs = {
-    "cpu": "AMD Ryzen 9 9950x3d",
-    "gpu": "AMD Radeon RX 7900XTX",
-    "memory": "Corsair Vengance 64GB DDR5-6000 CL-40",
-    "motherboard": "Gigabyte B650M Aorus Elite",
-    "case": "Montech XR ATX"
+    "CPU": "AMD Ryzen 9 9950x3d",
+    "GPU": "AMD Radeon RX 7900XTX",
+    "Memory": "Corsair Vengance 64GB DDR5-6000 CL-40",
+    "Motherboard": "Gigabyte B650M Aorus Elite",
+    "Case": "Montech XR ATX"
 }
 
 storage = {
-    "primary-ssd": "Arch Linux (1TB NVMe)",
-    "secondary-ssd": "Windows 11 (1TB NVMe)",
-    "deep-storage": "Seagate Exos X14 12TB"
+    "Primary SSD": "Arch Linux (1TB NVMe)",
+    "secondary SSD": "Windows 11 (1TB NVMe)",
+    "Deep Storage": "Seagate Exos X14 12TB"
 }
 
 peripherals = {
-    "monitor": "Gigabyte G34WQCP 34' 180Hz 1440x3440",
-    "mouse": "Logitech G502 X PLUS",
-    "keyboard": "Akko Sakura Miku",
+    "Monitor": "Gigabyte G34WQCP 34' 180Hz 1440x3440",
+    "Mouse": "Logitech G502 X PLUS",
+    "Keyboard": "Akko Sakura Miku",
 }
 
 pcPages = [

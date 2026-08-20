@@ -15,6 +15,7 @@ dependencies = [
     "ruff>=0.16.3",
     "toml>=0.10.2",
     "ty>=0.0.72",
+    "watchfiles>=1.2.0",
 ]
 
 [tool.uv]

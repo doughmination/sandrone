@@ -33,20 +33,13 @@ class NsfwGifs(commands.Cog):
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=nsfwGifAuto)
     async def nsfwGifSlash(self, interaction: discord.Interaction, gif: str) -> None:
-        channel = interaction.channel
-        if not isinstance(channel, (discord.TextChannel, discord.Thread)) or not channel.is_nsfw():
-            await interaction.response.send_message(
-                "This command can only be used in an age-restricted (NSFW) channel.",
-                ephemeral=True,
-            )
-            return
         await interaction.response.defer()
-        reply = await self.getGifUrl(gif)
+        reply = await self.getNsfwGifUrl(gif)
         await interaction.followup.send(embed=reply)
     
-    async def getGifUrl(self, gif: str) -> discord.Embed:
+    async def getNsfwGifUrl(self, gif: str) -> discord.Embed:
         embed = discord.Embed(color=discord.Color.fuchsia())
-        slug = gifUrls.get(gif)
+        slug = nsfwGifUrls.get(gif)
         embed.set_image(url=f"https://m.doughmination.gay/gif/nsfw/{slug}.gif")
         return embed
     

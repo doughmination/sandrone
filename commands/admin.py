@@ -4,6 +4,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from utils.cog_state import loadDisabled, setDisabled
+
 cogsPackage = "commands.cogs"
 cogsDir = Path(__file__).parent / "cogs"
 
@@ -56,9 +58,10 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             await interaction.response.send_message(f"Failed to load `{name}`: {e}", ephemeral=True)
             return
 
+        setDisabled(name, False)
         print(f"[cog] loaded {extension} (requested by {interaction.user})")
         await self.bot.tree.sync()
-        await interaction.response.send_message(f"Loaded `{name}`.", ephemeral=True)
+        await interaction.response.send_message(f"Loaded `{name}`. Will stay loaded across restarts.", ephemeral=True)
 
     @app_commands.command(name="unload", description="Unload a cog from commands.cogs")
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
@@ -77,9 +80,32 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             await interaction.response.send_message(f"Failed to unload `{name}`: {e}", ephemeral=True)
             return
 
+        setDisabled(name, True)
         print(f"[cog] unloaded {extension} (requested by {interaction.user})")
         await self.bot.tree.sync()
-        await interaction.response.send_message(f"Unloaded `{name}`.", ephemeral=True)
+        await interaction.response.send_message(f"Unloaded `{name}`. Will stay unloaded across restarts.", ephemeral=True)
+
+    @app_commands.command(name="list", description="Show which cogs are loaded and whether they'll survive a restart")
+    @ownerOnly()
+    async def listCogs(self, interaction: discord.Interaction) -> None:
+        disabled = loadDisabled()
+        lines = []
+        for name in discoverCogNames():
+            loaded = f"{cogsPackage}.{name}" in self.bot.extensions
+            if loaded:
+                status = "✅ loaded"
+            elif name in disabled:
+                status = "⛔ unloaded (disabled — stays off across restarts)"
+            else:
+                status = "⚠️ unloaded (not disabled, but not loaded — check startup logs)"
+            lines.append(f"`{name}` — {status}")
+
+        embed = discord.Embed(
+            title="Cog status",
+            description="\n".join(lines) if lines else "No cogs found.",
+            color=discord.Color.blurple(),
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
     async def cog_app_command_error(
         self, interaction: discord.Interaction, error: app_commands.AppCommandError

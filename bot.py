@@ -9,6 +9,7 @@ from discord.ext import commands
 from dotenvx import load_dotenv
 from watchfiles import Change, awatch
 
+from utils.cog_state import loadDisabled
 from utils.doughmination import dough
 
 load_dotenv()
@@ -29,10 +30,15 @@ def discoverExtensions(directory: Path, package: str) -> list[str]:
 
 class Bot(commands.Bot):
     async def setup_hook(self) -> None:
+        disabled = loadDisabled()
         extensions = discoverExtensions(commandsDir, "commands") + discoverExtensions(
             cogsDir, "commands.cogs"
         )
         for extension in extensions:
+            if extension.startswith("commands.cogs.") and extension.removeprefix("commands.cogs.") in disabled:
+                print(f"[startup] skipped {extension} (disabled via /cog unload)")
+                continue
+
             try:
                 await self.load_extension(extension)
                 print(f"[startup] loaded {extension}")
@@ -48,11 +54,17 @@ class Bot(commands.Bot):
     async def watchCogs(self) -> None:
         async for changes in awatch(cogsDir):
             reloaded = False
+            disabled = loadDisabled()
             for change, path in changes:
                 if change == Change.deleted or not path.endswith(".py"):
                     continue
 
-                extension = f"commands.cogs.{Path(path).stem}"
+                name = Path(path).stem
+                if name in disabled:
+                    print(f"[dev-reload] skipped commands.cogs.{name} (disabled via /cog unload)")
+                    continue
+
+                extension = f"commands.cogs.{name}"
                 try:
                     if extension in self.extensions:
                         await self.reload_extension(extension)

@@ -12,3 +12,6 @@ wheels/
 # Enviroment Variables
 .env.keys
 .idea/
+
+# Local cog load/unload state (per-deployment, not source-controlled)
+cog_state.json

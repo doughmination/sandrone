@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-gifUrls = {
+nsfwGifUrls = {
 "Catgirl Sucking": "catgirl-suck",
 "Cum Filled": "cum-filled",
 "Cum Thirsty": "cum-thirsty",
@@ -16,23 +16,23 @@ gifUrls = {
 "Yeah Yeah Whatever": "whatever"
 }
 
-class Gifs(commands.Cog):
+class NsfwGifs(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    async def gifAuto(
+    async def nsfwGifAuto(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
         result = []
-        for name in gifUrls:
+        for name in nsfwGifUrls:
             if current.lower() in name.lower():
                 result.append(app_commands.Choice(name=name, value=name))
         return result[:25]
 
-    @app_commands.command(name="nsfw-gif", description="Moans!", nsfw=True)
+    @app_commands.command(name="nsfwgif", description="Moans!", nsfw=True)
     @app_commands.describe(gif="The gif to grab")
-    @app_commands.autocomplete(gif=gifAuto)
-    async def gifSlash(self, interaction: discord.Interaction, gif: str) -> None:
+    @app_commands.autocomplete(gif=nsfwGifAuto)
+    async def nsfwGifSlash(self, interaction: discord.Interaction, gif: str) -> None:
         channel = interaction.channel
         if not isinstance(channel, (discord.TextChannel, discord.Thread)) or not channel.is_nsfw():
             await interaction.response.send_message(
@@ -51,4 +51,4 @@ class Gifs(commands.Cog):
         return embed
     
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(Gifs(bot))
+    await bot.add_cog(NsfwGifs(bot))

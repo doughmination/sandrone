@@ -11,3 +11,4 @@ wheels/
 
 # Enviroment Variables
 .env.keys
+.idea/

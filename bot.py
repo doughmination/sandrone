@@ -9,6 +9,8 @@ from discord.ext import commands
 from dotenvx import load_dotenv
 from watchfiles import Change, awatch
 
+from utils.doughmination import dough
+
 load_dotenv()
 
 TOKEN = os.getenv('BOT_TOKEN')
@@ -99,6 +101,7 @@ async def main():
         with contextlib.suppress(asyncio.CancelledError):
             await start_task
 
+        await dough.close()
         print("[shutdown] bot closed")
 
 if TOKEN is not None:

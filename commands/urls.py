@@ -32,7 +32,7 @@ class Urls(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getUrlEmbed(self, site: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.pink())
+        embed = discord.Embed(color=discord.Color.fuchsia())
         embed.set_thumbnail(url="https://m.doughmination.gay/img/avatars/favicon.png")
         urlString = await self.getUrlFromMap(site)
         embed.add_field(name="URL:", value=f"[{site}]({urlString})")

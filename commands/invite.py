@@ -13,7 +13,7 @@ class Invite(commands.Cog):
         await interaction.followup.send(embed=invite)
 
     async def buildInviteEmbed(self):
-        embed = discord.Embed(color=discord.Color.blue(), title="Invite Links:")
+        embed = discord.Embed(color=discord.Color.fuchsia(), title="Invite Links:")
         embed.set_thumbnail(url=self.bot.user.avatar.url)
         embed.add_field(name=" ", value=f"[Invite Link](https://discord.com/oauth2/authorize?client_id={self.bot.user.id})")
         embed.add_field(name=" ", value="[Discord Server](https://discord.gg/N8gCjS294R)")

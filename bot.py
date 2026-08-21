@@ -1,3 +1,4 @@
+from discord import guild
 import asyncio
 import contextlib
 import os
@@ -81,6 +82,12 @@ class Bot(commands.Bot):
 intents = discord.Intents.default()
 bot = Bot(command_prefix=prefix, intents=intents)
 
+bot.tree.allowed_contexts.guild = True
+bot.tree.allowed_contexts.dm_channel = True
+bot.tree.allowed_contexts.private_channel = True
+bot.tree.allowed_installs.guild = True
+bot.tree.allowed_installs.user = True
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
@@ -89,13 +96,16 @@ async def main():
     async with bot:
         loop = asyncio.get_running_loop()
         stop_event = asyncio.Event()
-
+        
         def requestShutdown() -> None:
             print("\n[shutdown] signal received, closing bot...")
             stop_event.set()
 
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, requestShutdown)
+        try:
+            for sig in (signal.SIGINT, signal.SIGTERM):
+                loop.add_signal_handler(sig, requestShutdown)
+        except NotImplementedError:
+            print("Window machine is detected, shutdown may not be graceful")
 
         start_task = asyncio.create_task(bot.start(TOKEN))
         stop_task = asyncio.create_task(stop_event.wait())

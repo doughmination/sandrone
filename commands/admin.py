@@ -103,7 +103,7 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         embed = discord.Embed(
             title="Cog status",
             description="\n".join(lines) if lines else "No cogs found.",
-            color=discord.Color.blurple(),
+            color=discord.Color.fuchsia(),
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 

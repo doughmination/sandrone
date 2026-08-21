@@ -8,7 +8,7 @@ from github import Auth, Github, GithubException
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-embedColor = discord.Color.blurple()
+embedColor = discord.Color.fuchsia()
 errorColor = discord.Color.red()
 
 

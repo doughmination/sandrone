@@ -2,7 +2,6 @@ import datetime
 from pathlib import Path
 import toml
 
-
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -37,7 +36,7 @@ class Stats(commands.Cog):
             )
             return
 
-        embed = discord.Embed(title=f"{self.bot.user.name}'s stats", color=discord.Color.blurple())
+        embed = discord.Embed(title=f"{self.bot.user.name}'s stats", color=discord.Color.fuchsia())
         embed.add_field(name="Ping:", value=f"{latency}ms")
         embed.add_field(name="Uptime:", value=f"{days}d, {hours}h, {minutes}m, {seconds}s")
         embed.add_field(name="Region:", value="London, UK")

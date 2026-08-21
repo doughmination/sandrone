@@ -13,7 +13,7 @@ statusEmoji = {
     "offline": "⚪",
 }
 
-embedColor = discord.Color.blurple()
+embedColor = discord.Color.fuchsia()
 errorColor = discord.Color.red()
 
 

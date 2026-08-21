@@ -32,7 +32,7 @@ elementOrder = ["Pyro", "Hydro", "Anemo", "Electro", "Cryo", "Geo", "Dendro", "A
 
 slotLabels = {"flower": "Flower", "plume": "Plume", "sands": "Sands", "goblet": "Goblet", "circlet": "Circlet"}
 
-embedColor = discord.Color.blurple()
+embedColor = discord.Color.fuchsia()
 successColor = discord.Color.green()
 errorColor = discord.Color.red()
 

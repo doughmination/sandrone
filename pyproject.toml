@@ -16,6 +16,7 @@ dependencies = [
     "toml>=0.10.2",
     "ty>=0.0.72",
     "watchfiles>=1.2.0",
+    "wikipedia-api>=0.15.0",
 ]
 
 [tool.uv]

@@ -5,9 +5,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-embedColor = discord.Color.blurple()
-errorColor = discord.Color.red()
-
 
 class Codeberg(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -32,12 +29,12 @@ class Codeberg(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def fetchUserEmbed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=embedColor, title=username, description="")
+        embed = discord.Embed(color=discord.Color.fuchsia(), title=username, description="")
 
         async with self.session.get(f"https://codeberg.org/api/v1/users/{username}") as resp:
             if resp.status != 200:
                 embed.title = None
-                embed.color = errorColor
+                embed.color = discord.Color.red()
                 embed.description = ":x: That Codeberg account does not exist."
                 return embed
             data = await resp.json()

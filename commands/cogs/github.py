@@ -5,6 +5,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from github import Auth, Github, GithubException
+import colorful as cf
+
+cf.use_true_colors()
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
@@ -86,9 +89,9 @@ class GitHub(commands.Cog):
 
 async def setup(bot: commands.Bot) -> None:
     if not GITHUB_TOKEN:
-        print(
+        print(cf.yellow(
             "[github] GITHUB_TOKEN is not set, skipping cog. "
             "To get a token, visit https://github.com/settings/tokens/new"
-        )
+        ))
         return
     await bot.add_cog(GitHub(bot))

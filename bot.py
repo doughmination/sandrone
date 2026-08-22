@@ -13,6 +13,9 @@ from watchfiles import Change, awatch
 from utils.cog_state import loadDisabled
 from utils.doughmination import dough
 
+import colorful as cf
+cf.use_true_colors()
+
 load_dotenv()
 
 TOKEN = os.getenv('BOT_TOKEN')
@@ -37,20 +40,20 @@ class Bot(commands.Bot):
         )
         for extension in extensions:
             if extension.startswith("commands.cogs.") and extension.removeprefix("commands.cogs.") in disabled:
-                print(f"[startup] skipped {extension} (disabled via /cog unload)")
+                print(cf.grey(f"[startup] skipped {extension} (disabled via /cog unload)"))
                 continue
 
             try:
                 await self.load_extension(extension)
-                print(f"[startup] loaded {extension}")
+                print(cf.green(f"[startup] loaded {extension}"))
             except commands.ExtensionError as e:
-                print(f"[startup] failed to load {extension}: {e}")
+                print(cf.red(f"[startup] failed to load {extension}: {e}"))
 
         await self.tree.sync()
 
         if devMode:
             self.loop.create_task(self.watchCogs())
-            print("[dev-reload] watching commands/cogs for changes")
+            print(cf.magenta("[dev-reload] watching commands/cogs for changes"))
 
     async def watchCogs(self) -> None:
         async for changes in awatch(cogsDir):
@@ -62,7 +65,7 @@ class Bot(commands.Bot):
 
                 name = Path(path).stem
                 if name in disabled:
-                    print(f"[dev-reload] skipped commands.cogs.{name} (disabled via /cog unload)")
+                    print(cf.grey(f"[dev-reload] skipped commands.cogs.{name} (disabled via /cog unload)"))
                     continue
 
                 extension = f"commands.cogs.{name}"
@@ -72,9 +75,9 @@ class Bot(commands.Bot):
                     else:
                         await self.load_extension(extension)
                     reloaded = True
-                    print(f"[dev-reload] reloaded {extension}")
+                    print(cf.grey(f"[dev-reload] reloaded {extension}"))
                 except commands.ExtensionError as e:
-                    print(f"[dev-reload] failed to reload {extension}: {e}")
+                    print(cf.red(f"[dev-reload] failed to reload {extension}: {e}"))
 
             if reloaded:
                 await self.tree.sync()
@@ -90,7 +93,7 @@ bot.tree.allowed_installs.user = True
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    print(cf.magenta(f"Logged in as {bot.user}"))
 
 async def main():
     async with bot:
@@ -98,14 +101,20 @@ async def main():
         stop_event = asyncio.Event()
         
         def requestShutdown() -> None:
-            print("\n[shutdown] signal received, closing bot...")
+            print(cf.grey("\n[shutdown] signal received, closing bot..."))
             stop_event.set()
 
         try:
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, requestShutdown)
         except NotImplementedError:
-            print("Window machine is detected, shutdown may not be graceful")
+            def _handle(signum, frame):
+                loop.call_soon_threadsafe(requestShutdown)
+
+            signal.signal(signal.SIGINT, _handle)
+            if hasattr(signal, "SIGBREAK"):
+                signal.signal(signal.SIGBREAK, _handle)
+            print(cf.blue("Windows machine detected, shutdown may not be graceful"))
 
         start_task = asyncio.create_task(bot.start(TOKEN))
         stop_task = asyncio.create_task(stop_event.wait())
@@ -124,9 +133,9 @@ async def main():
             await start_task
 
         await dough.close()
-        print("[shutdown] bot closed")
+        print(cf.grey("[shutdown] bot closed"))
 
 if TOKEN is not None:
     asyncio.run(main())
 else:
-    print("The Bot Token is not set, please configure .env")
+    print(cf.grey("The Bot Token is not set, please configure .env"))

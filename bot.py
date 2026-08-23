@@ -102,7 +102,7 @@ async def on_ready():
         try:
             with open("./assets/avatar.png", "rb") as f:
                 avatar_bytes = f.read()
-            with open("./assets/banner.jpg", "rb") as h:
+            with open("./assets/banner.png", "rb") as h:
                 banner_bytes = h.read()
             await bot.user.edit(avatar=avatar_bytes, banner=banner_bytes)
             print(cf.yellow("Avatar and Banner loaded!"))

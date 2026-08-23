@@ -33,6 +33,10 @@ def discoverExtensions(directory: Path, package: str) -> list[str]:
     )
 
 class Bot(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._profileSet = False
+
     async def setup_hook(self) -> None:
         disabled = loadDisabled()
         extensions = discoverExtensions(commandsDir, "commands") + discoverExtensions(
@@ -93,6 +97,17 @@ bot.tree.allowed_installs.user = True
 
 @bot.event
 async def on_ready():
+    if not bot._profileSet:
+        bot._profileSet = True
+        try:
+            with open("./assets/avatar.png", "rb") as f:
+                avatar_bytes = f.read()
+            with open("./assets/banner.jpg", "rb") as h:
+                banner_bytes = h.read()
+            await bot.user.edit(avatar=avatar_bytes, banner=banner_bytes)
+            print(cf.yellow("Avatar and Banner loaded!"))
+        except discord.HTTPException as e:
+            print(cf.red(f"Failed to set avatar/banner: {e}"))
     print(cf.magenta(f"Logged in as {bot.user}"))
 
 async def main():

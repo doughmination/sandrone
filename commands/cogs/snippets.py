@@ -34,7 +34,7 @@ class Snippets(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getSnippetEmbed(self, snip: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.gold())
+        embed = discord.Embed(color=discord.Color.fuchsia())
         reply = xSnips.get(snip)
         embed.add_field(name=" ", value=reply)
         return embed

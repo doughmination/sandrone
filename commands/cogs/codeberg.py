@@ -21,13 +21,6 @@ class Codeberg(commands.Cog):
         embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
-    @app_commands.command(name="cb", description="Look up a Codeberg user (alias for /codeberg)")
-    @app_commands.describe(username="The Codeberg username to fetch information on")
-    async def cbSlash(self, interaction: discord.Interaction, username: str) -> None:
-        await interaction.response.defer()
-        embed = await self.fetchUserEmbed(username)
-        await interaction.followup.send(embed=embed)
-
     async def fetchUserEmbed(self, username: str) -> discord.Embed:
         embed = discord.Embed(color=discord.Color.fuchsia(), title=username, description="")
 

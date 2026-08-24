@@ -26,13 +26,6 @@ class GitHub(commands.Cog):
         embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
-    @app_commands.command(name="gh", description="Look up a GitHub user (alias for /github)")
-    @app_commands.describe(username="The GitHub username to fetch information on")
-    async def ghSlash(self, interaction: discord.Interaction, username: str) -> None:
-        await interaction.response.defer()
-        embed = await self.fetchUserEmbed(username)
-        await interaction.followup.send(embed=embed)
-
     async def fetchUserEmbed(self, username: str) -> discord.Embed:
         username = username.removeprefix("@")
         return await asyncio.to_thread(self._buildEmbed, username)

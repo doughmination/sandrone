@@ -13,6 +13,7 @@ nsfwGifUrls = {
 "Shuddup": "shuddup",
 "Shut the fuck up": "stfu",
 "Stop Yapping": "stop-yapping",
+"Tied Up": "tied-up",
 "Yeah Yeah Whatever": "whatever"
 }
 

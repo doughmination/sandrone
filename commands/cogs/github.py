@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 import discord
 from discord import app_commands
@@ -7,9 +6,9 @@ from discord.ext import commands
 from github import Auth, Github, GithubException
 import colorful as cf
 
-cf.use_true_colors()
+from bot.config import githubToken as GITHUB_TOKEN
 
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+cf.use_true_colors()
 
 embedColor = discord.Color.fuchsia()
 errorColor = discord.Color.red()

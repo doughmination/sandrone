@@ -1,29 +1,20 @@
-from discord import guild
 import asyncio
 import contextlib
-import os
 import signal
 from pathlib import Path
 
 import discord
 from discord.ext import commands
-from dotenvx import load_dotenv
 from watchfiles import Change, awatch
 
+from bot import config
+from bot.errors import handleAppCommandError
 from utils.cog_state import loadDisabled
 from utils.doughmination import dough
 
 import colorful as cf
 cf.use_true_colors()
 
-load_dotenv()
-
-TOKEN = os.getenv('BOT_TOKEN')
-prefix = os.getenv('BOT_PREFIX', '!')
-devMode = os.getenv('DEV_MODE', 'false').lower() == 'true'
-
-commandsDir = Path(__file__).parent / "commands"
-cogsDir = commandsDir / "cogs"
 
 def discoverExtensions(directory: Path, package: str) -> list[str]:
     return sorted(
@@ -37,10 +28,18 @@ class Bot(commands.Bot):
         super().__init__(*args, **kwargs)
         self._profileSet = False
 
+        self.tree.allowed_contexts.guild = True
+        self.tree.allowed_contexts.dm_channel = True
+        self.tree.allowed_contexts.private_channel = True
+        self.tree.allowed_installs.guild = True
+        self.tree.allowed_installs.user = True
+
+        self.tree.error(handleAppCommandError)
+
     async def setup_hook(self) -> None:
         disabled = loadDisabled()
-        extensions = discoverExtensions(commandsDir, "commands") + discoverExtensions(
-            cogsDir, "commands.cogs"
+        extensions = discoverExtensions(config.commandsDir, "commands") + discoverExtensions(
+            config.cogsDir, "commands.cogs"
         )
         for extension in extensions:
             if extension.startswith("commands.cogs.") and extension.removeprefix("commands.cogs.") in disabled:
@@ -55,12 +54,12 @@ class Bot(commands.Bot):
 
         await self.tree.sync()
 
-        if devMode:
+        if config.devMode:
             self.loop.create_task(self.watchCogs())
             print(cf.magenta("[dev-reload] watching commands/cogs for changes"))
 
     async def watchCogs(self) -> None:
-        async for changes in awatch(cogsDir):
+        async for changes in awatch(config.cogsDir):
             reloaded = False
             disabled = loadDisabled()
             for change, path in changes:
@@ -86,35 +85,33 @@ class Bot(commands.Bot):
             if reloaded:
                 await self.tree.sync()
 
-intents = discord.Intents.default()
-bot = Bot(command_prefix=prefix, intents=intents)
+    async def on_ready(self) -> None:
+        if not self._profileSet:
+            self._profileSet = True
+            try:
+                with open(config.assetsDir / "avatar.png", "rb") as f:
+                    avatar_bytes = f.read()
+                with open(config.assetsDir / "banner.png", "rb") as h:
+                    banner_bytes = h.read()
+                await self.user.edit(avatar=avatar_bytes, banner=banner_bytes)
+                print(cf.yellow("Avatar and Banner loaded!"))
+            except discord.HTTPException as e:
+                print(cf.red(f"Failed to set avatar/banner: {e}"))
+        print(cf.magenta(f"Logged in as {self.user}"))
 
-bot.tree.allowed_contexts.guild = True
-bot.tree.allowed_contexts.dm_channel = True
-bot.tree.allowed_contexts.private_channel = True
-bot.tree.allowed_installs.guild = True
-bot.tree.allowed_installs.user = True
 
-@bot.event
-async def on_ready():
-    if not bot._profileSet:
-        bot._profileSet = True
-        try:
-            with open("./assets/avatar.png", "rb") as f:
-                avatar_bytes = f.read()
-            with open("./assets/banner.png", "rb") as h:
-                banner_bytes = h.read()
-            await bot.user.edit(avatar=avatar_bytes, banner=banner_bytes)
-            print(cf.yellow("Avatar and Banner loaded!"))
-        except discord.HTTPException as e:
-            print(cf.red(f"Failed to set avatar/banner: {e}"))
-    print(cf.magenta(f"Logged in as {bot.user}"))
+def createBot() -> Bot:
+    intents = discord.Intents.default()
+    return Bot(command_prefix=config.prefix, intents=intents)
 
-async def main():
+
+async def runBot() -> None:
+    bot = createBot()
+
     async with bot:
         loop = asyncio.get_running_loop()
         stop_event = asyncio.Event()
-        
+
         def requestShutdown() -> None:
             print(cf.grey("\n[shutdown] signal received, closing bot..."))
             stop_event.set()
@@ -131,7 +128,7 @@ async def main():
                 signal.signal(signal.SIGBREAK, _handle)
             print(cf.blue("Windows machine detected, shutdown may not be graceful"))
 
-        start_task = asyncio.create_task(bot.start(TOKEN))
+        start_task = asyncio.create_task(bot.start(config.TOKEN))
         stop_task = asyncio.create_task(stop_event.wait())
 
         done, _ = await asyncio.wait(
@@ -149,8 +146,3 @@ async def main():
 
         await dough.close()
         print(cf.grey("[shutdown] bot closed"))
-
-if TOKEN is not None:
-    asyncio.run(main())
-else:
-    print(cf.grey("The Bot Token is not set, please configure .env"))

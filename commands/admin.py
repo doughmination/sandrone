@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot.errors import handleAppCommandError
 from utils.cog_state import loadDisabled, setDisabled
 import colorful as cf
 
@@ -126,18 +127,7 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
     async def cog_app_command_error(
         self, interaction: discord.Interaction, error: app_commands.AppCommandError
     ) -> None:
-        if isinstance(error, app_commands.CheckFailure):
-            await interaction.response.send_message(
-                "You do not have permission to execute this command", ephemeral=True
-            )
-            return
-
-        print(cf.red(f"[cog] unhandled error in {interaction.command}: {error}"))
-        message = f"Something went wrong running `{interaction.command}`: {error}"
-        if interaction.response.is_done():
-            await interaction.followup.send(message, ephemeral=True)
-        else:
-            await interaction.response.send_message(message, ephemeral=True)
+        await handleAppCommandError(interaction, error)
 
 
 async def setup(bot: commands.Bot) -> None:

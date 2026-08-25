@@ -1,9 +1,10 @@
 import io
 
 import discord
+import qrcode
 from discord import app_commands
 from discord.ext import commands
-import qrcode
+
 
 class Qr(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -16,7 +17,7 @@ class Qr(commands.Cog):
         reply = await self.getQr(text)
         await interaction.followup.send(file=reply)
 
-    async def getQr(self, text: str) -> None:
+    async def getQr(self, text: str) -> discord.File:
         qr = qrcode.make(text)
         buffer = io.BytesIO()
         qr.save(buffer, format="PNG")

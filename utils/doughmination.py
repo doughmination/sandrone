@@ -56,7 +56,9 @@ class DoughminationAPI:
         return await self._get(f"{genshinBase}/roster/{uid}", GenshinNotFoundError)
 
     async def getGenshinCharacter(self, uid: str, heroId: str) -> dict:
-        return await self._get(f"{genshinBase}/roster/{uid}/{heroId}", GenshinNotFoundError)
+        return await self._get(
+            f"{genshinBase}/roster/{uid}/{heroId}", GenshinNotFoundError
+        )
 
 
 dough = DoughminationAPI()

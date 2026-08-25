@@ -1,15 +1,17 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+
 from bot import doughchecks
 
 gifUrls = {
-"angry-cat": "angy-car",
-"bitey-cat": "nom-car",
-"meow-cat": "mrrow-car",
-"sus-cat": "sus",
-"want-pats": "want-pats",
+    "angry-cat": "angy-car",
+    "bitey-cat": "nom-car",
+    "meow-cat": "mrrow-car",
+    "sus-cat": "sus",
+    "want-pats": "want-pats",
 }
+
 
 class Gifs(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -32,12 +34,13 @@ class Gifs(commands.Cog):
         await interaction.response.defer()
         reply = await self.getGifUrl(gif)
         await interaction.followup.send(embed=reply)
-    
+
     async def getGifUrl(self, gif: str) -> discord.Embed:
         embed = discord.Embed(color=discord.Color.fuchsia())
         slug = gifUrls.get(gif)
         embed.set_image(url=f"https://m.doughmination.gay/gif/{slug}.gif")
         return embed
-    
+
+
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Gifs(bot))

@@ -3,10 +3,11 @@ from discord import app_commands
 from discord.ext import commands
 
 siteUrls = {
-"personal": "https://doughmination.gay",
-"cdn": "https://m.doughmination.gay",
-"git": "https://git.doughmination.gay",
+    "personal": "https://doughmination.gay",
+    "cdn": "https://m.doughmination.gay",
+    "git": "https://git.doughmination.gay",
 }
+
 
 class Urls(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -20,8 +21,6 @@ class Urls(commands.Cog):
             if current.lower() in name.lower():
                 result.append(app_commands.Choice(name=name, value=name))
         return result[:25]
-
-
 
     @app_commands.command(name="urls", description="Get a Doughmination URL")
     @app_commands.describe(site="The website to get")

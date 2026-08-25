@@ -9,7 +9,7 @@ def loadDisabled() -> set[str]:
         return set()
     try:
         data = json.loads(statePath.read_text())
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return set()
     return set(data.get("disabled", []))
 

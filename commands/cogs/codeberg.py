@@ -16,15 +16,19 @@ class Codeberg(commands.Cog):
 
     @app_commands.command(name="codeberg", description="Look up a Codeberg user")
     @app_commands.describe(username="The Codeberg username to fetch information on")
-    async def codebergSlash(self, interaction: discord.Interaction, username: str) -> None:
+    async def codebergSlash(
+        self, interaction: discord.Interaction, username: str
+    ) -> None:
         await interaction.response.defer()
         embed = await self.fetchUserEmbed(username)
         await interaction.followup.send(embed=embed)
 
     async def fetchUserEmbed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.fuchsia(), title=username, description="")
+        embed = discord.Embed(color=discord.Color.fuchsia(), title=username)
 
-        async with self.session.get(f"https://codeberg.org/api/v1/users/{username}") as resp:
+        async with self.session.get(
+            f"https://codeberg.org/api/v1/users/{username}"
+        ) as resp:
             if resp.status != 200:
                 embed.title = None
                 embed.color = discord.Color.red()
@@ -46,26 +50,31 @@ class Codeberg(commands.Cog):
             website_label = website.removeprefix("https://").removeprefix("http://")
 
         embed.url = data.get("html_url")
+
+        parts: list[str] = []
         if data.get("description"):
-            embed.description += f"{data.get('description')}\n"
+            parts.append(f"{data.get('description')}\n")
         if website:
-            embed.description += f"\n> **Website**: [{website_label}]({website})"
+            parts.append(f"\n> **Website**: [{website_label}]({website})")
         if data.get("email"):
-            embed.description += f"\n> **Email**: [{data.get('email')}](mailto:{data.get('email')})"
+            parts.append(
+                f"\n> **Email**: [{data.get('email')}](mailto:{data.get('email')})"
+            )
         if data.get("location"):
-            embed.description += f"\n> **Location**: {data.get('location')}"
+            parts.append(f"\n> **Location**: {data.get('location')}")
         if data.get("followers_count"):
-            embed.description += f"\n> **Followers**: {data.get('followers_count')}"
+            parts.append(f"\n> **Followers**: {data.get('followers_count')}")
         if data.get("following_count"):
-            embed.description += f"\n> **Following**: {data.get('following_count')}"
+            parts.append(f"\n> **Following**: {data.get('following_count')}")
         if repo_count:
-            embed.description += f"\n> **Public Repositories**: {repo_count}"
+            parts.append(f"\n> **Public Repositories**: {repo_count}")
         if data.get("created"):
             joined = dt.datetime.fromisoformat(data.get("created"))
-            embed.description += f"\n> **Joined Codeberg**: <t:{int(joined.timestamp())}:D>"
+            parts.append(f"\n> **Joined Codeberg**: <t:{int(joined.timestamp())}:D>")
         if data.get("is_admin"):
-            embed.description += "\n\n**This user is a Codeberg site administrator.**"
+            parts.append("\n\n**This user is a Codeberg site administrator.**")
 
+        embed.description = "".join(parts)
         return embed
 
 

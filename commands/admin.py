@@ -4,11 +4,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import config
 from bot.errors import handleAppCommandError
 from utils.cog_state import loadDisabled, setDisabled
-import colorful as cf
-
-cf.use_true_colors()
+from utils.colors import cf
 
 cogsPackage = "commands.cogs"
 cogsDir = Path(__file__).parent / "cogs"
@@ -20,7 +19,7 @@ def discoverCogNames() -> list[str]:
 
 def ownerOnly():
     async def predicate(interaction: discord.Interaction) -> bool:
-        return await interaction.client.is_owner(interaction.user)
+        return interaction.user.id in config.owners
 
     return app_commands.check(predicate)
 
@@ -36,7 +35,8 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         return [
             app_commands.Choice(name=name, value=name)
             for name in discoverCogNames()
-            if f"{cogsPackage}.{name}" not in self.bot.extensions and current.lower() in name.lower()
+            if f"{cogsPackage}.{name}" not in self.bot.extensions
+            and current.lower() in name.lower()
         ][:25]
 
     async def unloadAutocomplete(
@@ -45,7 +45,8 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         return [
             app_commands.Choice(name=name, value=name)
             for name in discoverCogNames()
-            if f"{cogsPackage}.{name}" in self.bot.extensions and current.lower() in name.lower()
+            if f"{cogsPackage}.{name}" in self.bot.extensions
+            and current.lower() in name.lower()
         ][:25]
 
     @app_commands.command(name="load", description="Load a cog from commands.cogs")
@@ -63,20 +64,26 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
 
         extension = f"{cogsPackage}.{name}"
         if extension in self.bot.extensions:
-            await interaction.followup.send(f"`{name}` is already loaded.", ephemeral=True)
+            await interaction.followup.send(
+                f"`{name}` is already loaded.", ephemeral=True
+            )
             return
 
         try:
             await self.bot.load_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to load {extension}: {e}"))
-            await interaction.followup.send(f"Failed to load `{name}`: {e}", ephemeral=True)
+            await interaction.followup.send(
+                f"Failed to load `{name}`: {e}", ephemeral=True
+            )
             return
 
         setDisabled(name, False)
         print(cf.yellow(f"[cog] loaded {extension} (requested by {interaction.user})"))
         await self.bot.tree.sync()
-        await interaction.followup.send(f"Loaded `{name}`. Will stay loaded across restarts.", ephemeral=True)
+        await interaction.followup.send(
+            f"Loaded `{name}`. Will stay loaded across restarts.", ephemeral=True
+        )
 
     @app_commands.command(name="unload", description="Unload a cog from commands.cogs")
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
@@ -94,15 +101,24 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             await self.bot.unload_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to unload {extension}: {e}"))
-            await interaction.followup.send(f"Failed to unload `{name}`: {e}", ephemeral=True)
+            await interaction.followup.send(
+                f"Failed to unload `{name}`: {e}", ephemeral=True
+            )
             return
 
         setDisabled(name, True)
-        print(cf.yellow(f"[cog] unloaded {extension} (requested by {interaction.user})"))
+        print(
+            cf.yellow(f"[cog] unloaded {extension} (requested by {interaction.user})")
+        )
         await self.bot.tree.sync()
-        await interaction.followup.send(f"Unloaded `{name}`. Will stay unloaded across restarts.", ephemeral=True)
+        await interaction.followup.send(
+            f"Unloaded `{name}`. Will stay unloaded across restarts.", ephemeral=True
+        )
 
-    @app_commands.command(name="list", description="Show which cogs are loaded and whether they'll survive a restart")
+    @app_commands.command(
+        name="list",
+        description="Show which cogs are loaded and whether they'll survive a restart",
+    )
     @ownerOnly()
     async def listCogs(self, interaction: discord.Interaction) -> None:
         disabled = loadDisabled()
@@ -114,7 +130,9 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             elif name in disabled:
                 status = "⛔ unloaded (disabled — stays off across restarts)"
             else:
-                status = "⚠️ unloaded (not disabled, but not loaded — check startup logs)"
+                status = (
+                    "⚠️ unloaded (not disabled, but not loaded — check startup logs)"
+                )
             lines.append(f"`{name}` — {status}")
 
         embed = discord.Embed(

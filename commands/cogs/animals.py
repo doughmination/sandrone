@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+
 class Animals(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -19,6 +20,7 @@ class Animals(commands.Cog):
         catUrl = f"https://cataas.com/cat?v={uuid.uuid4()}"
         catEmbed.set_image(url=catUrl)
         return catEmbed
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Animals(bot))

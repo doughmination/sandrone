@@ -1,10 +1,11 @@
 import datetime as dt
 
+import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils.doughmination import GenshinNotFoundError, dough
+from utils.doughmination import DoughminationError, GenshinNotFoundError, dough
 
 genshinAccounts = {
     "main": {"label": "Main", "uid": "691386457"},
@@ -13,7 +14,8 @@ genshinAccounts = {
 defaultAccount = "main"
 
 accountChoices = [
-    app_commands.Choice(name=account["label"], value=key) for key, account in genshinAccounts.items()
+    app_commands.Choice(name=account["label"], value=key)
+    for key, account in genshinAccounts.items()
 ]
 
 accountBySubcommand = {"main-chara": "main", "alt-chara": "alt"}
@@ -30,7 +32,13 @@ elementEmojiMap = {
 }
 elementOrder = ["Pyro", "Hydro", "Anemo", "Electro", "Cryo", "Geo", "Dendro", "All"]
 
-slotLabels = {"flower": "Flower", "plume": "Plume", "sands": "Sands", "goblet": "Goblet", "circlet": "Circlet"}
+slotLabels = {
+    "flower": "Flower",
+    "plume": "Plume",
+    "sands": "Sands",
+    "goblet": "Goblet",
+    "circlet": "Circlet",
+}
 
 embedColor = discord.Color.fuchsia()
 successColor = discord.Color.green()
@@ -90,7 +98,9 @@ def findCharacter(characters: list[dict], query: str) -> dict | None:
     return None
 
 
-def buildErrorEmbed(error: Exception, accountLabel: str, notFoundTitle: str) -> discord.Embed:
+def buildErrorEmbed(
+    error: Exception, accountLabel: str, notFoundTitle: str
+) -> discord.Embed:
     notFound = isinstance(error, GenshinNotFoundError)
     message = (
         f"No Enka.Network record for the {accountLabel} account. "
@@ -98,7 +108,11 @@ def buildErrorEmbed(error: Exception, accountLabel: str, notFoundTitle: str) -> 
         if notFound
         else str(error)
     )
-    embed = discord.Embed(color=errorColor, title=notFoundTitle if notFound else "❌ Error", description=message)
+    embed = discord.Embed(
+        color=errorColor,
+        title=notFoundTitle if notFound else "❌ Error",
+        description=message,
+    )
     embed.timestamp = dt.datetime.now(dt.UTC)
     return embed
 
@@ -115,12 +129,26 @@ def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
         embed.set_thumbnail(url=detail["icon_url"])
 
     if not detail["owned"]:
-        embed.add_field(name="Ownership", value="❌ Not owned on this account.", inline=False)
+        embed.add_field(
+            name="Ownership", value="❌ Not owned on this account.", inline=False
+        )
         return embed
 
-    embed.add_field(name="Level", value=str(detail["level"]) if detail.get("level") is not None else "Unknown", inline=True)
-    embed.add_field(name="Constellation", value=f"C{detail['constellation']}", inline=True)
-    embed.add_field(name="Friendship", value=str(detail["friendship"]) if detail.get("friendship") is not None else "—", inline=True)
+    embed.add_field(
+        name="Level",
+        value=str(detail["level"]) if detail.get("level") is not None else "Unknown",
+        inline=True,
+    )
+    embed.add_field(
+        name="Constellation", value=f"C{detail['constellation']}", inline=True
+    )
+    embed.add_field(
+        name="Friendship",
+        value=str(detail["friendship"])
+        if detail.get("friendship") is not None
+        else "—",
+        inline=True,
+    )
 
     if not detail["tracked"]:
         embed.add_field(
@@ -131,7 +159,14 @@ def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
 
     weapon = detail.get("weapon")
     if weapon:
-        weaponStats = " • ".join(s for s in (formatStat(weapon.get("base_stat")), formatStat(weapon.get("sub_stat"))) if s)
+        weaponStats = " • ".join(
+            s
+            for s in (
+                formatStat(weapon.get("base_stat")),
+                formatStat(weapon.get("sub_stat")),
+            )
+            if s
+        )
         value = f"**{weapon['name']}** {stars(weapon['rarity'])}\nLv.{weapon['level']} • R{weapon['refinement']}"
         if weaponStats:
             value += f"\n{weaponStats}"
@@ -147,7 +182,9 @@ def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
             if main:
                 line += f"\n  {main}"
             lines.append(line)
-        embed.add_field(name=f"🛡️ Artifacts ({len(artifacts)})", value="\n".join(lines), inline=False)
+        embed.add_field(
+            name=f"🛡️ Artifacts ({len(artifacts)})", value="\n".join(lines), inline=False
+        )
     elif detail["tracked"]:
         embed.add_field(
             name="🛡️ Artifacts",
@@ -158,7 +195,9 @@ def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
     return embed
 
 
-class Genshin(commands.GroupCog, name="genshin", description="Genshin Impact character lookups"):
+class Genshin(
+    commands.GroupCog, name="genshin", description="Genshin Impact character lookups"
+):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         super().__init__()
@@ -166,74 +205,120 @@ class Genshin(commands.GroupCog, name="genshin", description="Genshin Impact cha
     async def charaAutocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        accountKey = accountBySubcommand.get(interaction.command.name if interaction.command else "")
+        accountKey = accountBySubcommand.get(
+            interaction.command.name if interaction.command else ""
+        )
         if not accountKey:
             return []
 
         account = genshinAccounts[accountKey]
         try:
             roster = await dough.getGenshinRoster(account["uid"])
-        except Exception:
+        except DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError:
             return []
 
         q = current.lower()
-        owned = [c for c in roster["characters"] if c["owned"] and q in c["name"].lower()]
+        owned = [
+            c for c in roster["characters"] if c["owned"] and q in c["name"].lower()
+        ]
         owned.sort(key=lambda c: (-(c.get("level") or 0), c["name"]))
 
         return [
             app_commands.Choice(
-                name=f"{c['name']} (Lv.{c['level']})" if c.get("level") is not None else c["name"],
+                name=f"{c['name']} (Lv.{c['level']})"
+                if c.get("level") is not None
+                else c["name"],
                 value=c["name"],
             )
             for c in owned[:25]
         ]
 
-    @app_commands.command(name="stats", description="Quick overview of an account (level, owned count, etc.)")
+    @app_commands.command(
+        name="stats",
+        description="Quick overview of an account (level, owned count, etc.)",
+    )
     @app_commands.describe(account="Which account (defaults to Main)")
     @app_commands.choices(account=accountChoices)
-    async def statsSlash(self, interaction: discord.Interaction, account: str | None = None) -> None:
+    async def statsSlash(
+        self, interaction: discord.Interaction, account: str | None = None
+    ) -> None:
         await interaction.response.defer(ephemeral=True)
         acc = resolveAccount(account)
 
         try:
             roster = await dough.getGenshinRoster(acc["uid"])
-        except Exception as error:
-            await interaction.followup.send(embed=buildErrorEmbed(error, acc["label"], "❓ Account Not Found"))
+        except (
+            DoughminationError,
+            RuntimeError,
+            aiohttp.ClientError,
+            TimeoutError,
+        ) as error:
+            await interaction.followup.send(
+                embed=buildErrorEmbed(error, acc["label"], "❓ Account Not Found")
+            )
             return
 
         untracked = roster["owned_count"] - roster["tracked_count"]
-        embed = discord.Embed(color=successColor, title=f"📊 Genshin Stats — {roster.get('nickname') or acc['label']}")
+        embed = discord.Embed(
+            color=successColor,
+            title=f"📊 Genshin Stats — {roster.get('nickname') or acc['label']}",
+        )
         embed.timestamp = parseTimestamp(roster.get("updated_at"))
         embed.add_field(name="UID", value=roster["uid"], inline=True)
         embed.add_field(
-            name="Adventure Rank", value=str(roster["player_level"]) if roster.get("player_level") else "Unknown", inline=True
+            name="Adventure Rank",
+            value=str(roster["player_level"])
+            if roster.get("player_level")
+            else "Unknown",
+            inline=True,
         )
         embed.add_field(name="Account", value=acc["label"], inline=True)
-        embed.add_field(name="Owned", value=f"{roster['owned_count']} / {roster['total_count']}", inline=True)
-        embed.add_field(name="Tracked live", value=str(roster["tracked_count"]), inline=True)
+        embed.add_field(
+            name="Owned",
+            value=f"{roster['owned_count']} / {roster['total_count']}",
+            inline=True,
+        )
+        embed.add_field(
+            name="Tracked live", value=str(roster["tracked_count"]), inline=True
+        )
         embed.add_field(name="Last known only", value=str(untracked), inline=True)
 
         notes = []
         if roster.get("partial"):
-            notes.append('⚠️ Only pinned showcase characters visible — enable "Display all your characters" in-game.')
+            notes.append(
+                '⚠️ Only pinned showcase characters visible — enable "Display all your characters" in-game.'
+            )
         if roster.get("stale"):
-            notes.append("ℹ️ Served from the ownership ledger (Enka unavailable) — figures are last-known.")
+            notes.append(
+                "ℹ️ Served from the ownership ledger (Enka unavailable) — figures are last-known."
+            )
         if notes:
             embed.description = "\n".join(notes)
 
         await interaction.followup.send(embed=embed)
 
-    @app_commands.command(name="roster", description="List the characters you own, grouped by element")
+    @app_commands.command(
+        name="roster", description="List the characters you own, grouped by element"
+    )
     @app_commands.describe(account="Which account (defaults to Main)")
     @app_commands.choices(account=accountChoices)
-    async def rosterSlash(self, interaction: discord.Interaction, account: str | None = None) -> None:
+    async def rosterSlash(
+        self, interaction: discord.Interaction, account: str | None = None
+    ) -> None:
         await interaction.response.defer(ephemeral=True)
         acc = resolveAccount(account)
 
         try:
             roster = await dough.getGenshinRoster(acc["uid"])
-        except Exception as error:
-            await interaction.followup.send(embed=buildErrorEmbed(error, acc["label"], "❓ Roster Not Found"))
+        except (
+            DoughminationError,
+            RuntimeError,
+            aiohttp.ClientError,
+            TimeoutError,
+        ) as error:
+            await interaction.followup.send(
+                embed=buildErrorEmbed(error, acc["label"], "❓ Roster Not Found")
+            )
             return
 
         owned = [c for c in roster["characters"] if c["owned"]]
@@ -243,7 +328,11 @@ class Genshin(commands.GroupCog, name="genshin", description="Genshin Impact cha
             title=f"🎮 Genshin Roster — {roster.get('nickname') or acc['label']}",
             description=(
                 f"**UID:** {roster['uid']}"
-                + (f" • **AR {roster['player_level']}**" if roster.get("player_level") else "")
+                + (
+                    f" • **AR {roster['player_level']}**"
+                    if roster.get("player_level")
+                    else ""
+                )
                 + f"\n**Owned:** {roster['owned_count']}/{roster['total_count']} characters"
                 + f" • **Tracked live:** {roster['tracked_count']}"
             ),
@@ -266,7 +355,9 @@ class Genshin(commands.GroupCog, name="genshin", description="Genshin Impact cha
 
             label = "Traveler" if element == "All" else element
             embed.add_field(
-                name=f"{elementEmoji(element)} {label} ({len(inElement)})", value=capFieldLines(lines), inline=True
+                name=f"{elementEmoji(element)} {label} ({len(inElement)})",
+                value=capFieldLines(lines),
+                inline=True,
             )
 
         if roster.get("partial"):
@@ -281,11 +372,19 @@ class Genshin(commands.GroupCog, name="genshin", description="Genshin Impact cha
             )
 
         if roster.get("stale"):
-            embed.set_footer(text="Served from the ownership ledger — Enka was unavailable, levels are last-known.")
+            embed.set_footer(
+                text="Served from the ownership ledger — Enka was unavailable, levels are last-known."
+            )
 
         await interaction.followup.send(embed=embed)
 
-    async def characterSlash(self, interaction: discord.Interaction, accountKey: str, name: str, ephemeral: bool) -> None:
+    async def characterSlash(
+        self,
+        interaction: discord.Interaction,
+        accountKey: str,
+        name: str,
+        ephemeral: bool,
+    ) -> None:
         await interaction.response.defer(ephemeral=ephemeral)
         account = genshinAccounts[accountKey]
 
@@ -293,23 +392,46 @@ class Genshin(commands.GroupCog, name="genshin", description="Genshin Impact cha
             roster = await dough.getGenshinRoster(account["uid"])
             match = findCharacter(roster["characters"], name)
             if not match:
-                await interaction.followup.send(content=f'❌ No character matching "{name}" was found in the catalog.')
+                await interaction.followup.send(
+                    content=f'❌ No character matching "{name}" was found in the catalog.'
+                )
                 return
             detail = await dough.getGenshinCharacter(account["uid"], match["id"])
-            await interaction.followup.send(embed=buildCharacterEmbed(detail, account["label"]))
-        except Exception as error:
-            await interaction.followup.send(embed=buildErrorEmbed(error, account["label"], "❓ Not Found"))
+            await interaction.followup.send(
+                embed=buildCharacterEmbed(detail, account["label"])
+            )
+        except (
+            DoughminationError,
+            RuntimeError,
+            aiohttp.ClientError,
+            TimeoutError,
+        ) as error:
+            await interaction.followup.send(
+                embed=buildErrorEmbed(error, account["label"], "❓ Not Found")
+            )
 
-    @app_commands.command(name="main-chara", description="Character detail on the Main account")
-    @app_commands.describe(name="Character name", ephemeral="Only show the reply to you (default: true)")
+    @app_commands.command(
+        name="main-chara", description="Character detail on the Main account"
+    )
+    @app_commands.describe(
+        name="Character name", ephemeral="Only show the reply to you (default: true)"
+    )
     @app_commands.autocomplete(name=charaAutocomplete)
-    async def mainCharaSlash(self, interaction: discord.Interaction, name: str, ephemeral: bool = True) -> None:
+    async def mainCharaSlash(
+        self, interaction: discord.Interaction, name: str, ephemeral: bool = True
+    ) -> None:
         await self.characterSlash(interaction, "main", name, ephemeral)
 
-    @app_commands.command(name="alt-chara", description="Character detail on the Alt account")
-    @app_commands.describe(name="Character name", ephemeral="Only show the reply to you (default: true)")
+    @app_commands.command(
+        name="alt-chara", description="Character detail on the Alt account"
+    )
+    @app_commands.describe(
+        name="Character name", ephemeral="Only show the reply to you (default: true)"
+    )
     @app_commands.autocomplete(name=charaAutocomplete)
-    async def altCharaSlash(self, interaction: discord.Interaction, name: str, ephemeral: bool = True) -> None:
+    async def altCharaSlash(
+        self, interaction: discord.Interaction, name: str, ephemeral: bool = True
+    ) -> None:
         await self.characterSlash(interaction, "alt", name, ephemeral)
 
 

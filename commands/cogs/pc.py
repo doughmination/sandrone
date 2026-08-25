@@ -7,13 +7,13 @@ mainSpecs = {
     "GPU": "AMD Radeon RX 7900XTX",
     "Memory": "Corsair Vengance 64GB DDR5-6000 CL-40",
     "Motherboard": "Gigabyte B650M Aorus Elite",
-    "Case": "Montech XR ATX"
+    "Case": "Montech XR ATX",
 }
 
 storage = {
     "Primary SSD": "Arch Linux (1TB NVMe)",
     "secondary SSD": "Windows 11 (1TB NVMe)",
-    "Deep Storage": "Seagate Exos X14 12TB"
+    "Deep Storage": "Seagate Exos X14 12TB",
 }
 
 peripherals = {
@@ -49,21 +49,35 @@ class PcView(discord.ui.View):
         self.leftButton.disabled = self.index == 0
         self.rightButton.disabled = self.index == len(pcPages) - 1
 
-    @discord.ui.button(emoji="<:rem:1539939307144613958>", style=discord.ButtonStyle.secondary)
-    async def leftButton(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    @discord.ui.button(
+        emoji="<:rem:1539939307144613958>", style=discord.ButtonStyle.secondary
+    )
+    async def leftButton(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
         self.index -= 1
         self._updateButtons()
-        await interaction.response.edit_message(embed=buildPcEmbed(self.index), view=self)
+        await interaction.response.edit_message(
+            embed=buildPcEmbed(self.index), view=self
+        )
 
-    @discord.ui.button(emoji="<:ram:1539939306167337060>", style=discord.ButtonStyle.secondary)
-    async def rightButton(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    @discord.ui.button(
+        emoji="<:ram:1539939306167337060>", style=discord.ButtonStyle.secondary
+    )
+    async def rightButton(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
         self.index += 1
         self._updateButtons()
-        await interaction.response.edit_message(embed=buildPcEmbed(self.index), view=self)
+        await interaction.response.edit_message(
+            embed=buildPcEmbed(self.index), view=self
+        )
 
     async def on_timeout(self) -> None:
         for child in self.children:
-            child.disabled = True
+            # View.children is list[Item]; disabled lives on the concrete components
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
         if self.message is not None:
             await self.message.edit(view=self)
 
@@ -72,11 +86,15 @@ class Pc(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="pcspecs", description="Get the owner's PC Specs and setup")
+    @app_commands.command(
+        name="pcspecs", description="Get the owner's PC Specs and setup"
+    )
     async def pcSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         view = PcView()
-        message = await interaction.followup.send(embed=buildPcEmbed(0), view=view, wait=True)
+        message = await interaction.followup.send(
+            embed=buildPcEmbed(0), view=view, wait=True
+        )
         view.message = message
 
 

@@ -11,6 +11,7 @@ xSnips = {
     "userproxies": "You can setup a Userproxy using this guide <https://youtu.be/spRkTssPCqg>!",
 }
 
+
 class Snippets(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -23,7 +24,6 @@ class Snippets(commands.Cog):
             if current.lower() in name.lower():
                 result.append(app_commands.Choice(name=name, value=name))
         return result[:25]
-
 
     @app_commands.command(name="snippet", description="repost a commonly used snippet")
     @app_commands.describe(snip="The snippet to repos")
@@ -38,6 +38,7 @@ class Snippets(commands.Cog):
         reply = xSnips.get(snip)
         embed.add_field(name=" ", value=reply)
         return embed
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Snippets(bot))

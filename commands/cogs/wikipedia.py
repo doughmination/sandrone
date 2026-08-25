@@ -1,20 +1,14 @@
-from pathlib import Path
-import toml
-
-import wikipediaapi
 import discord
+import wikipediaapi
 from discord import app_commands
 from discord.ext import commands
 
-pyproject_toml_file = Path(__file__).parent / ".." / ".." /"pyproject.toml"
-if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
-    data = toml.load(pyproject_toml_file)
-    # check project.version
-    if "project" in data and "version" in data["project"]:
-        version = data["project"]["version"]
+from bot import config
+
 
 def format_text(text: str) -> str:
     return text[:500].strip() + "..." if len(text) > 500 else text
+
 
 class Wikipedia(commands.Cog):
     def __init__(self, bot):
@@ -28,7 +22,10 @@ class Wikipedia(commands.Cog):
         await interaction.followup.send(embed=defin)
 
     async def wikiDefEmbed(self, query: str) -> discord.Embed:
-        wiki = wikipediaapi.AsyncWikipedia(user_agent=f"UV-Bot-{version} (https://github.com/doughmination/UV-Bot)", language="en")
+        wiki = wikipediaapi.AsyncWikipedia(
+            user_agent=f"UV-Bot-{config.version} (https://github.com/doughmination/UV-Bot)",
+            language="en",
+        )
         wiki_page = wiki.page(query)
         if not await wiki_page.exists():
             embed = discord.Embed(color=discord.Color.red())
@@ -46,16 +43,24 @@ class Wikipedia(commands.Cog):
         else:
             page_images = await wiki_page.images
             page_summary = format_text(await wiki_page.summary)
-        
-        
-        embed = discord.Embed(title=wiki_page.title, description=page_summary, url=(await wiki_page.fullurl), color=discord.Color.fuchsia())
-        embed.set_footer(text="Powered by Wikipedia", icon_url="https://upload.wikimedia.org/wikipedia/commons/2/2e/Wikipedia_W_favicon_on_white_background.png")
+
+        embed = discord.Embed(
+            title=wiki_page.title,
+            description=page_summary,
+            url=(await wiki_page.fullurl),
+            color=discord.Color.fuchsia(),
+        )
+        embed.set_footer(
+            text="Powered by Wikipedia",
+            icon_url="https://upload.wikimedia.org/wikipedia/commons/2/2e/Wikipedia_W_favicon_on_white_background.png",
+        )
         if page_images:
             img = next(iter(page_images.values()))
             embed.set_thumbnail(url=await img.url)
         else:
             embed.set_thumbnail(url="https://m.doughmination.gay/img/search.png")
         return embed
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Wikipedia(bot))

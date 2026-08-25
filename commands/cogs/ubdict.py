@@ -10,7 +10,9 @@ from discord.ext import commands
 def formatText(text: str) -> str:
     text = re.sub(
         r"\[(.*?)\]",
-        lambda match: f"[{match.group(1)}](https://www.urbandictionary.com/define.php?term={urllib.parse.quote(match.group(1))})",
+        lambda match: (
+            f"[{match.group(1)}](https://www.urbandictionary.com/define.php?term={urllib.parse.quote(match.group(1))})"
+        ),
         text,
     )
     return text[:300].strip() + "..." if len(text) > 300 else text
@@ -24,7 +26,9 @@ class UrbanDictionary(commands.Cog):
     async def cog_unload(self) -> None:
         await self.session.close()
 
-    @app_commands.command(name="urban-dictionary", description="Lookup a definition on UrbDictionary")
+    @app_commands.command(
+        name="urban-dictionary", description="Lookup a definition on UrbDictionary"
+    )
     @app_commands.describe(query="The query")
     async def urbDictSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
@@ -32,10 +36,15 @@ class UrbanDictionary(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getUrbDefEmbed(self, query: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.fuchsia(), title=f"Searched '{query}' and found:", description=" ")
+        embed = discord.Embed(
+            color=discord.Color.fuchsia(),
+            title=f"Searched '{query}' and found:",
+        )
 
         params = {"term": query}
-        async with self.session.get("https://api.urbandictionary.com/v0/define", params=params) as resp:
+        async with self.session.get(
+            "https://api.urbandictionary.com/v0/define", params=params
+        ) as resp:
             data = await resp.json()
             if not data["list"]:
                 embed.title = None
@@ -48,11 +57,18 @@ class UrbanDictionary(commands.Cog):
 
             embed.url = reply.get("permalink")
             embed.set_thumbnail(url="https://m.doughmination.gay/img/search.png")
-            embed.description += f"**Definition:**\n{formatText(reply.get("definition"))}"
+            parts: list[str] = []
+            parts.append(f"**Definition:**\n{formatText(reply.get('definition'))}")
             if reply.get("example"):
-                embed.description += f"\n\n**Example:**\n{formatText(reply.get("example"))}"
-            embed.description += f"\n\n-# <:likes:1540415874794528768>: {reply.get("thumbs_up")} | <:dislikes:1540415873678844035>: {reply.get("thumbs_down")}"
-            embed.set_footer(text=f"by {reply.get("author")}, Urban Dictionary", icon_url="https://www.urbandictionary.com/favicon-32x32.png")
+                parts.append(f"\n\n**Example:**\n{formatText(reply.get('example'))}")
+            parts.append(
+                f"\n\n-# <:likes:1540415874794528768>: {reply.get('thumbs_up')} | <:dislikes:1540415873678844035>: {reply.get('thumbs_down')}"
+            )
+            embed.description = "".join(parts)
+            embed.set_footer(
+                text=f"by {reply.get('author')}, Urban Dictionary",
+                icon_url="https://www.urbandictionary.com/favicon-32x32.png",
+            )
             return embed
 
 

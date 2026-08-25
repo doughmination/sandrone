@@ -10,10 +10,8 @@ from watchfiles import Change, awatch
 from bot import config
 from bot.errors import handleAppCommandError
 from utils.cog_state import loadDisabled
+from utils.colors import cf
 from utils.doughmination import dough
-
-import colorful as cf
-cf.use_true_colors()
 
 
 def discoverExtensions(directory: Path, package: str) -> list[str]:
@@ -22,6 +20,7 @@ def discoverExtensions(directory: Path, package: str) -> list[str]:
         for path in directory.glob("*.py")
         if path.stem != "__init__"
     )
+
 
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -38,12 +37,17 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         disabled = loadDisabled()
-        extensions = discoverExtensions(config.commandsDir, "commands") + discoverExtensions(
-            config.cogsDir, "commands.cogs"
-        )
+        extensions = discoverExtensions(
+            config.commandsDir, "commands"
+        ) + discoverExtensions(config.cogsDir, "commands.cogs")
         for extension in extensions:
-            if extension.startswith("commands.cogs.") and extension.removeprefix("commands.cogs.") in disabled:
-                print(cf.grey(f"[startup] skipped {extension} (disabled via /cog unload)"))
+            if (
+                extension.startswith("commands.cogs.")
+                and extension.removeprefix("commands.cogs.") in disabled
+            ):
+                print(
+                    cf.grey(f"[startup] skipped {extension} (disabled via /cog unload)")
+                )
                 continue
 
             try:
@@ -68,7 +72,11 @@ class Bot(commands.Bot):
 
                 name = Path(path).stem
                 if name in disabled:
-                    print(cf.grey(f"[dev-reload] skipped commands.cogs.{name} (disabled via /cog unload)"))
+                    print(
+                        cf.grey(
+                            f"[dev-reload] skipped commands.cogs.{name} (disabled via /cog unload)"
+                        )
+                    )
                     continue
 
                 extension = f"commands.cogs.{name}"
@@ -89,13 +97,16 @@ class Bot(commands.Bot):
         if not self._profileSet:
             self._profileSet = True
             try:
-                with open(config.assetsDir / "avatar.png", "rb") as f:
-                    avatar_bytes = f.read()
-                with open(config.assetsDir / "banner.png", "rb") as h:
-                    banner_bytes = h.read()
-                await self.user.edit(avatar=avatar_bytes, banner=banner_bytes)
+                avatar_bytes = await asyncio.to_thread(
+                    (config.assetsDir / "avatar.png").read_bytes
+                )
+                banner_bytes = await asyncio.to_thread(
+                    (config.assetsDir / "banner.png").read_bytes
+                )
+                if self.user is not None:
+                    await self.user.edit(avatar=avatar_bytes, banner=banner_bytes)
                 print(cf.yellow("Avatar and Banner loaded!"))
-            except discord.HTTPException as e:
+            except (discord.HTTPException, OSError) as e:
                 print(cf.red(f"Failed to set avatar/banner: {e}"))
         print(cf.magenta(f"Logged in as {self.user}"))
 
@@ -120,6 +131,7 @@ async def runBot() -> None:
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, requestShutdown)
         except NotImplementedError:
+
             def _handle(signum, frame):
                 loop.call_soon_threadsafe(requestShutdown)
 
@@ -128,7 +140,7 @@ async def runBot() -> None:
                 signal.signal(signal.SIGBREAK, _handle)
             print(cf.blue("Windows machine detected, shutdown may not be graceful"))
 
-        start_task = asyncio.create_task(bot.start(config.TOKEN))
+        start_task = asyncio.create_task(bot.start(config.requireToken()))
         stop_task = asyncio.create_task(stop_event.wait())
 
         done, _ = await asyncio.wait(

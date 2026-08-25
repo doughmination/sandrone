@@ -1,9 +1,7 @@
 import discord
 from discord import app_commands
 
-import colorful as cf
-
-cf.use_true_colors()
+from utils.colors import cf
 
 
 def formatPermissions(permissions: list[str]) -> str:

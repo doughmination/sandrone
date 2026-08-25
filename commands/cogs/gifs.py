@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from bot import doughchecks
 
 gifUrls = {
 "angry-cat": "angy-car",
@@ -23,9 +24,10 @@ class Gifs(commands.Cog):
                 result.append(app_commands.Choice(name=name, value=name))
         return result[:25]
 
-    @app_commands.command(name="fungif", description="Angry MRAAAOW!")
+    @app_commands.command(name="fungif", description="Send some fun gifs!")
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=gifAuto)
+    @doughchecks.has_permissions(embed_links=True)
     async def gifSlash(self, interaction: discord.Interaction, gif: str) -> None:
         await interaction.response.defer()
         reply = await self.getGifUrl(gif)

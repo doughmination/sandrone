@@ -1,12 +1,14 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+from bot import doughchecks
 
 class Invite(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @app_commands.command(name="invite", description="All invite links")
+    @doughchecks.has_permissions(embed_links=True)
     async def inviteSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         invite = await self.buildInviteEmbed()

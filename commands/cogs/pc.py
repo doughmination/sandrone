@@ -12,7 +12,7 @@ mainSpecs = {
 
 storage = {
     "Primary SSD": "Arch Linux (1TB NVMe)",
-    "secondary SSD": "Windows 11 (1TB NVMe)",
+    "Secondary SSD": "Windows 11 (1TB NVMe)",
     "Deep Storage": "Seagate Exos X14 12TB",
 }
 
@@ -39,11 +39,21 @@ def buildPcEmbed(index: int) -> discord.Embed:
 
 
 class PcView(discord.ui.View):
-    def __init__(self) -> None:
+    def __init__(self, authorId: int) -> None:
         super().__init__(timeout=120)
+        self.authorId = authorId
         self.index = 0
         self.message: discord.Message | None = None
         self._updateButtons()
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.authorId:
+            await interaction.response.send_message(
+                "Only the person who ran this command can use these buttons.",
+                ephemeral=True,
+            )
+            return False
+        return True
 
     def _updateButtons(self) -> None:
         self.leftButton.disabled = self.index == 0
@@ -91,7 +101,7 @@ class Pc(commands.Cog):
     )
     async def pcSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-        view = PcView()
+        view = PcView(interaction.user.id)
         message = await interaction.followup.send(
             embed=buildPcEmbed(0), view=view, wait=True
         )

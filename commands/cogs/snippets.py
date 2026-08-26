@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 xSnips = {
     "adb": "Starting December 5, 2025, the active developer badge has been **removed**, and is **no longer** obtainable. There are also *no* plans for a new badge replacing this.",
     "refresh": "To refresh your client to fix bugs or reload commands, use:\nControl + R on Windows and Linux\nCommand(⌘) + R on Mac\nSwipe clear and reopen on Mobile",
@@ -28,6 +30,7 @@ class Snippets(commands.Cog):
     @app_commands.command(name="snippet", description="repost a commonly used snippet")
     @app_commands.describe(snip="The snippet to repos")
     @app_commands.autocomplete(snip=snippetAuto)
+    @doughchecks.has_permissions(embed_links=True)
     async def snippetSlash(self, interaction: discord.Interaction, snip: str) -> None:
         await interaction.response.defer()
         embed = await self.getSnippetEmbed(snip)

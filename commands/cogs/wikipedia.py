@@ -3,7 +3,7 @@ import wikipediaapi
 from discord import app_commands
 from discord.ext import commands
 
-from bot import config
+from bot import config, doughchecks
 
 
 def format_text(text: str) -> str:
@@ -16,6 +16,7 @@ class Wikipedia(commands.Cog):
 
     @app_commands.command(name="wikipedia", description="Look a term on Wikipedia")
     @app_commands.describe(query="The query")
+    @doughchecks.has_permissions(embed_links=True)
     async def wikiSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
         defin = await self.wikiDefEmbed(query)

@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 mainSpecs = {
     "CPU": "AMD Ryzen 9 9950x3d",
     "GPU": "AMD Radeon RX 7900XTX",
@@ -99,6 +101,7 @@ class Pc(commands.Cog):
     @app_commands.command(
         name="pcspecs", description="Get the owner's PC Specs and setup"
     )
+    @doughchecks.has_permissions(embed_links=True)
     async def pcSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         view = PcView(interaction.user.id)

@@ -6,6 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 
 def formatText(text: str) -> str:
     text = re.sub(
@@ -30,6 +32,7 @@ class UrbanDictionary(commands.Cog):
         name="urban-dictionary", description="Lookup a definition on UrbDictionary"
     )
     @app_commands.describe(query="The query")
+    @doughchecks.has_permissions(embed_links=True)
     async def urbDictSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
         embed = await self.getUrbDefEmbed(query)

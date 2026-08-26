@@ -15,7 +15,7 @@ ownerOrgs = [
     "Clove-Web",
     "Clove-Archives",
     "Girls-Network",
-    "Is-A-Stupid-Cat"
+    "Is-A-Stupid-Cat",
 ]
 
 ownerOrgLookup = {org.lower() for org in ownerOrgs}

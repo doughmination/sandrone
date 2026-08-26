@@ -4,8 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import config
-from bot.errors import handleAppCommandError
+from bot import config, doughchecks
 from utils.cog_state import loadDisabled, setDisabled
 from utils.colors import cf
 
@@ -54,35 +53,31 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
     @app_commands.autocomplete(name=loadAutocomplete)
     @ownerOnly()
     async def load(self, interaction: discord.Interaction, name: str) -> None:
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         if name not in discoverCogNames():
             await interaction.followup.send(
-                f"No cog named `{name}` in `{cogsPackage}`.", ephemeral=True
+                f"No cog named `{name}` in `{cogsPackage}`."
             )
             return
 
         extension = f"{cogsPackage}.{name}"
         if extension in self.bot.extensions:
-            await interaction.followup.send(
-                f"`{name}` is already loaded.", ephemeral=True
-            )
+            await interaction.followup.send(f"`{name}` is already loaded.")
             return
 
         try:
             await self.bot.load_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to load {extension}: {e}"))
-            await interaction.followup.send(
-                f"Failed to load `{name}`: {e}", ephemeral=True
-            )
+            await interaction.followup.send(f"Failed to load `{name}`: {e}")
             return
 
         setDisabled(name, False)
         print(cf.yellow(f"[cog] loaded {extension} (requested by {interaction.user})"))
         await self.bot.tree.sync()
         await interaction.followup.send(
-            f"Loaded `{name}`. Will stay loaded across restarts.", ephemeral=True
+            f"Loaded `{name}`. Will stay loaded across restarts."
         )
 
     @app_commands.command(name="unload", description="Unload a cog from commands.cogs")
@@ -90,20 +85,18 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
     @app_commands.autocomplete(name=unloadAutocomplete)
     @ownerOnly()
     async def unload(self, interaction: discord.Interaction, name: str) -> None:
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         extension = f"{cogsPackage}.{name}"
         if extension not in self.bot.extensions:
-            await interaction.followup.send(f"`{name}` is not loaded.", ephemeral=True)
+            await interaction.followup.send(f"`{name}` is not loaded.")
             return
 
         try:
             await self.bot.unload_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to unload {extension}: {e}"))
-            await interaction.followup.send(
-                f"Failed to unload `{name}`: {e}", ephemeral=True
-            )
+            await interaction.followup.send(f"Failed to unload `{name}`: {e}")
             return
 
         setDisabled(name, True)
@@ -112,7 +105,7 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         )
         await self.bot.tree.sync()
         await interaction.followup.send(
-            f"Unloaded `{name}`. Will stay unloaded across restarts.", ephemeral=True
+            f"Unloaded `{name}`. Will stay unloaded across restarts."
         )
 
     @app_commands.command(
@@ -120,6 +113,7 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         description="Show which cogs are loaded and whether they'll survive a restart",
     )
     @ownerOnly()
+    @doughchecks.has_permissions(embed_links=True)
     async def listCogs(self, interaction: discord.Interaction) -> None:
         disabled = loadDisabled()
         lines = []
@@ -141,11 +135,6 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             color=discord.Color.fuchsia(),
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    async def cog_app_command_error(
-        self, interaction: discord.Interaction, error: app_commands.AppCommandError
-    ) -> None:
-        await handleAppCommandError(interaction, error)
 
 
 async def setup(bot: commands.Bot) -> None:

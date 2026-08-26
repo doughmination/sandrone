@@ -5,6 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 
 class Codeberg(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -16,6 +18,7 @@ class Codeberg(commands.Cog):
 
     @app_commands.command(name="codeberg", description="Look up a Codeberg user")
     @app_commands.describe(username="The Codeberg username to fetch information on")
+    @doughchecks.has_permissions(embed_links=True)
     async def codebergSlash(
         self, interaction: discord.Interaction, username: str
     ) -> None:

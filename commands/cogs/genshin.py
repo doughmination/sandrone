@@ -5,6 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
 from utils.doughmination import DoughminationError, GenshinNotFoundError, dough
 
 genshinAccounts = {
@@ -239,6 +240,7 @@ class Genshin(
     )
     @app_commands.describe(account="Which account (defaults to Main)")
     @app_commands.choices(account=accountChoices)
+    @doughchecks.has_permissions(embed_links=True)
     async def statsSlash(
         self, interaction: discord.Interaction, account: str | None = None
     ) -> None:
@@ -302,6 +304,7 @@ class Genshin(
     )
     @app_commands.describe(account="Which account (defaults to Main)")
     @app_commands.choices(account=accountChoices)
+    @doughchecks.has_permissions(embed_links=True)
     async def rosterSlash(
         self, interaction: discord.Interaction, account: str | None = None
     ) -> None:
@@ -417,6 +420,7 @@ class Genshin(
         name="Character name", ephemeral="Only show the reply to you (default: true)"
     )
     @app_commands.autocomplete(name=charaAutocomplete)
+    @doughchecks.has_permissions(embed_links=True)
     async def mainCharaSlash(
         self, interaction: discord.Interaction, name: str, ephemeral: bool = True
     ) -> None:
@@ -429,6 +433,7 @@ class Genshin(
         name="Character name", ephemeral="Only show the reply to you (default: true)"
     )
     @app_commands.autocomplete(name=charaAutocomplete)
+    @doughchecks.has_permissions(embed_links=True)
     async def altCharaSlash(
         self, interaction: discord.Interaction, name: str, ephemeral: bool = True
     ) -> None:

@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 nsfwGifUrls = {
     "Catgirl Sucking": "catgirl-suck",
     "Cum Filled": "cum-filled",
@@ -34,6 +36,7 @@ class NsfwGifs(commands.Cog):
     @app_commands.command(name="nsfwgif", description="Moans!", nsfw=True)
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=nsfwGifAuto)
+    @doughchecks.has_permissions(embed_links=True)
     async def nsfwGifSlash(self, interaction: discord.Interaction, gif: str) -> None:
         await interaction.response.defer()
         reply = await self.getNsfwGifUrl(gif)

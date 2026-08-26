@@ -4,12 +4,15 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 
 class Animals(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @app_commands.command(name="kitty", description="KITTY!")
+    @doughchecks.has_permissions(embed_links=True)
     async def kittySlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         embed = await self.getCatEmbed()

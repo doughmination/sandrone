@@ -10,26 +10,29 @@ class MissingPermissions(app_commands.MissingPermissions):
     `app_commands.CheckFailure`."""
 
 
-def has_permissions(*, guildOnly: bool = True, **perms: bool):
+def has_permissions(*, guildOnly: bool = False, **perms: bool):
     """Check that the invoker has every listed permission.
 
     Permission names must match the properties on `discord.Permissions`;
     invalid ones raise TypeError when the cog is imported rather than when
     the command is run.
 
-    With `guildOnly` (the default), running the command outside a server
-    raises NoPrivateMessage instead of reporting every permission as missing,
-    since the tree allows DM and user-install contexts."""
+    Outside a server there are no channel permissions to read, so the
+    permission check is skipped and the command runs, keeping the DM and
+    user-install contexts the tree allows. Pass `guildOnly=True` on commands
+    that genuinely need a server; those raise NoPrivateMessage instead."""
 
     invalid = perms.keys() - discord.Permissions.VALID_FLAGS.keys()
     if invalid:
         raise TypeError(f"Invalid permission(s): {', '.join(sorted(invalid))}")
 
     async def predicate(interaction: discord.Interaction) -> bool:
-        if guildOnly and interaction.guild is None:
-            raise app_commands.NoPrivateMessage(
-                "This command can only be used in a server."
-            )
+        if interaction.guild is None:
+            if guildOnly:
+                raise app_commands.NoPrivateMessage(
+                    "This command can only be used in a server."
+                )
+            return True
 
         permissions = interaction.permissions
         missing = [

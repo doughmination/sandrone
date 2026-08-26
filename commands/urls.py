@@ -2,6 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from bot import doughchecks
+
 siteUrls = {
     "personal": "https://doughmination.gay",
     "cdn": "https://m.doughmination.gay",
@@ -25,6 +27,7 @@ class Urls(commands.Cog):
     @app_commands.command(name="urls", description="Get a Doughmination URL")
     @app_commands.describe(site="The website to get")
     @app_commands.autocomplete(site=urlAutocomplete)
+    @doughchecks.has_permissions(embed_links=True)
     async def urlsSlash(self, interaction: discord.Interaction, site: str) -> None:
         await interaction.response.defer()
         embed = await self.getUrlEmbed(site)

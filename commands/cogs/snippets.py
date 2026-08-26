@@ -37,9 +37,13 @@ class Snippets(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getSnippetEmbed(self, snip: str) -> discord.Embed:
+        user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
         reply = xSnips.get(snip)
         embed.add_field(name=" ", value=reply)
+        embed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        )
         return embed
 
 

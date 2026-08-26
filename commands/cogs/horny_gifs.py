@@ -43,9 +43,13 @@ class NsfwGifs(commands.Cog):
         await interaction.followup.send(embed=reply)
 
     async def getNsfwGifUrl(self, gif: str) -> discord.Embed:
+        user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
         slug = nsfwGifUrls.get(gif)
         embed.set_image(url=f"https://m.doughmination.gay/gif/nsfw/{slug}.gif")
+        embed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        )
         return embed
 
 

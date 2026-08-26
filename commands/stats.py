@@ -44,6 +44,7 @@ class Stats(commands.Cog):
     @app_commands.command(name="stats", description="Show the bot's ping and uptime")
     @doughchecks.has_permissions(embed_links=True)
     async def stats(self, interaction: discord.Interaction) -> None:
+        user = self.bot.user
         await interaction.response.defer()
 
         delta_uptime = datetime.datetime.now(datetime.UTC) - self.launch_time
@@ -58,8 +59,11 @@ class Stats(commands.Cog):
         embed.add_field(
             name="Uptime:", value=f"{days}d, {hours}h, {minutes}m, {seconds}s"
         )
-        embed.add_field(name="Region:", value=await self.getRegion())
         embed.add_field(name="Version:", value=config.version)
+        embed.add_field(name="Region:", value=await self.getRegion())
+        embed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        )
         await interaction.followup.send(embed=embed)
 
 

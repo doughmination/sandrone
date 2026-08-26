@@ -19,9 +19,13 @@ class Animals(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getCatEmbed(self) -> discord.Embed:
+        user = self.bot.user
         catEmbed = discord.Embed(color=discord.Color.fuchsia())
         catUrl = f"https://cataas.com/cat?v={uuid.uuid4()}"
         catEmbed.set_image(url=catUrl)
+        catEmbed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        )
         return catEmbed
 
 

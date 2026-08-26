@@ -32,16 +32,23 @@ class EightBall(commands.Cog):
         self.bot = bot
 
     @app_commands.command(
-        name="8ball", description="Ask Sandrone a question. Don't expect her to be nice about it."
+        name="8ball",
+        description="Ask Sandrone a question. Don't expect her to be nice about it.",
     )
     @app_commands.describe(question="The question you want answered")
     @doughchecks.has_permissions(embed_links=True)
     async def eightballSlash(
         self, interaction: discord.Interaction, question: str
     ) -> None:
+        user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
         embed.add_field(name="You asked", value=question, inline=False)
-        embed.add_field(name="Sandrone says", value=random.choice(responses), inline=False)
+        embed.add_field(
+            name="Sandrone says", value=random.choice(responses), inline=False
+        )
+        embed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        )
         await interaction.response.send_message(embed=embed)
 
 

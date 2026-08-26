@@ -34,10 +34,14 @@ class Urls(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getUrlEmbed(self, site: str) -> discord.Embed:
+        user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
         embed.set_thumbnail(url="https://m.doughmination.gay/img/avatars/favicon.png")
         urlString = await self.getUrlFromMap(site)
         embed.add_field(name="URL:", value=f"[{site}]({urlString})")
+        embed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        )
         return embed
 
     async def getUrlFromMap(self, site: str):

@@ -11,7 +11,14 @@ from sandrone import doughchecks
 
 apiBase = "https://api.girlcockx.com"
 
-allowedHosts = {"x.com", "www.x.com", "mobile.x.com", "twitter.com", "www.twitter.com", "mobile.twitter.com"}
+allowedHosts = {
+    "x.com",
+    "www.x.com",
+    "mobile.x.com",
+    "twitter.com",
+    "www.twitter.com",
+    "mobile.twitter.com",
+}
 statusPattern = re.compile(r"/status/(\d+)")
 
 
@@ -28,7 +35,9 @@ def extractStatusId(url: str) -> str | None:
 
 
 def errorEmbed(title: str, description: str) -> discord.Embed:
-    return discord.Embed(color=discord.Color.red(), title=title, description=description)
+    return discord.Embed(
+        color=discord.Color.red(), title=title, description=description
+    )
 
 
 def formatDuration(seconds: float) -> str:
@@ -81,7 +90,7 @@ class Twitter(commands.Cog):
         try:
             async with self.session.get(f"{apiBase}/status/{statusId}") as resp:
                 body = await resp.json(content_type=None)
-        except (aiohttp.ClientError, TimeoutError):
+        except aiohttp.ClientError, TimeoutError:
             return (
                 errorEmbed(
                     "❌ Error", "Couldn't reach girlcockx.com — try again in a moment."
@@ -154,7 +163,10 @@ class Twitter(commands.Cog):
             )
             videoUrl = bestVideoUrl(video)
 
-        embed.set_footer(text="  ".join(stats) if stats else "girlcockx.com", icon_url="https://abs.twimg.com/responsive-web/client-web/icon-svg.ea5ff4a45cd19faaa.svg")
+        embed.set_footer(
+            text="  ".join(stats) if stats else "girlcockx.com",
+            icon_url="https://abs.twimg.com/responsive-web/client-web/icon-svg.ea5ff4a45cd19faaa.svg",
+        )
         return embed, videoUrl
 
 

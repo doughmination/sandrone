@@ -103,7 +103,9 @@ class GitHub(commands.Cog):
                 parts.append("\n\n**This user is a GitHub site administrator.**")
 
             embed.description = "".join(parts)
-            embed.set_footer(text=" ", icon_url="https://m.doughmination.gay/img/icons/github.svg")
+            embed.set_footer(
+                text=" ", icon_url="https://m.doughmination.gay/img/icons/github.png"
+            )
             return embed
         finally:
             gh.close()
@@ -172,7 +174,9 @@ class GitHub(commands.Cog):
                 name="Open issues",
                 value=f"[{repo.open_issues_count}]({repo.html_url}/issues)",
             )
-            embed.set_footer(text=" ", icon_url="https://m.doughmination.gay/img/icons/github.svg")
+            embed.set_footer(
+                text=" ", icon_url="https://m.doughmination.gay/img/icons/github.png"
+            )
             return embed
         finally:
             gh.close()

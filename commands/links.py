@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, config
+from sandrone import config, doughchecks
 
 
 class Invite(commands.Cog):
@@ -22,8 +22,6 @@ class Invite(commands.Cog):
             raise RuntimeError("Bot is not logged in yet")
 
         embed = discord.Embed(color=discord.Color.fuchsia(), title="Invite Links:")
-        if user.avatar is not None:
-            embed.set_thumbnail(url=user.avatar.url)
         embed.add_field(
             name=" ",
             value=f"[Invite Link](https://discord.com/oauth2/authorize?client_id={user.id})",
@@ -37,7 +35,10 @@ class Invite(commands.Cog):
         embed.add_field(
             name=" ", value="\n[Source Code](https://github.com/doughmination/sandrone)"
         )
-        embed.set_footer(text=f"Sandrone v{config.version}", icon_url="https://m.doughmination.gay/img/icons/github.svg")
+        embed.set_footer(
+            text=f"Sandrone v{config.version}",
+            icon_url=user.avatar.url if user.avatar else None,
+        )
         return embed
 
 

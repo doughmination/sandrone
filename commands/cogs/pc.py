@@ -10,12 +10,12 @@ mainSpecs = {
     "Memory": "[Corsair Vengance 64GB DDR5-6000 CL-40](https://uk.pcpartpicker.com/product/LWVmP6/corsair-vengeance-64-gb-2-x-32-gb-ddr5-6000-cl40-memory-cmk64gx5m2b6000z40)",
     "Motherboard": "[Gigabyte B650M Aorus Elite](https://uk.pcpartpicker.com/product/Q8KnTW/gigabyte-b850m-aorus-elite-wifi6e-ice-micro-atx-am5-motherboard-b850m-aorus-elite-wifi6e-ice)",
     "Case": "[Montech XR ATX](https://uk.pcpartpicker.com/product/nhbRsY/montech-xr-atx-mid-tower-case-xr-w)",
-    "Cooler": "[Thermalright Aqua Elite V3](https://uk.pcpartpicker.com/product/YXFmP6/thermalright-aqua-elite-v3-6617-cfm-liquid-cpu-cooler-aqua-elite-360-white-v3)"
+    "Cooler": "[Thermalright Aqua Elite V3](https://uk.pcpartpicker.com/product/YXFmP6/thermalright-aqua-elite-v3-6617-cfm-liquid-cpu-cooler-aqua-elite-360-white-v3)",
 }
 
 storage = {
     "Primary SSD": "Arch Linux KDE (1TB NVMe) - [Acer Predator GM7](https://uk.pcpartpicker.com/product/YPKscf/acer-predator-gm7-1-tb-m2-2280-pcie-40-x4-nvme-solid-state-drive-bl9bwwr118)",
-    "Secondary SSD": "Windows 11 (1TB NVMe) - WD SN56​0 SDDPNQE-​1T00-1002",
+    "Secondary SSD": "Windows 11 (1TB NVMe) - WD SN56\u200b0 SDDPNQE-\u200b1T00-1002",
     "Deep Storage": "Photos and Recordings - [Seagate Exos X14 12TB](https://uk.pcpartpicker.com/product/fmfhP6/seagate-exos-x14-12-tb-35-7200-rpm-internal-hard-drive-st12000nm0008)",
 }
 

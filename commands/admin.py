@@ -129,10 +129,14 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
                 )
             lines.append(f"`{name}` — {status}")
 
+        user = self.bot.user
         embed = discord.Embed(
             title="Cog status",
             description="\n".join(lines) if lines else "No cogs found.",
             color=discord.Color.fuchsia(),
+        )
+        embed.set_footer(
+            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 

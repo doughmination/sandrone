@@ -57,6 +57,11 @@ class Profile(commands.Cog):
                 description=str(error),
             )
             embed.timestamp = dt.datetime.now(dt.UTC)
+            botUser = self.bot.user
+            embed.set_footer(
+                text="Sandrone",
+                icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
+            )
             await interaction.followup.send(embed=embed)
             return
 
@@ -126,6 +131,11 @@ class Profile(commands.Cog):
                 name="Connected Accounts", value="\n".join(socials), inline=False
             )
 
+        botUser = self.bot.user
+        embed.set_footer(
+            text="Sandrone",
+            icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
+        )
         return embed
 
 

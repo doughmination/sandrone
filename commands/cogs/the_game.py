@@ -19,6 +19,7 @@ class TheGame(commands.Cog):
         await interaction.followup.send(embed=reply)
 
     async def buildTheGameRules(self) -> discord.Embed:
+        user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia(), title="Rules of The Game")
         parts: list[str] = []
         parts.append("**Rule 1:**\nThe Game is 'The Game'.")
@@ -44,6 +45,10 @@ class TheGame(commands.Cog):
             '\n\n**Rule 8:**\nIf you lose The Game, and someone (foolishly) asks "whats The Game?", please either explain it to them, or direct them toward this command, as an unspoken purpose to The Game is to get as many people playing as possible'
         )
         embed.description = "".join(parts)
+        embed.set_footer(
+            text="And you lost the game!",
+            icon_url=user.avatar.url if user and user.avatar else None,
+        )
         return embed
 
 

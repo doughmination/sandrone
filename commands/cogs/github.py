@@ -113,7 +113,7 @@ class GitHub(commands.Cog):
             if lookup == ownerGithub:
                 me = gh.get_user()
                 if me.login.lower() != lookup:
-                    return None  # token belongs to somebody else
+                    return None
                 return me.total_private_repos
             if lookup in ownerOrgLookup:
                 return gh.get_organization(username).total_private_repos
@@ -147,7 +147,7 @@ class GitHub(commands.Cog):
         try:
             try:
                 repo = gh.get_repo(fullName)
-                _ = repo.id  # forces the request now, so a missing repo raises here
+                _ = repo.id
             except GithubException:
                 embed.color = discord.Color.red()
                 embed.description = ":x: That repository does not exist."

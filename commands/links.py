@@ -18,7 +18,7 @@ class Invite(commands.Cog):
 
     async def buildInviteEmbed(self) -> discord.Embed:
         user = self.bot.user
-        if user is None:  # only possible before login
+        if user is None:
             raise RuntimeError("Bot is not logged in yet")
 
         embed = discord.Embed(color=discord.Color.fuchsia(), title="Invite Links:")

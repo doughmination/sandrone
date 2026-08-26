@@ -99,7 +99,6 @@ class PcView(discord.ui.View):
 
     async def on_timeout(self) -> None:
         for child in self.children:
-            # View.children is list[Item]; disabled lives on the concrete components
             if isinstance(child, discord.ui.Button):
                 child.disabled = True
         if self.message is not None:

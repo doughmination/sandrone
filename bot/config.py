@@ -12,11 +12,9 @@ cogsDir = commandsDir / "cogs"
 assetsDir = repoRoot / "assets"
 
 version = "unknown"
-# adopt path to your pyproject.toml
 pyproject_toml_file = repoRoot / "pyproject.toml"
 if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
     data = toml.load(pyproject_toml_file)
-    # check project.version
     if "project" in data and "version" in data["project"]:
         version = data["project"]["version"]
 
@@ -25,7 +23,6 @@ prefix = os.getenv("BOT_PREFIX", "!")
 devMode = os.getenv("DEV_MODE", "false").lower() == "true"
 githubToken = os.getenv("GITHUB_TOKEN")
 
-# Discord user IDs allowed to run owner-only commands (e.g. /cog).
 owners: list[int] = [
     1464890289922641993,
 ]

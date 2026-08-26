@@ -45,12 +45,8 @@ class DoughminationAPI:
                 raise RuntimeError(f"Doughmination API error: {message}")
             return body["data"]
 
-    # --- Discord profile (/v2/discord) ---
-
     async def getProfile(self, userId: int) -> dict:
         return await self._get(f"{profileBase}/users/{userId}", ProfileNotFoundError)
-
-    # --- Genshin roster (/v2/genshin) ---
 
     async def getGenshinRoster(self, uid: str) -> dict:
         return await self._get(f"{genshinBase}/roster/{uid}", GenshinNotFoundError)

@@ -6,8 +6,7 @@ from discord.ext import commands
 from github import Auth, Github, GithubException
 
 from bot.config import githubToken as GITHUB_TOKEN
-from bot import config
-from bot import doughchecks
+from bot import config, doughchecks
 from utils.colors import cf
 
 ownerGithub = "doughmination"

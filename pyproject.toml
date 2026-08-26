@@ -1,7 +1,7 @@
 [project]
-name = "python-bot"
-version = "1.0.0"
-description = "Bot that I'm coding to relearn Python"
+name = "sandrone"
+version = "1.1.0"
+description = "Python utility bot"
 readme = "README.md"
 authors = [
     { name = "Clove Twilight", email = "admin@doughmination.win" }

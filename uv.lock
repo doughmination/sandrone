@@ -700,37 +700,6 @@ wheels = [
 ]
 
 [[package]]
-name = "python-bot"
-version = "1.0.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "colorful" },
-    { name = "discord-py" },
-    { name = "pygithub" },
-    { name = "python-dotenvx" },
-    { name = "qrcode", extra = ["pil"] },
-    { name = "ruff" },
-    { name = "toml" },
-    { name = "ty" },
-    { name = "watchfiles" },
-    { name = "wikipedia-api" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "colorful", specifier = ">=0.5.8" },
-    { name = "discord-py", specifier = ">=2.7.1" },
-    { name = "pygithub", specifier = ">=2.9.1" },
-    { name = "python-dotenvx", specifier = ">=2.0.0" },
-    { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
-    { name = "ruff", specifier = ">=0.16.3" },
-    { name = "toml", specifier = ">=0.10.2" },
-    { name = "ty", specifier = ">=0.0.72" },
-    { name = "watchfiles", specifier = ">=1.2.0" },
-    { name = "wikipedia-api", specifier = ">=0.15.0" },
-]
-
-[[package]]
 name = "python-dotenvx"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -797,6 +766,37 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/78/9b/475b927cf27a5cbbda3c7bafb69ed6ff77e1d7923d5d85f17c2749d7ae32/ruff-0.16.3-py3-none-win32.whl", hash = "sha256:388cdf2166642bd9b13d52b5932d3170f34f8abed7e8d9a855f1d84b83645a0a", size = 10931415, upload-time = "2026-08-13T15:17:05.726Z" },
     { url = "https://files.pythonhosted.org/packages/b2/99/e2a2bfc4fbf0a1e8a916bc9ebe6fe6c58cc34c28e0ffc6ce281d572d1c2e/ruff-0.16.3-py3-none-win_amd64.whl", hash = "sha256:e80a7d69ca2a6d1c4d352ec91458cdca6e56c83cdbcabd93e4abe1e53591d948", size = 11445993, upload-time = "2026-08-13T15:17:08.353Z" },
     { url = "https://files.pythonhosted.org/packages/69/3e/4132e539aed78c148854d4997a2685b0ed4dc4e87110b59ce528564e184e/ruff-0.16.3-py3-none-win_arm64.whl", hash = "sha256:b8ca152da82c1acc1fa8d5874b15951935f0eef46f10e6954c83859011b6178a", size = 11399302, upload-time = "2026-08-13T15:17:10.908Z" },
+]
+
+[[package]]
+name = "sandrone"
+version = "1.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "colorful" },
+    { name = "discord-py" },
+    { name = "pygithub" },
+    { name = "python-dotenvx" },
+    { name = "qrcode", extra = ["pil"] },
+    { name = "ruff" },
+    { name = "toml" },
+    { name = "ty" },
+    { name = "watchfiles" },
+    { name = "wikipedia-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "colorful", specifier = ">=0.5.8" },
+    { name = "discord-py", specifier = ">=2.7.1" },
+    { name = "pygithub", specifier = ">=2.9.1" },
+    { name = "python-dotenvx", specifier = ">=2.0.0" },
+    { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
+    { name = "ruff", specifier = ">=0.16.3" },
+    { name = "toml", specifier = ">=0.10.2" },
+    { name = "ty", specifier = ">=0.0.72" },
+    { name = "watchfiles", specifier = ">=1.2.0" },
+    { name = "wikipedia-api", specifier = ">=0.15.0" },
 ]
 
 [[package]]

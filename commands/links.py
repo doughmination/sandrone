@@ -9,7 +9,7 @@ class Invite(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="invite", description="All invite links")
+    @app_commands.command(name="links", description="All related links")
     @doughchecks.has_permissions(embed_links=True)
     async def inviteSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
@@ -30,6 +30,12 @@ class Invite(commands.Cog):
         )
         embed.add_field(
             name=" ", value="[Discord Server](https://discord.gg/N8gCjS294R)"
+        )
+        embed.add_field(
+            name=" ", value="[Website](https://sandrone.doughmination.gay)"
+        )
+        embed.add_field(
+            name=" ", value="[Source Code](https://github.com/doughmination/sandrone)"
         )
         return embed
 

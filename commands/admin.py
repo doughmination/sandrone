@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import config, doughchecks
+from sandrone import config, doughchecks
 from utils.cog_state import loadDisabled, setDisabled
 from utils.colors import cf
 

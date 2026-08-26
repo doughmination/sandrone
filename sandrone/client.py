@@ -7,8 +7,8 @@ import discord
 from discord.ext import commands
 from watchfiles import Change, awatch
 
-from bot import config
-from bot.errors import handleAppCommandError
+from sandrone import config
+from sandrone.errors import handleAppCommandError
 from utils.cog_state import loadDisabled
 from utils.colors import cf
 from utils.doughmination import dough

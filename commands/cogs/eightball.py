@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import doughchecks
+from sandrone import doughchecks
 
 responses = [
     "Hmph. Fine, yes. Not that I did the math for your sake or anything.",

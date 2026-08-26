@@ -5,8 +5,8 @@ from discord import app_commands
 from discord.ext import commands
 from github import Auth, Github, GithubException
 
-from bot import config, doughchecks
-from bot.config import githubToken as GITHUB_TOKEN
+from sandrone import config, doughchecks
+from sandrone.config import githubToken as GITHUB_TOKEN
 from utils.colors import cf
 
 ownerGithub = "doughmination"
@@ -103,6 +103,7 @@ class GitHub(commands.Cog):
                 parts.append("\n\n**This user is a GitHub site administrator.**")
 
             embed.description = "".join(parts)
+            embed.set_footer(text=" ", icon_url="https://m.doughmination.gay/img/icons/github.svg")
             return embed
         finally:
             gh.close()
@@ -171,6 +172,7 @@ class GitHub(commands.Cog):
                 name="Open issues",
                 value=f"[{repo.open_issues_count}]({repo.html_url}/issues)",
             )
+            embed.set_footer(text=" ", icon_url="https://m.doughmination.gay/img/icons/github.svg")
             return embed
         finally:
             gh.close()

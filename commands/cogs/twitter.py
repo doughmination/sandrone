@@ -7,7 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import doughchecks
+from sandrone import doughchecks
 
 apiBase = "https://api.girlcockx.com"
 
@@ -154,7 +154,7 @@ class Twitter(commands.Cog):
             )
             videoUrl = bestVideoUrl(video)
 
-        embed.set_footer(text="  ".join(stats) if stats else "girlcockx.com")
+        embed.set_footer(text="  ".join(stats) if stats else "girlcockx.com", icon_url="https://abs.twimg.com/responsive-web/client-web/icon-svg.ea5ff4a45cd19faaa.svg")
         return embed, videoUrl
 
 

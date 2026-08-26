@@ -1,7 +1,7 @@
 import asyncio
 
-from bot import config
-from bot.client import runBot
+from sandrone import config
+from sandrone.client import runBot
 
 
 def main() -> None:

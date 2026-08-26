@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import doughchecks
+from sandrone import doughchecks, config
 
 
 class Invite(commands.Cog):
@@ -29,14 +29,15 @@ class Invite(commands.Cog):
             value=f"[Invite Link](https://discord.com/oauth2/authorize?client_id={user.id})",
         )
         embed.add_field(
-            name=" ", value="[Discord Server](https://discord.gg/N8gCjS294R)"
+            name=" ", value="\n[Discord Server](https://discord.gg/N8gCjS294R)"
         )
         embed.add_field(
-            name=" ", value="[Website](https://sandrone.doughmination.gay)"
+            name=" ", value="\n[Website](https://sandrone.doughmination.gay)"
         )
         embed.add_field(
-            name=" ", value="[Source Code](https://github.com/doughmination/sandrone)"
+            name=" ", value="\n[Source Code](https://github.com/doughmination/sandrone)"
         )
+        embed.set_footer(text=f"Sandrone v{config.version}", icon_url="https://m.doughmination.gay/img/icons/github.svg")
         return embed
 
 

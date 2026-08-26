@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from bot import doughchecks
+from sandrone import doughchecks
 
 mainSpecs = {
     "CPU": "[AMD Ryzen 9 9950X3D](https://uk.pcpartpicker.com/product/Pk62FT/amd-ryzen-9-9950x3d-43-ghz-16-core-processor-100-100000719wof)",

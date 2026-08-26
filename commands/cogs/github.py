@@ -6,11 +6,20 @@ from discord.ext import commands
 from github import Auth, Github, GithubException
 
 from bot.config import githubToken as GITHUB_TOKEN
-from bot.config import requireGithubToken
+from bot import config
+from bot import doughchecks
 from utils.colors import cf
 
-embedColor = discord.Color.fuchsia()
-errorColor = discord.Color.red()
+ownerGithub = "doughmination"
+
+ownerOrgs = [
+    "Clove-Web",
+    "Clove-Archives",
+    "Girls-Network",
+    "Is-A-Stupid-Cat"
+]
+
+ownerOrgLookup = {org.lower() for org in ownerOrgs}
 
 
 class GitHub(commands.Cog):
@@ -19,6 +28,7 @@ class GitHub(commands.Cog):
 
     @app_commands.command(name="github", description="Look up a GitHub user")
     @app_commands.describe(username="The GitHub username to fetch information on")
+    @doughchecks.has_permissions(embed_links=True)
     async def githubSlash(
         self, interaction: discord.Interaction, username: str
     ) -> None:
@@ -31,15 +41,15 @@ class GitHub(commands.Cog):
         return await asyncio.to_thread(self._buildEmbed, username)
 
     def _buildEmbed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=embedColor, title=username)
-        gh = Github(auth=Auth.Token(requireGithubToken()))
+        embed = discord.Embed(color=discord.Color.fuchsia(), title=username)
+        gh = Github(auth=Auth.Token(config.requireGithubToken()))
         try:
             try:
                 user = gh.get_user(username)
-                _ = user.id  # forces the request now, so a missing user raises here
+                _ = user.id
             except GithubException:
                 embed.title = None
-                embed.color = errorColor
+                embed.color = discord.Color.red()
                 embed.description = ":x: That GitHub account does not exist."
                 return embed
 
@@ -73,6 +83,9 @@ class GitHub(commands.Cog):
                 parts.append(f"\n> **Public Repositories**: {user.public_repos}")
             if user.public_gists:
                 parts.append(f"\n> **Public Gists**: {user.public_gists}")
+            privateRepos = self._fetchPrivateRepos(gh, username)
+            if privateRepos is not None:
+                parts.append(f"\n> **Private Repositories**: {privateRepos}")
             if user.user_view_type != "public":
                 parts.append("\n\nThis user has set their profile as private.")
             if user.site_admin:
@@ -82,6 +95,20 @@ class GitHub(commands.Cog):
             return embed
         finally:
             gh.close()
+
+    def _fetchPrivateRepos(self, gh: Github, username: str) -> int | None:
+        lookup = username.lower()
+        try:
+            if lookup == ownerGithub:
+                me = gh.get_user()
+                if me.login.lower() != lookup:
+                    return None  # token belongs to somebody else
+                return me.total_private_repos
+            if lookup in ownerOrgLookup:
+                return gh.get_organization(username).total_private_repos
+        except GithubException:
+            return None
+        return None
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -21,6 +21,18 @@ ownerOrgs = [
 ownerOrgLookup = {org.lower() for org in ownerOrgs}
 
 
+def normalizeRepo(repository: str) -> str | None:
+    text = repository.strip().removeprefix("@")
+    text = text.removeprefix("https://").removeprefix("http://")
+    text = text.removeprefix("www.").removeprefix("github.com/")
+    text = text.removesuffix("/").removesuffix(".git")
+
+    parts = [part.strip() for part in text.split("/")]
+    if len(parts) != 2 or not all(parts):
+        return None
+    return "/".join(parts)
+
+
 class GitHub(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -108,6 +120,60 @@ class GitHub(commands.Cog):
         except GithubException:
             return None
         return None
+
+    @app_commands.command(name="repo", description="Look up a GitHub repository")
+    @app_commands.describe(repository="The repository to fetch, as username/repo")
+    @doughchecks.has_permissions(embed_links=True)
+    async def repoSlash(
+        self, interaction: discord.Interaction, repository: str
+    ) -> None:
+        await interaction.response.defer()
+        embed = await self.fetchRepoEmbed(repository)
+        await interaction.followup.send(embed=embed)
+
+    async def fetchRepoEmbed(self, repository: str) -> discord.Embed:
+        return await asyncio.to_thread(self._buildRepoEmbed, repository)
+
+    def _buildRepoEmbed(self, repository: str) -> discord.Embed:
+        embed = discord.Embed(color=discord.Color.fuchsia())
+
+        fullName = normalizeRepo(repository)
+        if fullName is None:
+            embed.color = discord.Color.red()
+            embed.description = ":x: Give the repository as `username/repo`."
+            return embed
+
+        gh = Github(auth=Auth.Token(config.requireGithubToken()))
+        try:
+            try:
+                repo = gh.get_repo(fullName)
+                _ = repo.id  # forces the request now, so a missing repo raises here
+            except GithubException:
+                embed.color = discord.Color.red()
+                embed.description = ":x: That repository does not exist."
+                return embed
+
+            embed.title = repo.full_name
+            embed.url = repo.html_url
+            embed.set_thumbnail(url=repo.owner.avatar_url)
+            if repo.description:
+                embed.description = repo.description
+
+            embed.add_field(
+                name="Stars",
+                value=f"[{repo.stargazers_count}]({repo.html_url}/stargazers)",
+            )
+            embed.add_field(
+                name="Forks",
+                value=f"[{repo.forks_count}]({repo.html_url}/forks)",
+            )
+            embed.add_field(
+                name="Open issues",
+                value=f"[{repo.open_issues_count}]({repo.html_url}/issues)",
+            )
+            return embed
+        finally:
+            gh.close()
 
 
 async def setup(bot: commands.Bot) -> None:

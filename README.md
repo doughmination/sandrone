@@ -1,4 +1,4 @@
-# UV Bot
+# Sandrone
 This is a personal bot I'm using to relearn Python better than I originally did
 
 I learned Python in the least accesible and most hated way possible, and I always struggled.

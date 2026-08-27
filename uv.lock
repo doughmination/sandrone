@@ -338,6 +338,15 @@ wheels = [
 ]
 
 [[package]]
+name = "colour"
+version = "0.1.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/d4/5911a7618acddc3f594ddf144ecd8a03c29074a540f4494670ad8f153efe/colour-0.1.5.tar.gz", hash = "sha256:af20120fefd2afede8b001fbef2ea9da70ad7d49fafdb6489025dae8745c3aee", size = 24776, upload-time = "2017-11-19T23:20:08.015Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/74/46/e81907704ab203206769dee1385dc77e1407576ff8f50a0681d0a6b541be/colour-0.1.5-py2.py3-none-any.whl", hash = "sha256:33f6db9d564fadc16e59921a56999b79571160ce09916303d35346dddc17978c", size = 23772, upload-time = "2017-11-19T23:20:04.56Z" },
+]
+
+[[package]]
 name = "cryptography"
 version = "50.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -583,6 +592,20 @@ wheels = [
 ]
 
 [[package]]
+name = "pluralkit"
+version = "1.2.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colour" },
+    { name = "httpx" },
+    { name = "pytz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fb/7b/bb21b4524d9c69c0c5b87031006cf6da7f8addf79383244469e0e0020316/pluralkit-1.2.1.tar.gz", hash = "sha256:ed49e2b6dc6fb9acf489be8dccf6975d328f3946f69ee41e9fec1b9df06bb6af", size = 48530, upload-time = "2025-04-29T20:17:55.558Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f0/0b/d340b855a6fe7511b13103530b4dfead86d6a09e73846d588b8a9e48a324/pluralkit-1.2.1-py3-none-any.whl", hash = "sha256:feca40875f479ee1000f85314003cdcfa3f2757c32578ba905d425e56cb80baa", size = 38269, upload-time = "2025-04-29T20:17:54.462Z" },
+]
+
+[[package]]
 name = "propcache"
 version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -712,6 +735,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2026.3.post1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fb/48/fb042503b6ca6cd271261dc559fd6432f7d8c713153e9ec5c591af4dfc1c/pytz-2026.3.post1.tar.gz", hash = "sha256:2211d3fcf9a797d3405cac96ac7f61d80e6a644f72a3309607282fe8a2010c5d", size = 319745, upload-time = "2026-07-25T15:12:07.385Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0f/7b/39c34ca613b0b198cb866466651b26b045e2009864c5183c979a3b83f383/pytz-2026.3.post1-py2.py3-none-any.whl", hash = "sha256:dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815", size = 508283, upload-time = "2026-07-25T15:12:05.782Z" },
+]
+
+[[package]]
 name = "qrcode"
 version = "8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -775,6 +807,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "colorful" },
     { name = "discord-py" },
+    { name = "pluralkit" },
     { name = "pygithub" },
     { name = "python-dotenvx" },
     { name = "qrcode", extra = ["pil"] },
@@ -789,6 +822,7 @@ dependencies = [
 requires-dist = [
     { name = "colorful", specifier = ">=0.5.8" },
     { name = "discord-py", specifier = ">=2.7.1" },
+    { name = "pluralkit", specifier = ">=1.2.1" },
     { name = "pygithub", specifier = ">=2.9.1" },
     { name = "python-dotenvx", specifier = ">=2.0.0" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },

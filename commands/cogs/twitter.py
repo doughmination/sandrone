@@ -22,6 +22,24 @@ allowedHosts = {
 }
 statusPattern = re.compile(r"/status/(\d+)")
 
+# Twitter handles: 1-15 word chars, not preceded by a word char, "@" or "/"
+# (so emails and already-linked handles are left alone).
+mentionPattern = re.compile(r"(?<![\w@/])@(\w{1,15})\b")
+
+
+def linkifyMentions(text: str) -> str:
+    """Escape markdown in ``text`` while turning ``@handle`` mentions into links
+    to the mentioned account's twitter.com profile."""
+    parts: list[str] = []
+    lastEnd = 0
+    for match in mentionPattern.finditer(text):
+        parts.append(escapeMarkdown(text[lastEnd : match.start()]))
+        handle = match.group(1)
+        parts.append(f"[@{handle}](https://twitter.com/{handle})")
+        lastEnd = match.end()
+    parts.append(escapeMarkdown(text[lastEnd:]))
+    return "".join(parts)
+
 
 def extractStatusId(url: str) -> str | None:
     if not re.match(r"^https?://", url, re.IGNORECASE):
@@ -113,16 +131,18 @@ class Twitter(commands.Cog):
 
     def buildTweetEmbed(self, tweet: dict) -> tuple[discord.Embed, str | None]:
         author = tweet["author"]
+        tweetUrl = tweet.get("url")
 
         text = tweet.get("text")
         embed = discord.Embed(
             color=discord.Color.fuchsia(),
-            description=escapeMarkdown(text) if text else None,
-            url=tweet.get("url"),
+            title=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
+            description=linkifyMentions(text) if text else None,
+            url=tweetUrl,
         )
         embed.set_author(
-            name=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
-            url=author.get("url"),
+            name=f"@{author['screen_name']}",
+            url=tweetUrl,
             icon_url=author.get("avatar_url"),
         )
 

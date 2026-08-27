@@ -244,7 +244,7 @@ class Genshin(
     async def statsSlash(
         self, interaction: discord.Interaction, account: str | None = None
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         acc = resolveAccount(account)
 
         try:

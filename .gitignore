@@ -16,3 +16,4 @@ wheels/
 
 # Local cog load/unload state (per-deployment, not source-controlled)
 cog_state.json
+.ruff_cache/

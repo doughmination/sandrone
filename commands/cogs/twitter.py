@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils.markdown import escapeMarkdown
 
 apiBase = "https://api.girlcockx.com"
 
@@ -113,13 +114,14 @@ class Twitter(commands.Cog):
     def buildTweetEmbed(self, tweet: dict) -> tuple[discord.Embed, str | None]:
         author = tweet["author"]
 
+        text = tweet.get("text")
         embed = discord.Embed(
             color=discord.Color.fuchsia(),
-            description=tweet.get("text") or None,
+            description=escapeMarkdown(text) if text else None,
             url=tweet.get("url"),
         )
         embed.set_author(
-            name=f"{author['name']} (@{author['screen_name']})",
+            name=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
             url=author.get("url"),
             icon_url=author.get("avatar_url"),
         )
@@ -165,7 +167,7 @@ class Twitter(commands.Cog):
 
         embed.set_footer(
             text="  ".join(stats) if stats else "girlcockx.com",
-            icon_url="https://abs.twimg.com/responsive-web/client-web/icon-svg.ea5ff4a45cd19faaa.svg",
+            icon_url="https://m.doughmination.gay/img/icons/twitter.png",
         )
         return embed, videoUrl
 

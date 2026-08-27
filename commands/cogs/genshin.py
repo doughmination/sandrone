@@ -308,7 +308,7 @@ class Genshin(
     async def rosterSlash(
         self, interaction: discord.Interaction, account: str | None = None
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         acc = resolveAccount(account)
 
         try:
@@ -386,9 +386,8 @@ class Genshin(
         interaction: discord.Interaction,
         accountKey: str,
         name: str,
-        ephemeral: bool,
     ) -> None:
-        await interaction.response.defer(ephemeral=ephemeral)
+        await interaction.response.defer()
         account = genshinAccounts[accountKey]
 
         try:
@@ -417,27 +416,27 @@ class Genshin(
         name="main-chara", description="Character detail on the Main account"
     )
     @app_commands.describe(
-        name="Character name", ephemeral="Only show the reply to you (default: true)"
+        name="Character name",
     )
     @app_commands.autocomplete(name=charaAutocomplete)
     @doughchecks.has_permissions(embed_links=True)
     async def mainCharaSlash(
-        self, interaction: discord.Interaction, name: str, ephemeral: bool = True
+        self, interaction: discord.Interaction, name: str
     ) -> None:
-        await self.characterSlash(interaction, "main", name, ephemeral)
+        await self.characterSlash(interaction, "main", name)
 
     @app_commands.command(
         name="alt-chara", description="Character detail on the Alt account"
     )
     @app_commands.describe(
-        name="Character name", ephemeral="Only show the reply to you (default: true)"
+        name="Character name",
     )
     @app_commands.autocomplete(name=charaAutocomplete)
     @doughchecks.has_permissions(embed_links=True)
     async def altCharaSlash(
-        self, interaction: discord.Interaction, name: str, ephemeral: bool = True
+        self, interaction: discord.Interaction, name: str
     ) -> None:
-        await self.characterSlash(interaction, "alt", name, ephemeral)
+        await self.characterSlash(interaction, "alt", name)
 
 
 async def setup(bot: commands.Bot) -> None:

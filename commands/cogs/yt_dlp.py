@@ -65,12 +65,15 @@ def buildOptions(container: str, outDir: Path, sizeLimit: int) -> dict:
 
     if container == "mp3":
         options["format"] = "bestaudio/best"
+        options["writethumbnail"] = True
         options["postprocessors"] = [
             {
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
                 "preferredquality": "192",
-            }
+            },
+            {"key": "FFmpegMetadata", "add_metadata": True},
+            {"key": "EmbedThumbnail", "already_have_thumbnail": False},
         ]
     else:
         options["format"] = "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"

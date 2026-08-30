@@ -420,9 +420,7 @@ class Genshin(
     )
     @app_commands.autocomplete(name=charaAutocomplete)
     @doughchecks.has_permissions(embed_links=True)
-    async def mainCharaSlash(
-        self, interaction: discord.Interaction, name: str
-    ) -> None:
+    async def mainCharaSlash(self, interaction: discord.Interaction, name: str) -> None:
         await self.characterSlash(interaction, "main", name)
 
     @app_commands.command(
@@ -433,9 +431,7 @@ class Genshin(
     )
     @app_commands.autocomplete(name=charaAutocomplete)
     @doughchecks.has_permissions(embed_links=True)
-    async def altCharaSlash(
-        self, interaction: discord.Interaction, name: str
-    ) -> None:
+    async def altCharaSlash(self, interaction: discord.Interaction, name: str) -> None:
         await self.characterSlash(interaction, "alt", name)
 
 

@@ -134,7 +134,7 @@ class Bluesky(commands.Cog):
             ) as resp:
                 status = resp.status
                 body = await resp.json(content_type=None)
-        except (aiohttp.ClientError, TimeoutError, ValueError):
+        except aiohttp.ClientError, TimeoutError, ValueError:
             return (
                 errorEmbed(
                     "❌ Error", "Couldn't reach Bluesky — try again in a moment."
@@ -143,7 +143,9 @@ class Bluesky(commands.Cog):
             )
 
         if not isinstance(body, dict):
-            return errorEmbed("❌ Error", "Bluesky sent back something unexpected."), None
+            return errorEmbed(
+                "❌ Error", "Bluesky sent back something unexpected."
+            ), None
 
         if status != 200:
             error = body.get("error", "")
@@ -156,9 +158,7 @@ class Bluesky(commands.Cog):
                     None,
                 )
             return (
-                errorEmbed(
-                    "❌ Error", f"Bluesky returned an error: {error or status}"
-                ),
+                errorEmbed("❌ Error", f"Bluesky returned an error: {error or status}"),
                 None,
             )
 
@@ -166,7 +166,9 @@ class Bluesky(commands.Cog):
         threadType = thread.get("$type")
         if threadType == "app.bsky.feed.defs#notFoundPost":
             return (
-                errorEmbed("❓ Post not found", "That post doesn't exist or was deleted."),
+                errorEmbed(
+                    "❓ Post not found", "That post doesn't exist or was deleted."
+                ),
                 None,
             )
         if threadType == "app.bsky.feed.defs#blockedPost":
@@ -273,7 +275,10 @@ class Bluesky(commands.Cog):
         if isVideo:
             stats.append("🎥 Video")
 
-        embed.set_footer(text="  ".join(stats) if stats else "xsky.app", icon_url="https://m.doughmination.gay/img/icons/bluesky.png")
+        embed.set_footer(
+            text="  ".join(stats) if stats else "xsky.app",
+            icon_url="https://m.doughmination.gay/img/icons/bluesky.png",
+        )
 
         # Discord can't play Bluesky's HLS video inline; hand back the xsky.app
         # link so a follow-up message unfurls the playable embed.

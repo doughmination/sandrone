@@ -25,6 +25,7 @@ githubToken = os.getenv("GITHUB_TOKEN")
 
 owners: list[int] = [
     1464890289922641993,
+    1025770042245251122,
 ]
 
 

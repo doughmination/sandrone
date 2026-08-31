@@ -9,6 +9,7 @@ from watchfiles import Change, awatch
 
 from sandrone import config
 from sandrone.errors import handleAppCommandError
+from utils import downloads
 from utils.cog_state import loadDisabled
 from utils.colors import cf
 from utils.doughmination import dough
@@ -57,6 +58,9 @@ class Bot(commands.Bot):
                 print(cf.red(f"[startup] failed to load {extension}: {e}"))
 
         await self.tree.sync()
+
+        await downloads.startServer()
+        self.loop.create_task(downloads.sweepForever())
 
         if config.devMode:
             self.loop.create_task(self.watchCogs())
@@ -160,5 +164,6 @@ async def runBot() -> None:
         with contextlib.suppress(asyncio.CancelledError):
             await start_task
 
+        await downloads.stopServer()
         await dough.close()
         print(cf.grey("[shutdown] bot closed"))

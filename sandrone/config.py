@@ -23,6 +23,15 @@ prefix = os.getenv("BOT_PREFIX", "!")
 devMode = os.getenv("DEV_MODE", "false").lower() == "true"
 githubToken = os.getenv("GITHUB_TOKEN")
 
+downloadsDir = Path(os.getenv("DOWNLOADS_DIR", str(repoRoot / "downloads")))
+downloadsHost = os.getenv("DOWNLOADS_HOST", "0.0.0.0")
+downloadsPort = int(os.getenv("DOWNLOADS_PORT", "2020"))
+downloadsUrl = os.getenv("DOWNLOADS_URL", f"http://localhost:{downloadsPort}").rstrip(
+    "/"
+)
+downloadsRetention = int(os.getenv("DOWNLOADS_RETENTION_HOURS", "24"))
+downloadsMaxSize = int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
+
 owners: list[int] = [
     1464890289922641993,
     1025770042245251122,

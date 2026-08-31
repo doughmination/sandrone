@@ -17,3 +17,6 @@ wheels/
 # Local cog load/unload state (per-deployment, not source-controlled)
 cog_state.json
 .ruff_cache/
+
+# Files served by /yt-dlp, swept after DOWNLOADS_RETENTION_HOURS
+downloads/

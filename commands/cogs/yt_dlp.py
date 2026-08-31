@@ -1,9 +1,10 @@
 import asyncio
 import io
+import re
 import shutil
 from pathlib import Path
 from typing import NamedTuple
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import discord
 from discord import app_commands
@@ -36,6 +37,8 @@ mib = 1024 * 1024
 
 maxHeight = 1080
 
+videoIdPattern = re.compile(r"[A-Za-z0-9_-]{11}")
+
 
 class DownloadTooLarge(RuntimeError):
     pass
@@ -61,6 +64,34 @@ def firstLine(error: Exception) -> str:
     lines = str(error).strip().splitlines()
     line = lines[0] if lines else error.__class__.__name__
     return line.removeprefix("ERROR: ").strip()[:300]
+
+
+def cacheKey(url: str, container: str) -> str:
+    """A stable key for a request, so youtu.be and watch?v= forms of the same
+    video reuse one hosted copy. Falls back to the raw URL when no video id can
+    be pulled out.
+    """
+    parsed = urlsplit(url if "://" in url else f"https://{url}")
+    host = parsed.netloc.lower().removeprefix("www.")
+    if host == "youtu.be":
+        candidate = parsed.path.lstrip("/").split("/", 1)[0]
+    else:
+        candidate = parse_qs(parsed.query).get("v", [""])[0]
+    video = candidate if videoIdPattern.fullmatch(candidate) else url.strip()
+    return f"{container}\n{video}"
+
+
+def hostedReply(title: str, height: int | None, size: int, link: str) -> str:
+    details = " · ".join(
+        part
+        for part in (
+            f"{height}p" if height else "",
+            f"{size / mib:.1f} MiB",
+            f"expires in {config.downloadsRetention}h",
+        )
+        if part
+    )
+    return f"🎬 **{title}**\n{details}\n{link}"
 
 
 def videoFormats() -> str:
@@ -234,6 +265,14 @@ class YtDlp(commands.Cog):
         if host not in youtubeHosts:
             return "❌ Only YouTube links are supported.", None
 
+        key = cacheKey(url, container)
+        cached = downloads.findCached(key)
+        if cached:
+            link = downloads.publicUrl(cached["slot"], cached["name"])
+            return hostedReply(
+                cached["title"], cached.get("height"), cached["size"], link
+            ), None
+
         slot = downloads.newSlot()
         keep = False
         try:
@@ -249,17 +288,14 @@ class YtDlp(commands.Cog):
                 )
 
             keep = True
-            details = " · ".join(
-                part
-                for part in (
-                    f"{result.height}p" if result.height else "",
-                    f"{size / mib:.1f} MiB",
-                    f"expires in {config.downloadsRetention}h",
-                )
-                if part
+            downloads.recordSource(
+                slot,
+                key,
+                result.path.name,
+                {"title": result.title, "height": result.height, "size": size},
             )
             link = downloads.publicUrl(slot, result.path.name)
-            return f"🎬 **{result.title}**\n{details}\n{link}", None
+            return hostedReply(result.title, result.height, size, link), None
         except DownloadTooLarge as error:
             return (
                 (

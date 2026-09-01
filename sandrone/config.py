@@ -39,7 +39,6 @@ owners: list[int] = [
 
 
 def requireToken() -> str:
-    """The bot cannot run without a token, so fail with a clear message."""
     if not TOKEN:
         raise RuntimeError(
             "BOT_TOKEN is not set. Add it to your .env file before starting the bot."
@@ -48,7 +47,6 @@ def requireToken() -> str:
 
 
 def requireGithubToken() -> str:
-    """Only the /github command needs this, so it is checked on use."""
     if not githubToken:
         raise RuntimeError(
             "GITHUB_TOKEN is not set. Add it to your .env file to use /github."

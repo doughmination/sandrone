@@ -32,7 +32,7 @@ class Decrypt(commands.Cog):
         self,
         interaction: discord.Interaction,
         input: str,
-        method: app_commands.Choice[str] = None,
+        method: app_commands.Choice[str] | None = None,
     ) -> None:
         await interaction.response.defer(ephemeral=True)
         chosen_value = method.value if method else "b64"
@@ -72,7 +72,7 @@ class Decrypt(commands.Cog):
             else:
                 return "❌ Unknown decryption method requested."
 
-        except Exception:
+        except ValueError:
             return "❌ **Error:** Could not decode that text. Make sure you selected the right method for that specific scrambled text!"
 
 

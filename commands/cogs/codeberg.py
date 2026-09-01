@@ -29,36 +29,43 @@ class Codeberg(commands.Cog):
     async def fetchUserEmbed(self, username: str) -> discord.Embed:
         embed = discord.Embed(color=discord.Color.fuchsia(), title=username)
 
-        async with self.session.get(
-            f"https://codeberg.org/api/v1/users/{username}"
-        ) as resp:
-            if resp.status != 200:
-                embed.title = None
-                embed.color = discord.Color.red()
-                embed.description = ":x: That Codeberg account does not exist."
-                return embed
-            data = await resp.json()
+        try:
+            async with self.session.get(
+                f"https://codeberg.org/api/v1/users/{username}"
+            ) as resp:
+                if resp.status != 200:
+                    embed.title = None
+                    embed.color = discord.Color.red()
+                    embed.description = ":x: That Codeberg account does not exist."
+                    return embed
+                data = await resp.json()
 
-        username = data.get("username")
-        async with self.session.get(
-            f"https://codeberg.org/api/v1/users/{username}/repos", params={"limit": "1"}
-        ) as resp:
-            repo_count = resp.headers.get("X-Total-Count")
+            login = data.get("username") or username
+            async with self.session.get(
+                f"https://codeberg.org/api/v1/users/{login}/repos",
+                params={"limit": "1"},
+            ) as resp:
+                repoCount = (
+                    resp.headers.get("X-Total-Count") if resp.status == 200 else None
+                )
+        except aiohttp.ClientError, TimeoutError:
+            embed.title = None
+            embed.color = discord.Color.red()
+            embed.description = ":x: Couldn't reach Codeberg — try again in a moment."
+            return embed
 
         embed.set_thumbnail(url=data.get("avatar_url"))
         embed.set_footer(text=f"User ID: {data.get('id')}")
+        embed.url = data.get("html_url")
 
         website = data.get("website")
-        if website:
-            website_label = website.removeprefix("https://").removeprefix("http://")
-
-        embed.url = data.get("html_url")
 
         parts: list[str] = []
         if data.get("description"):
             parts.append(f"{data.get('description')}\n")
         if website:
-            parts.append(f"\n> **Website**: [{website_label}]({website})")
+            label = website.removeprefix("https://").removeprefix("http://")
+            parts.append(f"\n> **Website**: [{label}]({website})")
         if data.get("email"):
             parts.append(
                 f"\n> **Email**: [{data.get('email')}](mailto:{data.get('email')})"
@@ -69,8 +76,8 @@ class Codeberg(commands.Cog):
             parts.append(f"\n> **Followers**: {data.get('followers_count')}")
         if data.get("following_count"):
             parts.append(f"\n> **Following**: {data.get('following_count')}")
-        if repo_count:
-            parts.append(f"\n> **Public Repositories**: {repo_count}")
+        if repoCount:
+            parts.append(f"\n> **Public Repositories**: {repoCount}")
         if data.get("created"):
             joined = dt.datetime.fromisoformat(data.get("created"))
             parts.append(f"\n> **Joined Codeberg**: <t:{int(joined.timestamp())}:D>")

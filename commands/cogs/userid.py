@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 
-class userId(commands.Cog):
+class UserId(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
@@ -18,4 +18,4 @@ class userId(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(userId(bot))
+    await bot.add_cog(UserId(bot))

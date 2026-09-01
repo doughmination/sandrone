@@ -17,10 +17,6 @@ class GenshinNotFoundError(DoughminationError):
 
 
 class DoughminationAPI:
-    """Shared client for the Doughmination public API endpoints. One session
-    is reused across every cog that talks to doughmination.uk, so call
-    `close()` once during bot shutdown rather than per-cog."""
-
     def __init__(self) -> None:
         self._session: aiohttp.ClientSession | None = None
 

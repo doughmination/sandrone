@@ -14,8 +14,6 @@ apiBase = "https://public.api.bsky.app/xrpc"
 xskyBase = "https://xsky.app"
 blueskyColor = discord.Color(0x1185FE)
 
-# Hosts that use bsky.app's /profile/<actor>/post/<rkey> URL shape, including the
-# common embed-fixer mirrors people paste.
 allowedHosts = {
     "bsky.app",
     "www.bsky.app",
@@ -32,12 +30,6 @@ postPattern = re.compile(r"/profile/([^/]+)/post/([A-Za-z0-9]+)")
 
 
 def extractPostRef(url: str) -> tuple[str, str] | None:
-    """Return ``(actor, rkey)`` from a Bluesky post link, or None if it isn't one.
-
-    ``actor`` is whatever the URL carries — a handle or a ``did:...`` — and is
-    passed straight through to the AT-URI, which the app view resolves either
-    way.
-    """
     if not re.match(r"^https?://", url, re.IGNORECASE):
         url = f"https://{url}"
 
@@ -56,18 +48,12 @@ def errorEmbed(title: str, description: str) -> discord.Embed:
 
 
 def mediaEmbed(embed: dict) -> dict:
-    """The image/video/external portion of a post embed.
-
-    For ``recordWithMedia`` (a quote *and* media) the media lives one level down;
-    everything else carries it at the top.
-    """
     if embed.get("$type") == "app.bsky.embed.recordWithMedia#view":
         return embed.get("media") or {}
     return embed
 
 
 def quotedRecord(embed: dict) -> dict | None:
-    """The viewRecord for a quoted post, standalone or alongside media."""
     etype = embed.get("$type")
     if etype == "app.bsky.embed.record#view":
         record = embed.get("record") or {}
@@ -80,7 +66,6 @@ def quotedRecord(embed: dict) -> dict | None:
 
 
 def firstMediaThumb(embed: dict) -> tuple[str | None, bool]:
-    """``(image_url, is_video)`` for the first image/video in an embed, if any."""
     etype = embed.get("$type")
     if etype in ("app.bsky.embed.images#view", "app.bsky.embed.gallery#view"):
         items = embed.get("images") or embed.get("items") or []
@@ -280,8 +265,6 @@ class Bluesky(commands.Cog):
             icon_url="https://m.doughmination.gay/img/icons/bluesky.png",
         )
 
-        # Discord can't play Bluesky's HLS video inline; hand back the xsky.app
-        # link so a follow-up message unfurls the playable embed.
         return embed, postUrl if isVideo else None
 
 

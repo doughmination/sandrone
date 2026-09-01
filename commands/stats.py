@@ -19,7 +19,6 @@ class Stats(commands.Cog):
         await self.session.close()
 
     async def getRegion(self) -> str:
-        """Look up where the server is actually running, cached after the first call."""
         if self.region is not None:
             return self.region
 
@@ -52,7 +51,7 @@ class Stats(commands.Cog):
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
         latency = round(self.bot.latency * 1000)
-        botName = self.bot.user.name if self.bot.user else "Bot"
+        botName = user.name if user else "Bot"
 
         embed = discord.Embed(title=f"{botName}'s stats", color=discord.Color.fuchsia())
         embed.add_field(name="Ping:", value=f"{latency}ms")

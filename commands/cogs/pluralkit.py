@@ -81,7 +81,9 @@ class Pluralkit(commands.Cog):
             embed=self.buildFrontEmbed(fronters, target), ephemeral=True
         )
 
-    def buildSystemEmbed(self, system: System, user: discord.Member) -> discord.Embed:
+    def buildSystemEmbed(
+        self, system: System, user: discord.Member | discord.User
+    ) -> discord.Embed:
         color = (
             discord.Color(int(str(system.color), 16))
             if system.color
@@ -115,7 +117,7 @@ class Pluralkit(commands.Cog):
         return embed
 
     def buildFrontEmbed(
-        self, fronters: list[Member], user: discord.Member
+        self, fronters: list[Member], user: discord.Member | discord.User
     ) -> discord.Embed:
         embed = discord.Embed(color=discord.Color.fuchsia(), title="Currently fronting")
         embed.set_author(name=f"{user.display_name}'s System")

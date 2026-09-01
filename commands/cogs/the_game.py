@@ -36,7 +36,7 @@ class TheGame(commands.Cog):
             "\n\n**Rule 5:**\nThis immunity expires exactly after ten minutes. If, after these ten minutes, you think about The Game then you have once again lost The Game and must declare."
         )
         parts.append(
-            "\n\n**Rule 6**\n(a) There is no limit to the number of times you can lose The Game. (Once you begin, you are playing forever muhahahaha!!)\n(b) Some people think that they can simply 'not play' The Game. They are in denial and deserve a reality check. You cannot escape The Game once you are involved (unless you win-see Rule 7)."
+            "\n\n**Rule 6:**\n(a) There is no limit to the number of times you can lose The Game. (Once you begin, you are playing forever muhahahaha!!)\n(b) Some people think that they can simply 'not play' The Game. They are in denial and deserve a reality check. You cannot escape The Game once you are involved (unless you win-see Rule 7)."
         )
         parts.append(
             "\n\n**Rule 7:**\n(a) There is only one way to win The Game, and that is to truly and honestly forget about it completely.\n(b) This also means that if you do manage to win The Game, you will never know that you have won. This is because if you know you have won, then you have just thought about it (and consequently lost)."

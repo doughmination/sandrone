@@ -22,14 +22,10 @@ allowedHosts = {
 }
 statusPattern = re.compile(r"/status/(\d+)")
 
-# Twitter handles: 1-15 word chars, not preceded by a word char, "@" or "/"
-# (so emails and already-linked handles are left alone).
 mentionPattern = re.compile(r"(?<![\w@/])@(\w{1,15})\b")
 
 
 def linkifyMentions(text: str) -> str:
-    """Escape markdown in ``text`` while turning ``@handle`` mentions into links
-    to the mentioned account's twitter.com profile."""
     parts: list[str] = []
     lastEnd = 0
     for match in mentionPattern.finditer(text):

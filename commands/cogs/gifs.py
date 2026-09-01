@@ -20,11 +20,11 @@ class Gifs(commands.Cog):
     async def gifAuto(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        result = []
-        for name in gifUrls:
-            if current.lower() in name.lower():
-                result.append(app_commands.Choice(name=name, value=name))
-        return result[:25]
+        return [
+            app_commands.Choice(name=name, value=name)
+            for name in gifUrls
+            if current.lower() in name.lower()
+        ][:25]
 
     @app_commands.command(name="fungif", description="Send some fun gifs!")
     @app_commands.describe(gif="The gif to grab")
@@ -36,9 +36,15 @@ class Gifs(commands.Cog):
         await interaction.followup.send(embed=reply)
 
     async def getGifUrl(self, gif: str) -> discord.Embed:
+        slug = gifUrls.get(gif)
+        if slug is None:
+            return discord.Embed(
+                color=discord.Color.red(),
+                description=f":x: There's no gif called `{gif}`.",
+            )
+
         user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
-        slug = gifUrls.get(gif)
         embed.set_image(url=f"https://m.doughmination.gay/gif/{slug}.gif")
         embed.set_footer(
             text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None

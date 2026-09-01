@@ -21,14 +21,14 @@ class Snippets(commands.Cog):
     async def snippetAuto(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        result = []
-        for name in xSnips:
-            if current.lower() in name.lower():
-                result.append(app_commands.Choice(name=name, value=name))
-        return result[:25]
+        return [
+            app_commands.Choice(name=name, value=name)
+            for name in xSnips
+            if current.lower() in name.lower()
+        ][:25]
 
     @app_commands.command(name="snippet", description="repost a commonly used snippet")
-    @app_commands.describe(snip="The snippet to repos")
+    @app_commands.describe(snip="The snippet to repost")
     @app_commands.autocomplete(snip=snippetAuto)
     @doughchecks.has_permissions(embed_links=True)
     async def snippetSlash(self, interaction: discord.Interaction, snip: str) -> None:
@@ -37,9 +37,15 @@ class Snippets(commands.Cog):
         await interaction.followup.send(embed=embed)
 
     async def getSnippetEmbed(self, snip: str) -> discord.Embed:
+        reply = xSnips.get(snip)
+        if reply is None:
+            return discord.Embed(
+                color=discord.Color.red(),
+                description=f":x: There's no snippet called `{snip}`.",
+            )
+
         user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
-        reply = xSnips.get(snip)
         embed.add_field(name=" ", value=reply)
         embed.set_footer(
             text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None

@@ -5,7 +5,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-# 1. Expanded the options dictionary
 encoderSystem = {
     "Base64": "b64",
     "Base32": "b32",
@@ -33,7 +32,7 @@ class Encrypt(commands.Cog):
         self,
         interaction: discord.Interaction,
         input: str,
-        method: app_commands.Choice[str] = None,
+        method: app_commands.Choice[str] | None = None,
     ) -> None:
         await interaction.response.defer(ephemeral=True)
 
@@ -69,7 +68,7 @@ class Encrypt(commands.Cog):
             return "".join(shifted)
 
         else:
-            return "Unknown method requested."
+            return "❌ Unknown encryption method requested."
 
 
 async def setup(bot: commands.Bot) -> None:

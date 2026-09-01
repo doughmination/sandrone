@@ -14,9 +14,9 @@ wheels/
 .env.keys
 .idea/
 
-# Local cog load/unload state (per-deployment, not source-controlled)
-cog_state.json
+# Linting
 .ruff_cache/
 
-# Files served by /yt-dlp, swept after DOWNLOADS_RETENTION_HOURS
+# Sandrone Specific files
+cog_state.json
 downloads/

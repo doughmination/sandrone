@@ -5,7 +5,6 @@ from utils.colors import cf
 
 
 def formatPermissions(permissions: list[str]) -> str:
-    """Match discord.py's own wording, e.g. manage_guild -> `Manage Server`."""
     return ", ".join(
         f"`{perm.replace('_', ' ').replace('guild', 'server').title()}`"
         for perm in permissions
@@ -13,7 +12,6 @@ def formatPermissions(permissions: list[str]) -> str:
 
 
 async def respond(interaction: discord.Interaction, message: str) -> None:
-    """Reply ephemerally whether or not the command already deferred."""
     if interaction.response.is_done():
         await interaction.followup.send(message, ephemeral=True)
     else:
@@ -23,9 +21,6 @@ async def respond(interaction: discord.Interaction, message: str) -> None:
 async def handleAppCommandError(
     interaction: discord.Interaction, error: app_commands.AppCommandError
 ) -> None:
-    """Shared handler for every app command. Registered on the tree in
-    `bot.client`, and called by cogs that define their own error hook."""
-
     if isinstance(error, app_commands.MissingPermissions):
         await respond(
             interaction,

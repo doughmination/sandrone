@@ -27,11 +27,11 @@ class NsfwGifs(commands.Cog):
     async def nsfwGifAuto(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        result = []
-        for name in nsfwGifUrls:
-            if current.lower() in name.lower():
-                result.append(app_commands.Choice(name=name, value=name))
-        return result[:25]
+        return [
+            app_commands.Choice(name=name, value=name)
+            for name in nsfwGifUrls
+            if current.lower() in name.lower()
+        ][:25]
 
     @app_commands.command(name="nsfwgif", description="Moans!", nsfw=True)
     @app_commands.describe(gif="The gif to grab")
@@ -43,9 +43,15 @@ class NsfwGifs(commands.Cog):
         await interaction.followup.send(embed=reply)
 
     async def getNsfwGifUrl(self, gif: str) -> discord.Embed:
+        slug = nsfwGifUrls.get(gif)
+        if slug is None:
+            return discord.Embed(
+                color=discord.Color.red(),
+                description=f":x: There's no gif called `{gif}`.",
+            )
+
         user = self.bot.user
         embed = discord.Embed(color=discord.Color.fuchsia())
-        slug = nsfwGifUrls.get(gif)
         embed.set_image(url=f"https://m.doughmination.gay/gif/nsfw/{slug}.gif")
         embed.set_footer(
             text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None

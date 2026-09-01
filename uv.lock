@@ -1654,13 +1654,14 @@ wheels = [
 
 [[package]]
 name = "sandrone"
-version = "1.2.1"
+version = "1.4.0"
 source = { virtual = "." }
 dependencies = [
     { name = "argostranslate" },
     { name = "colorful" },
     { name = "discord-py" },
     { name = "imageio-ffmpeg" },
+    { name = "pillow" },
     { name = "pluralkit" },
     { name = "pygithub" },
     { name = "python-dotenvx" },
@@ -1679,6 +1680,7 @@ requires-dist = [
     { name = "colorful", specifier = ">=0.5.8" },
     { name = "discord-py", specifier = ">=2.7.1" },
     { name = "imageio-ffmpeg", specifier = ">=0.6.0" },
+    { name = "pillow", specifier = ">=11.0.0" },
     { name = "pluralkit", specifier = ">=1.2.1" },
     { name = "pygithub", specifier = ">=2.9.1" },
     { name = "python-dotenvx", specifier = ">=2.0.0" },

@@ -1,6 +1,6 @@
 [project]
 name = "sandrone"
-version = "1.2.1"
+version = "1.5.0"
 description = "Python utility bot"
 readme = "README.md"
 authors = [
@@ -12,6 +12,7 @@ dependencies = [
     "colorful>=0.5.8",
     "discord-py>=2.7.1",
     "imageio-ffmpeg>=0.6.0",
+    "pillow>=11.0.0",
     "pluralkit>=1.2.1",
     "pygithub>=2.9.1",
     "python-dotenvx>=2.0.0",

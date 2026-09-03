@@ -1,6 +1,8 @@
 # Sandrone
 This is a personal bot I'm using to relearn Python better than I originally did
 
+[Website](https://sandrone.doughmination.gay)
+
 I learned Python in the least accessible and most hated way possible, and I always struggled.
 
 > [!NOTE]

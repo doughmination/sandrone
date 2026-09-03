@@ -105,7 +105,7 @@ class Twitter(commands.Cog):
         try:
             async with self.session.get(f"{apiBase}/status/{statusId}") as resp:
                 body = await resp.json(content_type=None)
-        except aiohttp.ClientError, TimeoutError:
+        except (aiohttp.ClientError, TimeoutError):
             return (
                 errorEmbed(
                     "❌ Error", "Couldn't reach girlcockx.com — try again in a moment."

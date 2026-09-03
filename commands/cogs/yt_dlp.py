@@ -111,13 +111,13 @@ class YtDlp(commands.Cog):
                     discord.File(io.BytesIO(data), filename=result.path.name),
                 )
 
-            keep = True
             downloads.recordSource(
                 slot,
                 key,
                 result.path.name,
                 {"title": result.title, "height": result.height, "size": size},
             )
+            keep = True
             link = downloads.publicUrl(slot, result.path.name)
             return self.hostedReply(result.title, result.height, size, link), None
         except DownloadTooLarge as error:
@@ -139,7 +139,7 @@ class YtDlp(commands.Cog):
             return f"❌ Something went wrong handling that download: `{error}`", None
         finally:
             if not keep:
-                downloads.discard(slot)
+                await asyncio.to_thread(downloads.discard, slot)
 
     def download(self, url: str, container: str, outDir: Path) -> Result:
         with YoutubeDL(self.buildOptions(container, outDir)) as ydl:

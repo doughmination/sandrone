@@ -29,15 +29,15 @@ styles = {
 }
 
 
-def resolveFlag(name: str | None) -> tuple[str, ...] | None:
+def resolveFlag(name: str | None) -> str | None:
     if not name:
         return None
     key = name.strip().lower()
     if key in flagColours:
-        return flagColours[key]
+        return key
     for slug, label in flagLabels.items():
         if label.lower() == key:
-            return flagColours[slug]
+            return slug
     return None
 
 
@@ -94,9 +94,9 @@ class Pride(commands.Cog):
     ) -> None:
         await interaction.response.defer()
 
-        chosen = [name for name in (flag or "pride", flag2) if name]
-        columns = [resolveFlag(name) for name in chosen]
-        unknown = [name for name, colors in zip(chosen, columns) if colors is None]
+        requested = [name for name in (flag or "pride", flag2) if name]
+        chosen = [resolveFlag(name) for name in requested]
+        unknown = [name for name, slug in zip(requested, chosen) if slug is None]
         if unknown:
             await interaction.followup.send(
                 embed=self.errorEmbed(
@@ -108,7 +108,7 @@ class Pride(commands.Cog):
 
         target = user or interaction.user
         options = PrideOptions(
-            columns=tuple(column for column in columns if column is not None),
+            columns=tuple(flagColours[slug] for slug in chosen if slug is not None),
             cutout=style.value if style else "circle",
             cutoutSize=int(size),
             opacity=int(opacity),
@@ -142,7 +142,7 @@ class Pride(commands.Cog):
         filename = f"pride.{result.extension}"
         embed = discord.Embed(
             color=discord.Color.fuchsia(),
-            title=" + ".join(flagLabels[name] for name in chosen),
+            title=" + ".join(flagLabels[slug] for slug in chosen if slug is not None),
         )
         embed.set_author(name=target.display_name, icon_url=target.display_avatar.url)
         embed.set_image(url=f"attachment://{filename}")

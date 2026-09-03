@@ -50,7 +50,7 @@ class UrbanDictionary(commands.Cog):
                 "https://api.urbandictionary.com/v0/define", params=params
             ) as resp:
                 data = await resp.json(content_type=None)
-        except aiohttp.ClientError, TimeoutError, ValueError:
+        except (aiohttp.ClientError, TimeoutError, ValueError):
             embed.title = None
             embed.color = discord.Color.red()
             embed.description = (

@@ -19,15 +19,17 @@ class Pluralkit(commands.Cog):
     async def pkSystemSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
+        ephemeral = user is not None
         target = user or interaction.user
+
+        await interaction.response.defer(ephemeral=ephemeral)
 
         try:
             system = await pk.get_system(target.id)
         except NotFound:
             await interaction.followup.send(
                 f"❌ {target.mention} doesn't have a registered PluralKit system.",
-                ephemeral=True,
+                ephemeral=ephemeral,
             )
             return
         except PluralKitException as error:
@@ -36,11 +38,15 @@ class Pluralkit(commands.Cog):
                 title="❌ Could not fetch system",
                 description=str(error),
             )
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send(
+                embed=embed,
+                ephemeral=ephemeral,
+            )
             return
 
         await interaction.followup.send(
-            embed=self.buildSystemEmbed(system, target), ephemeral=True
+            embed=self.buildSystemEmbed(system, target),
+            ephemeral=ephemeral,
         )
 
     @app_commands.command(
@@ -51,21 +57,23 @@ class Pluralkit(commands.Cog):
     async def pkFrontSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
+        ephemeral = user is not None
         target = user or interaction.user
+
+        await interaction.response.defer(ephemeral=ephemeral)
 
         try:
             fronters = [member async for member in pk.get_fronters(target.id)]
         except NotFound:
             await interaction.followup.send(
                 f"❌ {target.mention} doesn't have a registered PluralKit system.",
-                ephemeral=True,
+                ephemeral=ephemeral,
             )
             return
         except Unauthorized:
             await interaction.followup.send(
                 f"❌ {target.mention}'s current front is private.",
-                ephemeral=True,
+                ephemeral=ephemeral,
             )
             return
         except PluralKitException as error:
@@ -74,11 +82,15 @@ class Pluralkit(commands.Cog):
                 title="❌ Could not fetch front",
                 description=str(error),
             )
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send(
+                embed=embed,
+                ephemeral=ephemeral,
+            )
             return
 
         await interaction.followup.send(
-            embed=self.buildFrontEmbed(fronters, target), ephemeral=True
+            embed=self.buildFrontEmbed(fronters, target),
+            ephemeral=ephemeral,
         )
 
     def buildSystemEmbed(
@@ -119,13 +131,17 @@ class Pluralkit(commands.Cog):
     def buildFrontEmbed(
         self, fronters: list[Member], user: discord.Member | discord.User
     ) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.fuchsia(), title="Currently fronting")
+        embed = discord.Embed(
+            color=discord.Color.fuchsia(),
+            title="Currently fronting",
+        )
         embed.set_author(name=f"{user.display_name}'s System")
 
         if not fronters:
             embed.description = "No one is currently fronting."
         else:
             primary = fronters[0]
+
             if primary.color:
                 embed.color = discord.Color(int(str(primary.color), 16))
 
@@ -142,7 +158,11 @@ class Pluralkit(commands.Cog):
             )
 
             if primary.pronouns:
-                embed.add_field(name="Pronouns", value=primary.pronouns, inline=True)
+                embed.add_field(
+                    name="Pronouns",
+                    value=primary.pronouns,
+                    inline=True,
+                )
 
             embed.timestamp = discord.utils.utcnow()
 

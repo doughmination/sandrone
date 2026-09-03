@@ -21,6 +21,13 @@ async def respond(interaction: discord.Interaction, message: str) -> None:
 async def handleAppCommandError(
     interaction: discord.Interaction, error: app_commands.AppCommandError
 ) -> None:
+    if isinstance(error, app_commands.BotMissingPermissions):
+        await respond(
+            interaction,
+            f"I am missing {formatPermissions(error.missing_permissions)} to run this command.",
+        )
+        return
+
     if isinstance(error, app_commands.MissingPermissions):
         await respond(
             interaction,

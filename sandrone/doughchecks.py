@@ -2,10 +2,6 @@ import discord
 from discord import app_commands
 
 
-class MissingPermissions(app_commands.MissingPermissions):
-    pass
-
-
 def has_permissions(*, guildOnly: bool = False, **perms: bool):
     invalid = perms.keys() - discord.Permissions.VALID_FLAGS.keys()
     if invalid:
@@ -19,12 +15,12 @@ def has_permissions(*, guildOnly: bool = False, **perms: bool):
                 )
             return True
 
-        permissions = interaction.permissions
+        permissions = interaction.app_permissions
         missing = [
             perm for perm, value in perms.items() if getattr(permissions, perm) != value
         ]
         if missing:
-            raise MissingPermissions(missing)
+            raise app_commands.BotMissingPermissions(missing)
         return True
 
     return app_commands.check(predicate)

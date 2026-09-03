@@ -16,6 +16,8 @@ from utils.colors import cf
 sweepInterval = 3600
 
 slotPattern = re.compile(r"[A-Za-z0-9_-]{1,64}")
+metaName = ".meta.json"
+markerName = ".sandrone-download"
 
 runner: web.AppRunner | None = None
 
@@ -23,22 +25,51 @@ runner: web.AppRunner | None = None
 def newSlot() -> Path:
     directory = config.downloadsDir / secrets.token_urlsafe(9)
     directory.mkdir(parents=True)
+    (directory / markerName).touch()
     return directory
 
 
 def discard(slot: Path) -> None:
-    shutil.rmtree(slot, ignore_errors=True)
+    managed = managedSlot(slot)
+    if managed is not None:
+        shutil.rmtree(managed, ignore_errors=True)
 
 
 def publicUrl(slot: Path, name: str) -> str:
-    return f"{config.downloadsUrl}/{slot.name}/{quote(name)}"
+    return f"{config.downloadsUrl}/{slot.name}/{quote(name, safe='')}"
 
 
-metaName = ".meta.json"
+def validName(name: object) -> bool:
+    return (
+        isinstance(name, str)
+        and bool(name)
+        and name not in (".", "..")
+        and not name.startswith(".")
+        and all(ord(char) >= 32 for char in name)
+        and "/" not in name
+        and "\\" not in name
+    )
+
+
+def managedSlot(slot: Path) -> Path | None:
+    try:
+        root = config.downloadsDir.resolve()
+        resolved = slot.resolve()
+    except OSError, RuntimeError:
+        return None
+    if resolved.parent != root or not slotPattern.fullmatch(resolved.name):
+        return None
+    if not (resolved / markerName).is_file() and not (resolved / metaName).is_file():
+        return None
+    return resolved
 
 
 def recordSource(slot: Path, key: str, name: str, extra: dict) -> None:
-    (slot / metaName).write_text(json.dumps({"key": key, "name": name, **extra}) + "\n")
+    managed = managedSlot(slot)
+    if managed is None or not validName(name):
+        raise ValueError("Invalid download slot or filename")
+    data = {**extra, "key": key, "name": name}
+    (managed / metaName).write_text(json.dumps(data) + "\n", encoding="utf-8")
 
 
 def findCached(key: str) -> dict | None:
@@ -47,16 +78,20 @@ def findCached(key: str) -> dict | None:
 
     cutoff = time.time() - config.downloadsRetention * 3600
     for entry in config.downloadsDir.iterdir():
-        if not entry.is_dir():
+        entry = managedSlot(entry)
+        if entry is None:
             continue
         try:
-            meta = json.loads((entry / metaName).read_text())
+            meta = json.loads((entry / metaName).read_text(encoding="utf-8"))
         except OSError, json.JSONDecodeError:
             continue
-        if meta.get("key") != key:
+        if not isinstance(meta, dict) or meta.get("key") != key:
             continue
 
-        target = entry / meta.get("name", "")
+        name = meta.get("name")
+        if not validName(name):
+            continue
+        target = entry / name
         try:
             if not target.is_file() or entry.stat().st_mtime < cutoff:
                 continue
@@ -78,13 +113,13 @@ def purgeExpired() -> int:
     cutoff = time.time() - config.downloadsRetention * 3600
     removed = 0
     for entry in config.downloadsDir.iterdir():
+        entry = managedSlot(entry)
+        if entry is None:
+            continue
         try:
             if entry.stat().st_mtime >= cutoff:
                 continue
-            if entry.is_dir():
-                shutil.rmtree(entry)
-            else:
-                entry.unlink()
+            shutil.rmtree(entry)
             removed += 1
         except OSError as error:
             print(cf.red(f"[downloads] could not remove {entry.name}: {error}"))
@@ -102,12 +137,15 @@ async def sweepForever() -> None:
 async def serve(request: web.Request) -> web.FileResponse:
     slot = request.match_info["slot"]
     name = request.match_info["name"]
-    if not slotPattern.fullmatch(slot) or name.startswith("."):
+    if not slotPattern.fullmatch(slot) or name.startswith(".") or not validName(name):
         raise web.HTTPNotFound
 
-    root = config.downloadsDir.resolve()
-    path = (root / slot / name).resolve()
-    if root not in path.parents or not path.is_file():
+    directory = managedSlot(config.downloadsDir / slot)
+    if directory is None:
+        raise web.HTTPNotFound
+
+    path = (directory / name).resolve()
+    if path.parent != directory or not path.is_file():
         raise web.HTTPNotFound
 
     now = time.time()

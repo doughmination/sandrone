@@ -9,6 +9,7 @@
   <img src="https://github.com/doughmination/sandrone/actions/workflows/checks.yml/badge.svg">
   <img src="https://github.com/doughmination/sandrone/actions/workflows/mirror.yml/badge.svg">
   <img src="https://github.com/doughmination/sandrone/actions/workflows/codeberg.yml/badge.svg">
+  <img src="https://github.com/doughmination/sandrone/actions/workflows/images.yml/badge.svg">
 </div>
 
 ### About

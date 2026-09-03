@@ -17,12 +17,14 @@ concurrency:
 
 jobs:
   weather:
+    if: github.repository == 'doughmination/sandrone'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: crystal-actions/activity-weather@v0
 
   generate:
+    if: github.repository == 'doughmination/sandrone'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

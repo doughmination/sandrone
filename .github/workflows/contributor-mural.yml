@@ -1,0 +1,18 @@
+name: Contributor Mural
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: contributor-mural
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: crystal-actions/contributor-mural@v1

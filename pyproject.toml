@@ -1,6 +1,6 @@
 [project]
 name = "sandrone"
-version = "1.5.0"
+version = "1.6.0"
 description = "Python utility bot"
 readme = "README.md"
 authors = [
@@ -17,9 +17,7 @@ dependencies = [
     "pygithub>=2.9.1",
     "python-dotenvx>=2.0.0",
     "qrcode[pil]>=8.2",
-    "ruff>=0.16.3",
     "toml>=0.10.2",
-    "ty>=0.0.72",
     "watchfiles>=1.2.0",
     "wikipedia-api>=0.15.0",
     "yt-dlp>=2026.8.19",
@@ -38,4 +36,6 @@ target-version = "py313"
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.16.3",
+    "ty>=0.0.72",
 ]

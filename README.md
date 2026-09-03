@@ -29,3 +29,9 @@ Names fully exempt from the lenience for this repo:
 
 Names allowed to PR to this repo:
 - [devrock07](https://github.com/devrock07)
+
+### Contributions
+![img](./img/contrib.svg)
+
+### Activity
+![img](./img/weather.svg)

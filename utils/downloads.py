@@ -55,7 +55,7 @@ def managedSlot(slot: Path) -> Path | None:
     try:
         root = config.downloadsDir.resolve()
         resolved = slot.resolve()
-    except OSError, RuntimeError:
+    except (OSError, RuntimeError):
         return None
     if resolved.parent != root or not slotPattern.fullmatch(resolved.name):
         return None
@@ -83,13 +83,22 @@ def findCached(key: str) -> dict | None:
             continue
         try:
             meta = json.loads((entry / metaName).read_text(encoding="utf-8"))
-        except OSError, json.JSONDecodeError:
+        except (OSError, json.JSONDecodeError):
             continue
         if not isinstance(meta, dict) or meta.get("key") != key:
             continue
 
         name = meta.get("name")
-        if not validName(name):
+        title = meta.get("title")
+        size = meta.get("size")
+        if (
+            not validName(name)
+            or not isinstance(title, str)
+            or not title.strip()
+            or not isinstance(size, int)
+            or isinstance(size, bool)
+            or size < 0
+        ):
             continue
         target = entry / name
         try:

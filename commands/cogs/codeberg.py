@@ -48,7 +48,7 @@ class Codeberg(commands.Cog):
                 repoCount = (
                     resp.headers.get("X-Total-Count") if resp.status == 200 else None
                 )
-        except aiohttp.ClientError, TimeoutError:
+        except (aiohttp.ClientError, TimeoutError):
             embed.title = None
             embed.color = discord.Color.red()
             embed.description = ":x: Couldn't reach Codeberg — try again in a moment."

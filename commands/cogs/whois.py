@@ -269,7 +269,7 @@ class Whois(commands.Cog):
                 text = await asyncio.wait_for(
                     self.askServer(server, target), timeout=lookupTimeout
                 )
-            except OSError, TimeoutError:
+            except (OSError, TimeoutError):
                 if hop == 0:
                     raise
                 break
@@ -306,7 +306,7 @@ class Whois(commands.Cog):
 
         try:
             records = await self.lookup(target, isIp)
-        except OSError, TimeoutError:
+        except (OSError, TimeoutError):
             embed.description = (
                 ":x: Couldn't reach the WHOIS servers — try again in a moment."
             )

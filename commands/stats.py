@@ -30,7 +30,7 @@ class Stats(commands.Cog):
                 timeout=aiohttp.ClientTimeout(total=5),
             ) as resp:
                 data = await resp.json()
-        except aiohttp.ClientError, TimeoutError:
+        except (aiohttp.ClientError, TimeoutError):
             return "Unknown"
 
         if data.get("status") != "success":

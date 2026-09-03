@@ -1,16 +1,10 @@
-import unittest
-
 from commands.cogs.pride import resolveFlag
 
 
-class PrideTests(unittest.TestCase):
-    def test_flag_names_are_normalized(self) -> None:
-        self.assertEqual(resolveFlag(" Pride "), "pride")
-        self.assertEqual(resolveFlag("MLM (older)"), "mlm_old")
-
-    def test_unknown_flag_returns_none(self) -> None:
-        self.assertIsNone(resolveFlag("not-a-real-flag"))
+def test_flag_names_are_normalized() -> None:
+    assert resolveFlag(" Pride ") == "pride"
+    assert resolveFlag("MLM (older)") == "mlm_old"
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_unknown_flag_returns_none() -> None:
+    assert resolveFlag("not-a-real-flag") is None

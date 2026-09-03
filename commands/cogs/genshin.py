@@ -215,7 +215,7 @@ class Genshin(
         account = genshinAccounts[accountKey]
         try:
             roster = await dough.getGenshinRoster(account["uid"])
-        except DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError:
+        except (DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError):
             return []
 
         q = current.lower()

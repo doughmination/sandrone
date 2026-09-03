@@ -119,7 +119,7 @@ class Bluesky(commands.Cog):
             ) as resp:
                 status = resp.status
                 body = await resp.json(content_type=None)
-        except aiohttp.ClientError, TimeoutError, ValueError:
+        except (aiohttp.ClientError, TimeoutError, ValueError):
             return (
                 errorEmbed(
                     "❌ Error", "Couldn't reach Bluesky — try again in a moment."

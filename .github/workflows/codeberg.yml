@@ -3,6 +3,8 @@ name: Codeberg
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
   mirror:

@@ -3,6 +3,8 @@ name: Mirror
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
   mirror:

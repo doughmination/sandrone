@@ -1,4 +1,12 @@
 # Sandrone
+
+### Status Badges
+<div align="center">
+  <img src="https://github.com/doughmination/sandrone/actions/workflows/checks.yml/badge.svg">
+  <img src="https://github.com/doughmination/sandrone/actions/workflows/mirror.yml/badge.svg">
+  <img src="https://github.com/doughmination/sandrone/actions/workflows/codeberg.yml/badge.svg">
+</div>
+
 This is a personal bot I'm using to relearn Python better than I originally did
 
 [Website](https://sandrone.doughmination.gay)

@@ -1,4 +1,4 @@
-# go to my backup
+# Mirror GitHub -> Codeberg backup
 name: Codeberg
 
 on:
@@ -23,7 +23,7 @@ jobs:
       CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
 
     steps:
-      - name: Clone every ref
+      - name: Clone repository as a mirror
         env:
           SOURCE_TOKEN: ${{ github.token }}
           SERVER_URL: ${{ github.server_url }}
@@ -36,17 +36,28 @@ jobs:
             "https://x-access-token:${SOURCE_TOKEN}@${sourceHost}/${GITHUB_REPOSITORY}.git" \
             source.git
 
-      - name: Drop pull-request refs
+      - name: Remove GitHub pull-request refs
         working-directory: source.git
         run: |
           set -euo pipefail
 
-          git for-each-ref --format='%(refname)' 'refs/pull/*' \
-            | while read -r ref; do
-                git update-ref -d "$ref"
-              done
+          # GitHub creates refs/pull/<number>/head and
+          # refs/pull/<number>/merge for pull requests.
+          #
+          # These are GitHub-specific and Codeberg rejects them
+          # as hidden refs, so they are intentionally excluded
+          # from the Codeberg backup.
 
-      - name: Push mirror
+          while IFS= read -r ref; do
+            [ -z "$ref" ] && continue
+
+            echo "Removing $ref"
+            git update-ref -d "$ref"
+          done < <(
+            git for-each-ref --format='%(refname)' 'refs/pull/'
+          )
+
+      - name: Push mirror to Codeberg
         working-directory: source.git
         run: |
           set -euo pipefail
@@ -61,13 +72,19 @@ jobs:
             exit 1
           fi
 
+          if [ -z "$CODEBERG_TOKEN" ]; then
+            echo "CODEBERG_TOKEN is not set" >&2
+            exit 1
+          fi
+
           targetUrl="https://${CODEBERG_HOST}/${CODEBERG_USERNAME}/${CODEBERG_REPO}.git"
 
           echo "Mirroring ${GITHUB_REPOSITORY} -> ${targetUrl}"
 
           git remote add mirror "$targetUrl"
 
-          # Credentials go through a helper so the token never lands in .git/config
+          # Credentials are supplied through a helper so the token
+          # is not written into .git/config.
           git -c credential.helper= \
               -c "credential.helper=!f() { echo username=\"\$CODEBERG_USERNAME\"; echo password=\"\$CODEBERG_TOKEN\"; }; f" \
               push --mirror mirror

@@ -10,6 +10,9 @@ I learned Python in the least accesible and most hated way possible, and I alway
 
 The bot, and all it's code, is licenced under DASL-1.0, please read the [Licence](./licence.md) for terms.
 
-Names exempt from the licence for this repo:
+Names fully exempt from the licence for this repo:
 - Aria Twilight
 - Lilly Luna
+
+Names allowed to PR to this repo:
+- [devrock07](https://github.com/devrock07)

@@ -1,8 +1,10 @@
-name: Activity Weather
+name: Generate Images
 
 on:
-  schedule:
-    - cron: "17 0 * * *"
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -19,3 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: crystal-actions/activity-weather@v0
+
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: crystal-actions/contributor-mural@v1

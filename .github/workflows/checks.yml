@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.14"
 
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
 
       - run: uv sync --frozen
       - run: uv run ruff check .

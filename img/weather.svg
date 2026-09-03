@@ -50,8 +50,8 @@
   <text x="178" y="178" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="1.5" class="aw-sub">SUNNY</text>
   <text x="178" y="200" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="12.5" font-style="italic" class="aw-sub">Clear skies — commits are pouring in</text>
   <line x1="28" y1="212" x2="452" y2="212" class="aw-stroke" stroke-width="1"/>
-  <text x="28" y="232" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" class="aw-ink">45<tspan dx="5" font-size="10.5" font-weight="400" class="aw-sub">commits</tspan></text>
+  <text x="28" y="232" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" class="aw-ink">44<tspan dx="5" font-size="10.5" font-weight="400" class="aw-sub">commits</tspan></text>
   <text x="136" y="232" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" class="aw-ink">2<tspan dx="5" font-size="10.5" font-weight="400" class="aw-sub">prs</tspan></text>
   <text x="244" y="232" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" class="aw-ink">0<tspan dx="5" font-size="10.5" font-weight="400" class="aw-sub">issues</tspan></text>
-  <text x="352" y="232" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" class="aw-ink">+0<tspan dx="5" font-size="10.5" font-weight="400" class="aw-sub">stars</tspan></text>
+  <text x="352" y="232" font-family="-apple-system, &#39;Segoe UI&#39;, Helvetica, Arial, sans-serif" font-size="13" font-weight="600" class="aw-ink">+1<tspan dx="5" font-size="10.5" font-weight="400" class="aw-sub">stars</tspan></text>
 </svg>

@@ -30,7 +30,7 @@ class Invite(commands.Cog):
             name=" ", value="\n[Discord Server](https://discord.gg/N8gCjS294R)"
         )
         embed.add_field(
-            name=" ", value="\n[Website](https://sandrone.doughmination.gay)"
+            name=" ", value="\n[Website](https://sandrone.is-a.bot)"
         )
         embed.add_field(
             name=" ", value="\n[Source Code](https://github.com/doughmination/sandrone)"

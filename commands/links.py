@@ -17,17 +17,11 @@ class Invite(commands.Cog):
         await interaction.followup.send(view=await self.buildInvitePanel())
 
     async def buildInvitePanel(self) -> components.Panel:
-        user = self.bot.user
-        if user is None:
-            raise RuntimeError("Bot is not logged in yet")
-
-        links = "\n".join(
-            (
-                f"[Invite Link](https://discord.com/oauth2/authorize?client_id={user.id})",
-                "[Discord Server](https://discord.gg/N8gCjS294R)",
-                "[Website](https://sandrone.is-a.bot)",
-                "[Source Code](https://github.com/doughmination/sandrone)",
-            )
+        links = (
+            "[Invite Link](https://invite.sandrone.is-a.bot)\n"
+            "[Discord Server](https://support.sandrone.is-a.bot)\n"
+            "[Website](https://sandrone.is-a.bot)\n"
+            "[Source Code](https://github.com/doughmination/sandrone)"
         )
         return components.panel(
             title="Invite Links",

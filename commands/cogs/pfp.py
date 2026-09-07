@@ -4,52 +4,32 @@ from discord.ext import commands
 
 from utils import components
 
-scopes = {
-    "Global": "global",
-    "Server": "guild",
-}
-
 
 class Pfp(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @app_commands.command(name="pfp", description="Get a user's Profile Image")
-    @app_commands.describe(
-        user="The user you want to check (defaults to you)",
-        server="Global or server pfp (defaults to Global)",
-    )
-    @app_commands.choices(
-        server=[
-            app_commands.Choice(name=name, value=value)
-            for name, value in scopes.items()
-        ]
-    )
+    @app_commands.describe(user="The user you want to check (defaults to you)")
     async def pfpSlash(
         self,
         interaction: discord.Interaction,
         user: discord.Member | discord.User | None = None,
-        server: app_commands.Choice[str] | None = None,
     ) -> None:
         await interaction.response.defer()
         target = user or interaction.user
-        scope = server.value if server else "global"
-        await interaction.followup.send(view=await self.getPfpPanel(target, scope))
+        await interaction.followup.send(view=self.getPfpPanel(target))
 
-    async def getPfpPanel(
-        self, user: discord.Member | discord.User, scope: str
-    ) -> components.Panel:
-        if scope == "guild":
-            avatar = getattr(user, "guild_avatar", None) or self.globalAvatar(user)
-            title = f"{user.name}'s Server pfp"
-        else:
-            avatar = self.globalAvatar(user)
-            title = f"{user.name}'s Global pfp"
+    def getPfpPanel(self, user: discord.Member | discord.User) -> components.Panel:
+        globalAvatar = user.avatar or user.default_avatar
+        guildAvatar = getattr(user, "guild_avatar", None)
 
-        return components.panel(title=title, images=[avatar.url], footer="Sandrone")
+        images = [components.image(globalAvatar.url, alt="Global avatar")]
+        if guildAvatar is not None:
+            images.insert(0, components.image(guildAvatar.url, alt="Server avatar"))
 
-    def globalAvatar(self, user: discord.Member | discord.User) -> discord.Asset:
-        return user.avatar or user.default_avatar
+        title = f"{user.name}'s avatar" + ("s" if guildAvatar is not None else "")
+        return components.panel(title=title, images=images, footer="Sandrone")
 
 
 async def setup(bot: commands.Bot) -> None:

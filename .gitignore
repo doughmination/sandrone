@@ -20,3 +20,6 @@ wheels/
 # Sandrone Specific files
 cog_state.json
 downloads/
+
+# Genshin card image cache
+img/genshin-cache/

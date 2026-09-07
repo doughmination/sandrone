@@ -135,13 +135,10 @@ class Twitter(commands.Cog):
         media = tweet.get("media") or {}
         photos = media.get("photos") or []
         videos = media.get("videos") or []
-        allMedia = media.get("all") or []
 
-        image = None
-        if photos:
-            image = photos[0]["url"]
-        elif videos and videos[0].get("thumbnail_url"):
-            image = videos[0]["thumbnail_url"]
+        images = [p["url"] for p in photos[:10]]
+        if not images and videos and videos[0].get("thumbnail_url"):
+            images = [videos[0]["thumbnail_url"]]
 
         stats = []
         if tweet.get("likes") is not None:
@@ -153,9 +150,9 @@ class Twitter(commands.Cog):
         if tweet.get("views") is not None:
             stats.append(f"👁️ {tweet['views']:,}")
 
-        extra = len(allMedia) - 1
-        if extra > 0:
-            stats.append(f"📎 +{extra} more")
+        hidden = len(photos) - len(images)
+        if hidden > 0:
+            stats.append(f"📎 +{hidden} more")
 
         videoUrl = None
         if videos:
@@ -171,7 +168,7 @@ class Twitter(commands.Cog):
             title=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
             url=tweetUrl,
             body=body,
-            images=[image] if image else None,
+            images=images or None,
             footer="  ".join(stats) if stats else "girlcockx.com",
         )
         return panel, videoUrl

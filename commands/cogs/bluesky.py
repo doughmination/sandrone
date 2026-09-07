@@ -180,7 +180,7 @@ class Bluesky(commands.Cog):
         if record.get("text"):
             parts.append(escapeMarkdown(record["text"]))
 
-        image: str | None = None
+        gallery: list[str] = []
         thumbnail: str | None = None
 
         embedData = post.get("embed") or {}
@@ -191,12 +191,11 @@ class Bluesky(commands.Cog):
 
         if mediaType in ("app.bsky.embed.images#view", "app.bsky.embed.gallery#view"):
             images = media.get("images") or media.get("items") or []
-            if images:
-                image = images[0]["fullsize"]
-            extra = len(images) - 1
+            gallery = [img["fullsize"] for img in images[:10]]
+            extra = len(images) - len(gallery)
         elif mediaType == "app.bsky.embed.video#view":
             if media.get("thumbnail"):
-                image = media["thumbnail"]
+                gallery = [media["thumbnail"]]
             isVideo = True
         elif mediaType == "app.bsky.embed.external#view":
             external = media.get("external") or {}
@@ -222,11 +221,11 @@ class Bluesky(commands.Cog):
             heading = f"📝 Quoting {qName} (@{qHandle})"
             parts.append(f"{heading}:\n{qText}" if qText else heading)
 
-            if not image:
+            if not gallery:
                 for quotedEmbed in quoted.get("embeds") or []:
                     thumb, quotedIsVideo = firstMediaThumb(quotedEmbed)
                     if thumb:
-                        image = thumb
+                        gallery = [thumb]
                         isVideo = isVideo or quotedIsVideo
                         break
 
@@ -249,7 +248,7 @@ class Bluesky(commands.Cog):
             url=postUrl,
             body="\n\n".join(parts)[:3500] or None,
             thumbnail=thumbnail,
-            images=[image] if image else None,
+            images=gallery or None,
             footer="  ".join(stats) if stats else "xsky.app",
             color=blueskyColor,
         )

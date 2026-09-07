@@ -1,50 +1,49 @@
+import asyncio
+import hashlib
+import io
+import re
+import time
+from pathlib import Path
+from typing import Any, NamedTuple
+
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils import components
+from utils import components, genshin_card
 from utils.doughmination import DoughminationError, GenshinNotFoundError, dough
 
-elementEmojiMap = {
-    "Pyro": "🔥",
-    "Hydro": "💧",
-    "Anemo": "🌀",
-    "Electro": "⚡",
-    "Cryo": "❄️",
-    "Geo": "🪨",
-    "Dendro": "🌿",
-    "All": "✨",
-}
-
-slotLabels = {
-    "flower": "Flower",
-    "plume": "Plume",
-    "sands": "Sands",
-    "goblet": "Goblet",
-    "circlet": "Circlet",
-}
-
 embedColor = components.FUCHSIA
-successColor = discord.Color.green()
 
 jumpPageSize = 25
 apiErrors = (DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError)
 
+CACHE_DIR = Path("img/genshin-cache")
+ROSTER_TTL = 20.0
 
-def elementEmoji(element: str) -> str:
-    return elementEmojiMap.get(element, "•")
+# Stateless controls: everything the paginator needs rides in the custom_id, so
+# the buttons keep working forever with no live view object to time out.
+CONTROL_TEMPLATE = (
+    r"gsc:(?P<action>[a-z]+):(?P<uid>\d{9,10}):(?P<index>\d+):(?P<menu>\d+)"
+)
+JUMP_TEMPLATE = r"gsj:(?P<uid>\d{9,10}):(?P<index>\d+):(?P<menu>\d+)"
 
+ELEMENT_COLOR = {
+    "Pyro": 0xE0684B,
+    "Hydro": 0x3E9BD8,
+    "Anemo": 0x52B0B1,
+    "Electro": 0x9876AD,
+    "Cryo": 0x46A8BA,
+    "Geo": 0xBB9F4B,
+    "Dendro": 0x4D8E52,
+}
 
-def stars(rarity: int) -> str:
-    return "★" * max(0, rarity)
+# --- small in-process caches -------------------------------------------------
 
-
-def formatStat(stat: dict | None) -> str | None:
-    if not stat:
-        return None
-    value = f"{stat['value']:.1f}%" if stat["is_percent"] else str(round(stat["value"]))
-    return f"{stat['name']}: {value}"
+_rosterCache: dict[str, tuple[float, dict]] = {}
+_cardCache: dict[tuple[str, str, Any], bytes] = {}
+_imageMem: dict[str, bytes] = {}
 
 
 def validUid(raw: str) -> str | None:
@@ -52,17 +51,61 @@ def validUid(raw: str) -> str | None:
     return uid if uid.isdigit() and 9 <= len(uid) <= 10 else None
 
 
-def sectionText(
-    title: str | None = None,
-    body: str | None = None,
-    fields: list[components.Field] | None = None,
-) -> str:
-    parts = [components.heading(title)] if title else []
-    if body:
-        parts.append(body)
-    if fields:
-        parts.append(components.renderFields(fields))
-    return "\n\n".join(parts)
+def menuPages(count: int) -> int:
+    return max(1, -(-count // jumpPageSize))
+
+
+def sortedOwned(roster: dict) -> list[dict]:
+    return sorted(
+        (c for c in roster["characters"] if c["owned"]),
+        key=lambda c: (-(c.get("level") or 0), c["name"]),
+    )
+
+
+async def getRoster(uid: str) -> dict:
+    now = time.monotonic()
+    hit = _rosterCache.get(uid)
+    if hit and now - hit[0] < ROSTER_TTL:
+        return hit[1]
+    data = await dough.getGenshinRoster(uid)
+    _rosterCache[uid] = (now, data)
+    return data
+
+
+async def _fetchImage(session: aiohttp.ClientSession, url: str) -> bytes | None:
+    if url in _imageMem:
+        return _imageMem[url]
+    key = hashlib.sha1(url.encode()).hexdigest()
+    path = CACHE_DIR / f"{key}.img"
+    try:
+        if path.exists():
+            data = path.read_bytes()
+            _imageMem[url] = data
+            return data
+    except OSError:
+        pass
+    try:
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            if resp.status != 200:
+                return None
+            data = await resp.read()
+    except (aiohttp.ClientError, TimeoutError):
+        return None
+    try:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+    except OSError:
+        pass
+    _imageMem[url] = data
+    return data
+
+
+async def gatherImages(urls: list[str]) -> dict[str, bytes]:
+    if not urls:
+        return {}
+    async with aiohttp.ClientSession() as session:
+        blobs = await asyncio.gather(*(_fetchImage(session, u) for u in urls))
+    return {u: b for u, b in zip(urls, blobs) if b}
 
 
 def buildErrorPanel(error: Exception, uid: str) -> components.Panel:
@@ -80,375 +123,227 @@ def buildErrorPanel(error: Exception, uid: str) -> components.Panel:
     )
 
 
-def overviewSummary(roster: dict) -> tuple[str | None, list[components.Field]]:
-    untracked = roster["owned_count"] - roster["tracked_count"]
+async def renderCharacterPng(uid: str, hero: dict) -> tuple[bytes, dict]:
+    detail = await dough.getGenshinCharacter(uid, hero["id"])
+    key = (uid, hero["id"], detail.get("updated_at"))
+    cached = _cardCache.get(key)
+    if cached is not None:
+        return cached, detail
 
-    notes = []
-    if roster.get("partial"):
-        notes.append(
-            '⚠️ Only pinned showcase characters are visible — enable "Display all '
-            'your characters" in-game.'
-        )
-    if roster.get("stale"):
-        notes.append(
-            "ℹ️ Served from the ownership ledger (Enka unavailable) — figures are "
-            "last-known."
-        )
-
-    fields: list[components.Field] = [
-        ("UID", str(roster["uid"])),
-        (
-            "Adventure Rank",
-            str(roster["player_level"]) if roster.get("player_level") else "Unknown",
-        ),
-        ("Owned", f"{roster['owned_count']} / {roster['total_count']}"),
-        ("Tracked live", str(roster["tracked_count"])),
-        ("Last known only", str(untracked)),
-    ]
-    return "\n".join(notes) or None, fields
-
-
-def characterFields(detail: dict) -> list[components.Field]:
-    if not detail.get("owned"):
-        return [("Ownership", "❌ Not owned on this account.")]
-
-    fields: list[components.Field] = [
-        ("Constellation", f"C{detail.get('constellation', 0)}"),
-        (
-            "Friendship",
-            str(detail["friendship"]) if detail.get("friendship") is not None else "—",
-        ),
-    ]
-
-    if not detail.get("tracked"):
-        fields.append(
-            (
-                "ℹ️ Last known",
-                (
-                    "This character isn't in the live showcase right now, so the "
-                    "build below may be incomplete."
-                ),
-            )
-        )
-
-    weapon = detail.get("weapon")
-    if weapon:
-        weaponStats = " • ".join(
-            s
-            for s in (
-                formatStat(weapon.get("base_stat")),
-                formatStat(weapon.get("sub_stat")),
-            )
-            if s
-        )
-        value = (
-            f"**{weapon['name']}** {stars(weapon['rarity'])}\n"
-            f"Lv.{weapon['level']} • R{weapon['refinement']}"
-        )
-        if weaponStats:
-            value += f"\n{weaponStats}"
-        fields.append(("⚔️ Weapon", value))
-
-    artifacts = detail.get("artifacts") or []
-    if artifacts:
-        lines = []
-        for a in artifacts:
-            main = formatStat(a.get("main_stat"))
-            slot = slotLabels.get(a["slot"], a["slot"])
-            line = f"**{slot}** +{a['level']} — {a['set_name']}"
-            if main:
-                line += f"\n  {main}"
-            lines.append(line)
-        fields.append((f"🛡️ Artifacts ({len(artifacts)})", "\n".join(lines)))
-    elif detail.get("tracked"):
-        fields.append(
-            (
-                "🛡️ Artifacts",
-                (
-                    "No artifact data — pin this character to the in-game showcase "
-                    "to expose their full build."
-                ),
-            )
-        )
-
-    return fields
-
-
-class OverviewRow(discord.ui.ActionRow["GenshinView"]):
-    @discord.ui.button(
-        label="Browse characters", emoji="🎴", style=discord.ButtonStyle.primary
+    images = await gatherImages(genshin_card.iconUrls(detail))
+    ar = None
+    roster = _rosterCache.get(uid)
+    if roster:
+        ar = roster[1].get("player_level")
+    png = await asyncio.to_thread(
+        genshin_card.renderCard, detail, images, uid=uid, ar=ar
     )
-    async def browse(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.mode = "browser"
-        view.showBuild = False
-        view.goTo(0)
-        await view.refresh(interaction)
+
+    if len(_cardCache) > 48:
+        _cardCache.clear()
+    _cardCache[key] = png
+    return png, detail
 
 
-class NavRow(discord.ui.ActionRow["GenshinView"]):
-    @discord.ui.button(emoji="◀", style=discord.ButtonStyle.secondary)
-    async def prev(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.goTo(max(0, view.index - 1))
-        await view.refresh(interaction)
+class State(NamedTuple):
+    uid: str
+    index: int
+    menu: int
 
-    @discord.ui.button(emoji="▶", style=discord.ButtonStyle.secondary)
-    async def next(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.goTo(min(len(view.owned) - 1, view.index + 1))
-        await view.refresh(interaction)
+    def control(self, action: str) -> str:
+        return f"gsc:{action}:{self.uid}:{self.index}:{self.menu}"
 
-    @discord.ui.button(label="Full build", style=discord.ButtonStyle.secondary)
-    async def build(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.showBuild = not view.showBuild
-        view.buildError = None
-        if view.showBuild:
-            await view.loadBuild(interaction)
-        else:
-            await view.refresh(interaction)
-
-    @discord.ui.button(label="Overview", emoji="↩️", style=discord.ButtonStyle.secondary)
-    async def back(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.mode = "overview"
-        await view.refresh(interaction)
+    def jumpId(self) -> str:
+        return f"gsj:{self.uid}:{self.index}:{self.menu}"
 
 
-class JumpRow(discord.ui.ActionRow["GenshinView"]):
-    @discord.ui.select(placeholder="Jump to a character…")
-    async def jump(
-        self, interaction: discord.Interaction, select: discord.ui.Select
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.goTo(int(select.values[0]))
-        view.showBuild = False
-        await view.refresh(interaction)
+def applyAction(action: str, uid: str, index: int, menu: int) -> State:
+    """Next paginator state from a button press. Over-shoots are clamped once
+    the roster is loaded in :func:`buildView`."""
+    if action == "prev":
+        target = max(0, index - 1)
+        return State(uid, target, target // jumpPageSize)
+    if action == "next":
+        target = index + 1
+        return State(uid, target, target // jumpPageSize)
+    if action == "mprev":
+        return State(uid, index, max(0, menu - 1))
+    if action == "mnext":
+        return State(uid, index, menu + 1)
+    return State(uid, index, menu)
 
 
-class MenuPagerRow(discord.ui.ActionRow["GenshinView"]):
-    @discord.ui.button(label="◀ names", style=discord.ButtonStyle.secondary)
-    async def mprev(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.menuPage = max(0, view.menuPage - 1)
-        await view.refresh(interaction)
+def renderContainer(
+    state: State, owned: list[dict], filename: str
+) -> discord.ui.Container:
+    index = min(max(state.index, 0), len(owned) - 1)
+    pages = menuPages(len(owned))
+    menu = min(max(state.menu, 0), pages - 1)
+    here = state._replace(index=index, menu=menu)
+    char = owned[index]
 
-    @discord.ui.button(label="names ▶", style=discord.ButtonStyle.secondary)
-    async def mnext(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.menuPage = min(view.menuPageCount - 1, view.menuPage + 1)
-        await view.refresh(interaction)
+    accent = ELEMENT_COLOR.get(char.get("element", ""), embedColor)
+    box = discord.ui.Container(accent_colour=accent)
+    box.add_item(
+        discord.ui.MediaGallery(
+            components.image(f"attachment://{filename}", alt=char["name"])
+        )
+    )
+    tracked = "🟢 Live showcase" if char.get("tracked") else "⚪ Last known"
+    box.add_item(
+        discord.ui.TextDisplay(
+            f"-# {char['name']} · Lv.{char.get('level', '?')} · {tracked} · "
+            f"Character {index + 1}/{len(owned)} · UID {state.uid}"
+        )
+    )
+
+    nav = discord.ui.ActionRow()
+    nav.add_item(
+        discord.ui.Button(
+            emoji="◀",
+            style=discord.ButtonStyle.secondary,
+            custom_id=here.control("prev"),
+            disabled=index == 0,
+        )
+    )
+    nav.add_item(
+        discord.ui.Button(
+            emoji="▶",
+            style=discord.ButtonStyle.secondary,
+            custom_id=here.control("next"),
+            disabled=index >= len(owned) - 1,
+        )
+    )
+    box.add_item(nav)
+
+    start = menu * jumpPageSize
+    window = owned[start : start + jumpPageSize]
+    jumpRow = discord.ui.ActionRow()
+    jumpRow.add_item(
+        discord.ui.Select(
+            custom_id=here.jumpId(),
+            placeholder=f"Jump to a character… ({start + 1}–{start + len(window)})",
+            options=[
+                discord.SelectOption(
+                    label=c["name"][:100],
+                    value=str(start + offset),
+                    description=f"Lv.{c.get('level', '?')} · {c['element']}"[:100],
+                    default=(start + offset) == index,
+                )
+                for offset, c in enumerate(window)
+            ],
+        )
+    )
+    box.add_item(jumpRow)
+
+    if pages > 1:
+        pager = discord.ui.ActionRow()
+        pager.add_item(
+            discord.ui.Button(
+                label="◀ names",
+                style=discord.ButtonStyle.secondary,
+                custom_id=here.control("mprev"),
+                disabled=menu == 0,
+            )
+        )
+        pager.add_item(
+            discord.ui.Button(
+                label="names ▶",
+                style=discord.ButtonStyle.secondary,
+                custom_id=here.control("mnext"),
+                disabled=menu >= pages - 1,
+            )
+        )
+        box.add_item(pager)
+
+    return box
 
 
-class GenshinView(discord.ui.LayoutView):
-    def __init__(self, uid: str, roster: dict, authorId: int) -> None:
-        super().__init__(timeout=180)
+async def buildView(state: State) -> tuple[components.Panel, discord.File | None]:
+    roster = await getRoster(state.uid)
+    owned = sortedOwned(roster)
+    if not owned:
+        note = (
+            'This account has no visible characters. Enable "Display all your '
+            'characters" on the in-game Character Showcase, or pin a few, then retry.'
+        )
+        if roster.get("stale"):
+            note = "Enka.Network is unavailable right now — try again shortly."
+        return components.panel(
+            title="❓ Nothing to show", body=note, color=components.RED
+        ), None
+
+    index = min(max(state.index, 0), len(owned) - 1)
+    filename = "genshin.png"
+    png, _ = await renderCharacterPng(state.uid, owned[index])
+    file = discord.File(io.BytesIO(png), filename=filename)
+    return components.Panel(renderContainer(state, owned, filename)), file
+
+
+async def _swapView(interaction: discord.Interaction, state: State) -> None:
+    await interaction.response.defer()
+    try:
+        view, file = await buildView(state)
+    except apiErrors as error:
+        await interaction.edit_original_response(
+            view=buildErrorPanel(error, state.uid), attachments=[]
+        )
+        return
+    await interaction.edit_original_response(
+        view=view, attachments=[file] if file else []
+    )
+
+
+class GenshinControl(
+    discord.ui.DynamicItem[discord.ui.Button], template=CONTROL_TEMPLATE
+):
+    def __init__(self, nextState: State, customId: str) -> None:
+        self.nextState = nextState
+        super().__init__(
+            discord.ui.Button(style=discord.ButtonStyle.secondary, custom_id=customId)
+        )
+
+    @classmethod
+    async def from_custom_id(
+        cls,
+        interaction: discord.Interaction,
+        item: discord.ui.Item[Any],
+        match: re.Match[str],
+        /,
+    ) -> "GenshinControl":
+        nextState = applyAction(
+            match["action"], match["uid"], int(match["index"]), int(match["menu"])
+        )
+        return cls(nextState, match.string)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await _swapView(interaction, self.nextState)
+
+
+class GenshinJump(discord.ui.DynamicItem[discord.ui.Select], template=JUMP_TEMPLATE):
+    def __init__(self, uid: str, customId: str) -> None:
         self.uid = uid
-        self.roster = roster
-        self.authorId = authorId
-        self.owned = sorted(
-            (c for c in roster["characters"] if c["owned"]),
-            key=lambda c: (-(c.get("level") or 0), c["name"]),
-        )
-        self.mode = "overview"
-        self.index = 0
-        self.menuPage = 0
-        self.showBuild = False
-        self.buildError: str | None = None
-        self.detailCache: dict[str, dict] = {}
-        self.expired = False
-        self.message: discord.Message | None = None
-
-        self.box = discord.ui.Container(accent_colour=embedColor)
-        self.overviewRow = OverviewRow()
-        self.navRow = NavRow()
-        self.jumpRow = JumpRow()
-        self.menuPagerRow = MenuPagerRow()
-
-        self.add_item(self.box)
-        self.render()
-
-    @property
-    def menuPageCount(self) -> int:
-        return max(1, -(-len(self.owned) // jumpPageSize))
-
-    def goTo(self, index: int) -> None:
-        """Move to a character and snap the jump menu to the block holding it."""
-        self.index = index
-        self.menuPage = index // jumpPageSize
-        self.buildError = None
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.authorId:
-            await interaction.response.send_message(
-                "Only the person who ran this command can use these controls.",
-                ephemeral=True,
-            )
-            return False
-        return True
-
-    async def refresh(self, interaction: discord.Interaction) -> None:
-        self.render()
-        await interaction.response.edit_message(view=self)
-
-    async def loadBuild(self, interaction: discord.Interaction) -> None:
-        char = self.owned[self.index]
-        if char["id"] in self.detailCache:
-            self.render()
-            await interaction.response.edit_message(view=self)
-            return
-
-        self.render()
-        await interaction.response.edit_message(view=self)
-        try:
-            self.detailCache[char["id"]] = await dough.getGenshinCharacter(
-                self.uid, char["id"]
-            )
-        except apiErrors:
-            self.buildError = (
-                "Couldn't load this character's build — they may not be in the "
-                "live showcase."
-            )
-        self.render()
-        await interaction.edit_original_response(view=self)
-
-    def render(self) -> None:
-        self.box.clear_items()
-        if self.mode == "overview" or not self.owned:
-            self._renderOverview()
-        else:
-            self._renderBrowser()
-        if self.expired:
-            rows = (self.overviewRow, self.navRow, self.jumpRow, self.menuPagerRow)
-            for row in rows:
-                for child in row.children:
-                    if isinstance(child, discord.ui.Button | discord.ui.Select):
-                        child.disabled = True
-
-    def _renderOverview(self) -> None:
-        self.box.accent_colour = successColor
-        header, fields = overviewSummary(self.roster)
-        self.box.add_item(
-            discord.ui.TextDisplay(
-                sectionText(
-                    f"📊 Genshin — {self.roster.get('nickname') or self.uid}",
-                    header,
-                    fields,
-                )
+        super().__init__(
+            discord.ui.Select(
+                custom_id=customId,
+                options=[discord.SelectOption(label="_", value="0")],
             )
         )
-        self.overviewRow.browse.disabled = not self.owned
-        self.box.add_item(self.overviewRow)
 
-    def _renderBrowser(self) -> None:
-        self.box.accent_colour = embedColor
-        char = self.owned[self.index]
+    @classmethod
+    async def from_custom_id(
+        cls,
+        interaction: discord.Interaction,
+        item: discord.ui.Item[Any],
+        match: re.Match[str],
+        /,
+    ) -> "GenshinJump":
+        return cls(match["uid"], match.string)
 
-        lines = [
-            components.heading(f"{elementEmoji(char['element'])} {char['name']}"),
-            f"{stars(char['rarity'])} • {char['element']}",
-            f"**Level {char.get('level', '?')}** • "
-            + ("🟢 Live showcase" if char.get("tracked") else "⚪ Last known"),
-        ]
-
-        fields: list[components.Field] = []
-        if self.showBuild:
-            if self.buildError:
-                fields.append(("⚠️ Full build", self.buildError))
-            elif char["id"] in self.detailCache:
-                fields = characterFields(self.detailCache[char["id"]])
-            else:
-                lines.append("\n*Loading full build…*")
-
-        text = "\n".join(lines)
-        if fields:
-            text += "\n\n" + components.renderFields(fields)
-        text += f"\n\n-# Character {self.index + 1}/{len(self.owned)} • UID {self.uid}"
-
-        icon = char.get("icon_url")
-        if icon:
-            self.box.add_item(
-                discord.ui.Section(
-                    discord.ui.TextDisplay(text),
-                    accessory=discord.ui.Thumbnail(icon),
-                )
-            )
-        else:
-            self.box.add_item(discord.ui.TextDisplay(text))
-
-        self.box.add_item(discord.ui.Separator())
-
-        self.navRow.prev.disabled = self.index == 0
-        self.navRow.next.disabled = self.index >= len(self.owned) - 1
-        self.navRow.build.label = "Hide build" if self.showBuild else "Full build"
-        self.navRow.build.style = (
-            discord.ButtonStyle.primary
-            if self.showBuild
-            else discord.ButtonStyle.secondary
-        )
-        self.box.add_item(self.navRow)
-
-        self.menuPage = min(self.menuPage, self.menuPageCount - 1)
-        start = self.menuPage * jumpPageSize
-        window = self.owned[start : start + jumpPageSize]
-        self.jumpRow.jump.options = [
-            discord.SelectOption(
-                label=c["name"][:100],
-                value=str(start + offset),
-                description=f"Lv.{c.get('level', '?')} • {c['element']}"[:100],
-                default=(start + offset) == self.index,
-            )
-            for offset, c in enumerate(window)
-        ]
-        self.jumpRow.jump.placeholder = (
-            f"Jump to a character… (names {start + 1}–{start + len(window)})"
-        )
-        self.box.add_item(self.jumpRow)
-
-        if self.menuPageCount > 1:
-            self.menuPagerRow.mprev.disabled = self.menuPage == 0
-            self.menuPagerRow.mnext.disabled = self.menuPage >= self.menuPageCount - 1
-            self.box.add_item(self.menuPagerRow)
-
-    async def on_timeout(self) -> None:
-        self.expired = True
-        self.render()
-        if self.message is not None:
-            try:
-                await self.message.edit(view=self)
-            except discord.HTTPException:
-                pass
+    async def callback(self, interaction: discord.Interaction) -> None:
+        picked = int(self.item.values[0])
+        state = State(self.uid, picked, picked // jumpPageSize)
+        await _swapView(interaction, state)
 
 
 class Genshin(commands.Cog):
@@ -471,15 +366,19 @@ class Genshin(commands.Cog):
             )
             return
 
+        state = State(clean, 0, 0)
         try:
-            roster = await dough.getGenshinRoster(clean)
+            view, file = await buildView(state)
         except apiErrors as error:
             await interaction.followup.send(view=buildErrorPanel(error, clean))
             return
 
-        view = GenshinView(clean, roster, interaction.user.id)
-        view.message = await interaction.followup.send(view=view, wait=True)
+        if file is not None:
+            await interaction.followup.send(view=view, file=file)
+        else:
+            await interaction.followup.send(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:
+    bot.add_dynamic_items(GenshinControl, GenshinJump)
     await bot.add_cog(Genshin(bot))

@@ -5,6 +5,8 @@ A :class:`Panel` is a :class:`discord.ui.LayoutView` wrapping a single
 ``content=`` — Components V2 messages carry neither).
 """
 
+from collections.abc import Sequence
+
 import discord
 from discord import ui
 
@@ -12,6 +14,14 @@ FUCHSIA = discord.Color.fuchsia()
 RED = discord.Color.red()
 
 type Field = tuple[str, str]
+type Media = str | discord.MediaGalleryItem
+
+
+def image(
+    url: str, *, alt: str | None = None, spoiler: bool = False
+) -> discord.MediaGalleryItem:
+    """A gallery item with optional alt text / spoiler blur."""
+    return discord.MediaGalleryItem(url, description=alt, spoiler=spoiler)
 
 
 class Panel(ui.LayoutView):
@@ -42,7 +52,7 @@ def container(
     body: str | None = None,
     fields: list[Field] | None = None,
     thumbnail: str | None = None,
-    images: list[str] | None = None,
+    images: Sequence[Media] | None = None,
     files: list[str] | None = None,
     buttons: list[ui.Button] | None = None,
     footer: str | None = None,
@@ -50,9 +60,9 @@ def container(
 ) -> ui.Container:
     """Build a Container from embed-shaped pieces, laid out the V2 way.
 
-    ``images`` take URLs or ``attachment://name`` refs; ``files`` take
-    ``attachment://name`` refs and render as downloadable file components.
-    A V2 message hides any uploaded attachment it does not reference.
+    ``images`` take URLs, ``attachment://name`` refs, or ``image()`` items
+    (1-10, rendered as one gallery); ``files`` take ``attachment://name``
+    refs. A V2 message hides any uploaded attachment it does not reference.
     ``buttons`` render as a row inside the box, above the footer.
     """
     lead = [part for part in (heading(title, url) if title else None, body) if part]
@@ -76,7 +86,12 @@ def container(
 
     if images:
         blocks.append(
-            ui.MediaGallery(*(discord.MediaGalleryItem(url) for url in images))
+            ui.MediaGallery(
+                *(
+                    item if isinstance(item, discord.MediaGalleryItem) else image(item)
+                    for item in images[:10]
+                )
+            )
         )
 
     for ref in files or []:
@@ -105,7 +120,7 @@ def panel(
     body: str | None = None,
     fields: list[Field] | None = None,
     thumbnail: str | None = None,
-    images: list[str] | None = None,
+    images: Sequence[Media] | None = None,
     files: list[str] | None = None,
     buttons: list[ui.Button] | None = None,
     footer: str | None = None,

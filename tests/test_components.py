@@ -67,6 +67,21 @@ def test_buttons_render_as_a_row_inside_the_container() -> None:
     assert all(b.url is not None for b in buttons)
 
 
+def test_gallery_accepts_urls_and_image_items_and_caps_at_ten() -> None:
+    box = components.container(
+        images=[
+            "https://example.com/0.png",
+            components.image("https://example.com/1.png", alt="one"),
+            *[f"https://example.com/{i}.png" for i in range(2, 20)],
+        ]
+    )
+
+    galleries = [c for c in box.children if isinstance(c, ui.MediaGallery)]
+    assert len(galleries) == 1
+    assert len(galleries[0].items) == 10
+    assert galleries[0].items[1].description == "one"
+
+
 def test_container_renders_without_any_pieces() -> None:
     box = components.container()
 

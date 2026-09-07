@@ -1,3 +1,6 @@
+import re
+from typing import Any
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -52,70 +55,60 @@ def pcPageBody(index: int) -> str:
     return "\n".join(lines)
 
 
-class PcNav(discord.ui.ActionRow["PcView"]):
-    @discord.ui.button(
-        emoji="<:rem:1539939307144613958>", style=discord.ButtonStyle.secondary
-    )
-    async def leftButton(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.index -= 1
-        view.render()
-        await interaction.response.edit_message(view=view)
+class PcPageButton(
+    discord.ui.DynamicItem[discord.ui.Button],
+    template=r"pcspecs:page:(?P<index>\d+)",
+):
+    """Stateless page button — its custom_id carries the page it jumps to, so
+    the paginator keeps working forever with no live view object."""
 
-    @discord.ui.button(
-        emoji="<:ram:1539939306167337060>", style=discord.ButtonStyle.secondary
-    )
-    async def rightButton(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        view = self.view
-        if view is None:
-            return
-        view.index += 1
-        view.render()
-        await interaction.response.edit_message(view=view)
-
-
-class PcView(discord.ui.LayoutView):
-    def __init__(self, authorId: int) -> None:
-        super().__init__(timeout=120)
-        self.authorId = authorId
-        self.index = 0
-        self.message: discord.Message | None = None
-
-        self.box = discord.ui.Container(accent_colour=components.FUCHSIA)
-        self.nav = PcNav()
-
-        self.add_item(self.box)
-        self.render()
-
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id != self.authorId:
-            await interaction.response.send_message(
-                "Only the person who ran this command can use these buttons.",
-                ephemeral=True,
+    def __init__(self, index: int, *, emoji: str = "", disabled: bool = False) -> None:
+        self.index = index
+        super().__init__(
+            discord.ui.Button(
+                emoji=emoji or None,
+                style=discord.ButtonStyle.secondary,
+                custom_id=f"pcspecs:page:{index}",
+                disabled=disabled,
             )
-            return False
-        return True
+        )
 
-    def render(self) -> None:
-        self.nav.leftButton.disabled = self.index == 0
-        self.nav.rightButton.disabled = self.index == len(pcPages) - 1
+    @classmethod
+    async def from_custom_id(
+        cls,
+        interaction: discord.Interaction,
+        item: discord.ui.Item[Any],
+        match: re.Match[str],
+        /,
+    ) -> "PcPageButton":
+        return cls(int(match["index"]))
 
-        self.box.clear_items()
-        self.box.add_item(discord.ui.TextDisplay(pcPageBody(self.index)))
-        self.box.add_item(self.nav)
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.edit_message(view=buildPcView(self.index))
 
-    async def on_timeout(self) -> None:
-        self.render()
-        self.nav.leftButton.disabled = True
-        self.nav.rightButton.disabled = True
-        if self.message is not None:
-            await self.message.edit(view=self)
+
+def buildPcView(index: int) -> components.Panel:
+    index = max(0, min(index, len(pcPages) - 1))
+    box = discord.ui.Container(accent_colour=components.FUCHSIA)
+    box.add_item(discord.ui.TextDisplay(pcPageBody(index)))
+
+    nav = discord.ui.ActionRow()
+    nav.add_item(
+        PcPageButton(
+            max(0, index - 1),
+            emoji="<:rem:1539939307144613958>",
+            disabled=index == 0,
+        )
+    )
+    nav.add_item(
+        PcPageButton(
+            min(len(pcPages) - 1, index + 1),
+            emoji="<:ram:1539939306167337060>",
+            disabled=index == len(pcPages) - 1,
+        )
+    )
+    box.add_item(nav)
+    return components.Panel(box)
 
 
 class Pc(commands.Cog):
@@ -127,10 +120,9 @@ class Pc(commands.Cog):
     )
     @doughchecks.has_permissions(embed_links=True)
     async def pcSlash(self, interaction: discord.Interaction) -> None:
-        await interaction.response.defer()
-        view = PcView(interaction.user.id)
-        view.message = await interaction.followup.send(view=view, wait=True)
+        await interaction.response.send_message(view=buildPcView(0))
 
 
 async def setup(bot: commands.Bot) -> None:
+    bot.add_dynamic_items(PcPageButton)
     await bot.add_cog(Pc(bot))

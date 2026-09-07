@@ -1,25 +1,10 @@
-import datetime as dt
-
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 from utils.doughmination import DoughminationError, GenshinNotFoundError, dough
-
-genshinAccounts = {
-    "main": {"label": "Main", "uid": "691386457"},
-    "alt": {"label": "Alt", "uid": "640990645"},
-}
-defaultAccount = "main"
-
-accountChoices = [
-    app_commands.Choice(name=account["label"], value=key)
-    for key, account in genshinAccounts.items()
-]
-
-accountBySubcommand = {"main-chara": "main", "alt-chara": "alt"}
 
 elementEmojiMap = {
     "Pyro": "🔥",
@@ -31,7 +16,6 @@ elementEmojiMap = {
     "Dendro": "🌿",
     "All": "✨",
 }
-elementOrder = ["Pyro", "Hydro", "Anemo", "Electro", "Cryo", "Geo", "Dendro", "All"]
 
 slotLabels = {
     "flower": "Flower",
@@ -41,13 +25,11 @@ slotLabels = {
     "circlet": "Circlet",
 }
 
-embedColor = discord.Color.fuchsia()
+embedColor = components.FUCHSIA
 successColor = discord.Color.green()
-errorColor = discord.Color.red()
 
-
-def resolveAccount(key: str | None) -> dict:
-    return genshinAccounts.get(key or defaultAccount, genshinAccounts[defaultAccount])
+jumpPageSize = 25
+apiErrors = (DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError)
 
 
 def elementEmoji(element: str) -> str:
@@ -65,97 +47,88 @@ def formatStat(stat: dict | None) -> str | None:
     return f"{stat['name']}: {value}"
 
 
-def capFieldLines(lines: list[str]) -> str:
-    if not lines:
-        return "—"
-    limit = 1024
-    kept: list[str] = []
-    length = 0
-    for i, line in enumerate(lines):
-        tail = f"\n…and {len(lines) - i} more"
-        addition = (1 if kept else 0) + len(line)
-        if length + addition + len(tail) > limit:
-            kept.append(f"…and {len(lines) - i} more")
-            break
-        kept.append(line)
-        length += addition
-    return "\n".join(kept)
+def validUid(raw: str) -> str | None:
+    uid = raw.strip()
+    return uid if uid.isdigit() and 9 <= len(uid) <= 10 else None
 
 
-def parseTimestamp(ms: int | None) -> dt.datetime:
-    if ms:
-        return dt.datetime.fromtimestamp(ms / 1000, tz=dt.UTC)
-    return dt.datetime.now(dt.UTC)
+def sectionText(
+    title: str | None = None,
+    body: str | None = None,
+    fields: list[components.Field] | None = None,
+) -> str:
+    parts = [components.heading(title)] if title else []
+    if body:
+        parts.append(body)
+    if fields:
+        parts.append(components.renderFields(fields))
+    return "\n\n".join(parts)
 
 
-def findCharacter(characters: list[dict], query: str) -> dict | None:
-    q = query.lower()
-    for c in characters:
-        if c["name"].lower() == q:
-            return c
-    for c in characters:
-        if q in c["name"].lower():
-            return c
-    return None
-
-
-def buildErrorEmbed(
-    error: Exception, accountLabel: str, notFoundTitle: str
-) -> discord.Embed:
+def buildErrorPanel(error: Exception, uid: str) -> components.Panel:
     notFound = isinstance(error, GenshinNotFoundError)
     message = (
-        f"No Enka.Network record for the {accountLabel} account. "
-        "The profile may be private, unindexed, or the UID is wrong."
+        f"No Enka.Network record for UID `{uid}`. The profile may be private, "
+        "unindexed, or the UID is wrong."
         if notFound
         else str(error)
     )
-    embed = discord.Embed(
-        color=errorColor,
-        title=notFoundTitle if notFound else "❌ Error",
-        description=message,
+    return components.panel(
+        title="❓ Not found" if notFound else "❌ Error",
+        body=message,
+        color=components.RED,
     )
-    embed.timestamp = dt.datetime.now(dt.UTC)
-    return embed
 
 
-def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
-    embed = discord.Embed(
-        color=embedColor if detail["owned"] else discord.Color.light_gray(),
-        title=f"{elementEmoji(detail['element'])} {detail['name']}",
-        description=f"{stars(detail['rarity'])} • {detail['element']} • {accountLabel} account",
-    )
-    embed.timestamp = parseTimestamp(detail.get("updated_at"))
+def overviewSummary(roster: dict) -> tuple[str | None, list[components.Field]]:
+    untracked = roster["owned_count"] - roster["tracked_count"]
 
-    if detail.get("icon_url"):
-        embed.set_thumbnail(url=detail["icon_url"])
-
-    if not detail["owned"]:
-        embed.add_field(
-            name="Ownership", value="❌ Not owned on this account.", inline=False
+    notes = []
+    if roster.get("partial"):
+        notes.append(
+            '⚠️ Only pinned showcase characters are visible — enable "Display all '
+            'your characters" in-game.'
         )
-        return embed
+    if roster.get("stale"):
+        notes.append(
+            "ℹ️ Served from the ownership ledger (Enka unavailable) — figures are "
+            "last-known."
+        )
 
-    embed.add_field(
-        name="Level",
-        value=str(detail["level"]) if detail.get("level") is not None else "Unknown",
-        inline=True,
-    )
-    embed.add_field(
-        name="Constellation", value=f"C{detail['constellation']}", inline=True
-    )
-    embed.add_field(
-        name="Friendship",
-        value=str(detail["friendship"])
-        if detail.get("friendship") is not None
-        else "—",
-        inline=True,
-    )
+    fields: list[components.Field] = [
+        ("UID", str(roster["uid"])),
+        (
+            "Adventure Rank",
+            str(roster["player_level"]) if roster.get("player_level") else "Unknown",
+        ),
+        ("Owned", f"{roster['owned_count']} / {roster['total_count']}"),
+        ("Tracked live", str(roster["tracked_count"])),
+        ("Last known only", str(untracked)),
+    ]
+    return "\n".join(notes) or None, fields
 
-    if not detail["tracked"]:
-        embed.add_field(
-            name="ℹ️ Last known",
-            value="This character isn't in the live showcase right now, so the build below may be missing. Level/constellation are last-known values.",
-            inline=False,
+
+def characterFields(detail: dict) -> list[components.Field]:
+    if not detail.get("owned"):
+        return [("Ownership", "❌ Not owned on this account.")]
+
+    fields: list[components.Field] = [
+        ("Constellation", f"C{detail.get('constellation', 0)}"),
+        (
+            "Friendship",
+            str(detail["friendship"]) if detail.get("friendship") is not None else "—",
+        ),
+    ]
+
+    if not detail.get("tracked"):
+        fields.append(
+            (
+                "ℹ️ Last known",
+                (
+                    "This character isn't in the live showcase right now, so the "
+                    "build below may be incomplete."
+                ),
+            )
         )
 
     weapon = detail.get("weapon")
@@ -168,10 +141,13 @@ def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
             )
             if s
         )
-        value = f"**{weapon['name']}** {stars(weapon['rarity'])}\nLv.{weapon['level']} • R{weapon['refinement']}"
+        value = (
+            f"**{weapon['name']}** {stars(weapon['rarity'])}\n"
+            f"Lv.{weapon['level']} • R{weapon['refinement']}"
+        )
         if weaponStats:
             value += f"\n{weaponStats}"
-        embed.add_field(name="⚔️ Weapon", value=value, inline=False)
+        fields.append(("⚔️ Weapon", value))
 
     artifacts = detail.get("artifacts") or []
     if artifacts:
@@ -183,256 +159,326 @@ def buildCharacterEmbed(detail: dict, accountLabel: str) -> discord.Embed:
             if main:
                 line += f"\n  {main}"
             lines.append(line)
-        embed.add_field(
-            name=f"🛡️ Artifacts ({len(artifacts)})", value="\n".join(lines), inline=False
+        fields.append((f"🛡️ Artifacts ({len(artifacts)})", "\n".join(lines)))
+    elif detail.get("tracked"):
+        fields.append(
+            (
+                "🛡️ Artifacts",
+                (
+                    "No artifact data — pin this character to the in-game showcase "
+                    "to expose their full build."
+                ),
+            )
         )
-    elif detail["tracked"]:
-        embed.add_field(
-            name="🛡️ Artifacts",
-            value="No artifact data — pin this character to the in-game showcase to expose their full build.",
-            inline=False,
+
+    return fields
+
+
+class OverviewRow(discord.ui.ActionRow["GenshinView"]):
+    @discord.ui.button(
+        label="Browse characters", emoji="🎴", style=discord.ButtonStyle.primary
+    )
+    async def browse(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.mode = "browser"
+        view.showBuild = False
+        view.goTo(0)
+        await view.refresh(interaction)
+
+
+class NavRow(discord.ui.ActionRow["GenshinView"]):
+    @discord.ui.button(emoji="◀", style=discord.ButtonStyle.secondary)
+    async def prev(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.goTo(max(0, view.index - 1))
+        await view.refresh(interaction)
+
+    @discord.ui.button(emoji="▶", style=discord.ButtonStyle.secondary)
+    async def next(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.goTo(min(len(view.owned) - 1, view.index + 1))
+        await view.refresh(interaction)
+
+    @discord.ui.button(label="Full build", style=discord.ButtonStyle.secondary)
+    async def build(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.showBuild = not view.showBuild
+        view.buildError = None
+        if view.showBuild:
+            await view.loadBuild(interaction)
+        else:
+            await view.refresh(interaction)
+
+    @discord.ui.button(label="Overview", emoji="↩️", style=discord.ButtonStyle.secondary)
+    async def back(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.mode = "overview"
+        await view.refresh(interaction)
+
+
+class JumpRow(discord.ui.ActionRow["GenshinView"]):
+    @discord.ui.select(placeholder="Jump to a character…")
+    async def jump(
+        self, interaction: discord.Interaction, select: discord.ui.Select
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.goTo(int(select.values[0]))
+        view.showBuild = False
+        await view.refresh(interaction)
+
+
+class MenuPagerRow(discord.ui.ActionRow["GenshinView"]):
+    @discord.ui.button(label="◀ names", style=discord.ButtonStyle.secondary)
+    async def mprev(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.menuPage = max(0, view.menuPage - 1)
+        await view.refresh(interaction)
+
+    @discord.ui.button(label="names ▶", style=discord.ButtonStyle.secondary)
+    async def mnext(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.menuPage = min(view.menuPageCount - 1, view.menuPage + 1)
+        await view.refresh(interaction)
+
+
+class GenshinView(discord.ui.LayoutView):
+    def __init__(self, uid: str, roster: dict, authorId: int) -> None:
+        super().__init__(timeout=180)
+        self.uid = uid
+        self.roster = roster
+        self.authorId = authorId
+        self.owned = sorted(
+            (c for c in roster["characters"] if c["owned"]),
+            key=lambda c: (-(c.get("level") or 0), c["name"]),
         )
+        self.mode = "overview"
+        self.index = 0
+        self.menuPage = 0
+        self.showBuild = False
+        self.buildError: str | None = None
+        self.detailCache: dict[str, dict] = {}
+        self.expired = False
+        self.message: discord.Message | None = None
 
-    return embed
+        self.box = discord.ui.Container(accent_colour=embedColor)
+        self.overviewRow = OverviewRow()
+        self.navRow = NavRow()
+        self.jumpRow = JumpRow()
+        self.menuPagerRow = MenuPagerRow()
+
+        self.add_item(self.box)
+        self.render()
+
+    @property
+    def menuPageCount(self) -> int:
+        return max(1, -(-len(self.owned) // jumpPageSize))
+
+    def goTo(self, index: int) -> None:
+        """Move to a character and snap the jump menu to the block holding it."""
+        self.index = index
+        self.menuPage = index // jumpPageSize
+        self.buildError = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.authorId:
+            await interaction.response.send_message(
+                "Only the person who ran this command can use these controls.",
+                ephemeral=True,
+            )
+            return False
+        return True
+
+    async def refresh(self, interaction: discord.Interaction) -> None:
+        self.render()
+        await interaction.response.edit_message(view=self)
+
+    async def loadBuild(self, interaction: discord.Interaction) -> None:
+        char = self.owned[self.index]
+        if char["id"] in self.detailCache:
+            self.render()
+            await interaction.response.edit_message(view=self)
+            return
+
+        self.render()
+        await interaction.response.edit_message(view=self)
+        try:
+            self.detailCache[char["id"]] = await dough.getGenshinCharacter(
+                self.uid, char["id"]
+            )
+        except apiErrors:
+            self.buildError = (
+                "Couldn't load this character's build — they may not be in the "
+                "live showcase."
+            )
+        self.render()
+        await interaction.edit_original_response(view=self)
+
+    def render(self) -> None:
+        self.box.clear_items()
+        if self.mode == "overview" or not self.owned:
+            self._renderOverview()
+        else:
+            self._renderBrowser()
+        if self.expired:
+            rows = (self.overviewRow, self.navRow, self.jumpRow, self.menuPagerRow)
+            for row in rows:
+                for child in row.children:
+                    if isinstance(child, discord.ui.Button | discord.ui.Select):
+                        child.disabled = True
+
+    def _renderOverview(self) -> None:
+        self.box.accent_colour = successColor
+        header, fields = overviewSummary(self.roster)
+        self.box.add_item(
+            discord.ui.TextDisplay(
+                sectionText(
+                    f"📊 Genshin — {self.roster.get('nickname') or self.uid}",
+                    header,
+                    fields,
+                )
+            )
+        )
+        self.overviewRow.browse.disabled = not self.owned
+        self.box.add_item(self.overviewRow)
+
+    def _renderBrowser(self) -> None:
+        self.box.accent_colour = embedColor
+        char = self.owned[self.index]
+
+        lines = [
+            components.heading(f"{elementEmoji(char['element'])} {char['name']}"),
+            f"{stars(char['rarity'])} • {char['element']}",
+            f"**Level {char.get('level', '?')}** • "
+            + ("🟢 Live showcase" if char.get("tracked") else "⚪ Last known"),
+        ]
+
+        fields: list[components.Field] = []
+        if self.showBuild:
+            if self.buildError:
+                fields.append(("⚠️ Full build", self.buildError))
+            elif char["id"] in self.detailCache:
+                fields = characterFields(self.detailCache[char["id"]])
+            else:
+                lines.append("\n*Loading full build…*")
+
+        text = "\n".join(lines)
+        if fields:
+            text += "\n\n" + components.renderFields(fields)
+        text += f"\n\n-# Character {self.index + 1}/{len(self.owned)} • UID {self.uid}"
+
+        icon = char.get("icon_url")
+        if icon:
+            self.box.add_item(
+                discord.ui.Section(
+                    discord.ui.TextDisplay(text),
+                    accessory=discord.ui.Thumbnail(icon),
+                )
+            )
+        else:
+            self.box.add_item(discord.ui.TextDisplay(text))
+
+        self.box.add_item(discord.ui.Separator())
+
+        self.navRow.prev.disabled = self.index == 0
+        self.navRow.next.disabled = self.index >= len(self.owned) - 1
+        self.navRow.build.label = "Hide build" if self.showBuild else "Full build"
+        self.navRow.build.style = (
+            discord.ButtonStyle.primary
+            if self.showBuild
+            else discord.ButtonStyle.secondary
+        )
+        self.box.add_item(self.navRow)
+
+        self.menuPage = min(self.menuPage, self.menuPageCount - 1)
+        start = self.menuPage * jumpPageSize
+        window = self.owned[start : start + jumpPageSize]
+        self.jumpRow.jump.options = [
+            discord.SelectOption(
+                label=c["name"][:100],
+                value=str(start + offset),
+                description=f"Lv.{c.get('level', '?')} • {c['element']}"[:100],
+                default=(start + offset) == self.index,
+            )
+            for offset, c in enumerate(window)
+        ]
+        self.jumpRow.jump.placeholder = (
+            f"Jump to a character… (names {start + 1}–{start + len(window)})"
+        )
+        self.box.add_item(self.jumpRow)
+
+        if self.menuPageCount > 1:
+            self.menuPagerRow.mprev.disabled = self.menuPage == 0
+            self.menuPagerRow.mnext.disabled = self.menuPage >= self.menuPageCount - 1
+            self.box.add_item(self.menuPagerRow)
+
+    async def on_timeout(self) -> None:
+        self.expired = True
+        self.render()
+        if self.message is not None:
+            try:
+                await self.message.edit(view=self)
+            except discord.HTTPException:
+                pass
 
 
-class Genshin(
-    commands.GroupCog, name="genshin", description="Genshin Impact character lookups"
-):
+class Genshin(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        super().__init__()
-
-    async def charaAutocomplete(
-        self, interaction: discord.Interaction, current: str
-    ) -> list[app_commands.Choice[str]]:
-        accountKey = accountBySubcommand.get(
-            interaction.command.name if interaction.command else ""
-        )
-        if not accountKey:
-            return []
-
-        account = genshinAccounts[accountKey]
-        try:
-            roster = await dough.getGenshinRoster(account["uid"])
-        except (DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError):
-            return []
-
-        q = current.lower()
-        owned = [
-            c for c in roster["characters"] if c["owned"] and q in c["name"].lower()
-        ]
-        owned.sort(key=lambda c: (-(c.get("level") or 0), c["name"]))
-
-        return [
-            app_commands.Choice(
-                name=f"{c['name']} (Lv.{c['level']})"
-                if c.get("level") is not None
-                else c["name"],
-                value=c["name"],
-            )
-            for c in owned[:25]
-        ]
 
     @app_commands.command(
-        name="stats",
-        description="Quick overview of an account (level, owned count, etc.)",
+        name="genshin", description="Look up a Genshin Impact account by UID"
     )
-    @app_commands.describe(account="Which account (defaults to Main)")
-    @app_commands.choices(account=accountChoices)
-    @doughchecks.has_permissions(embed_links=True)
-    async def statsSlash(
-        self, interaction: discord.Interaction, account: str | None = None
-    ) -> None:
+    @app_commands.describe(uid="The 9–10 digit Genshin UID to look up")
+    async def genshinSlash(self, interaction: discord.Interaction, uid: str) -> None:
         await interaction.response.defer()
-        acc = resolveAccount(account)
 
-        try:
-            roster = await dough.getGenshinRoster(acc["uid"])
-        except (
-            DoughminationError,
-            RuntimeError,
-            aiohttp.ClientError,
-            TimeoutError,
-        ) as error:
+        clean = validUid(uid)
+        if clean is None:
             await interaction.followup.send(
-                embed=buildErrorEmbed(error, acc["label"], "❓ Account Not Found")
+                view=components.error(
+                    "That doesn't look like a Genshin UID — it should be 9–10 digits."
+                )
             )
             return
 
-        untracked = roster["owned_count"] - roster["tracked_count"]
-        embed = discord.Embed(
-            color=successColor,
-            title=f"📊 Genshin Stats — {roster.get('nickname') or acc['label']}",
-        )
-        embed.timestamp = parseTimestamp(roster.get("updated_at"))
-        embed.add_field(name="UID", value=roster["uid"], inline=True)
-        embed.add_field(
-            name="Adventure Rank",
-            value=str(roster["player_level"])
-            if roster.get("player_level")
-            else "Unknown",
-            inline=True,
-        )
-        embed.add_field(name="Account", value=acc["label"], inline=True)
-        embed.add_field(
-            name="Owned",
-            value=f"{roster['owned_count']} / {roster['total_count']}",
-            inline=True,
-        )
-        embed.add_field(
-            name="Tracked live", value=str(roster["tracked_count"]), inline=True
-        )
-        embed.add_field(name="Last known only", value=str(untracked), inline=True)
-
-        notes = []
-        if roster.get("partial"):
-            notes.append(
-                '⚠️ Only pinned showcase characters visible — enable "Display all your characters" in-game.'
-            )
-        if roster.get("stale"):
-            notes.append(
-                "ℹ️ Served from the ownership ledger (Enka unavailable) — figures are last-known."
-            )
-        if notes:
-            embed.description = "\n".join(notes)
-
-        await interaction.followup.send(embed=embed)
-
-    @app_commands.command(
-        name="roster", description="List the characters you own, grouped by element"
-    )
-    @app_commands.describe(account="Which account (defaults to Main)")
-    @app_commands.choices(account=accountChoices)
-    @doughchecks.has_permissions(embed_links=True)
-    async def rosterSlash(
-        self, interaction: discord.Interaction, account: str | None = None
-    ) -> None:
-        await interaction.response.defer()
-        acc = resolveAccount(account)
-
         try:
-            roster = await dough.getGenshinRoster(acc["uid"])
-        except (
-            DoughminationError,
-            RuntimeError,
-            aiohttp.ClientError,
-            TimeoutError,
-        ) as error:
-            await interaction.followup.send(
-                embed=buildErrorEmbed(error, acc["label"], "❓ Roster Not Found")
-            )
+            roster = await dough.getGenshinRoster(clean)
+        except apiErrors as error:
+            await interaction.followup.send(view=buildErrorPanel(error, clean))
             return
 
-        owned = [c for c in roster["characters"] if c["owned"]]
-
-        embed = discord.Embed(
-            color=embedColor,
-            title=f"🎮 Genshin Roster — {roster.get('nickname') or acc['label']}",
-            description=(
-                f"**UID:** {roster['uid']}"
-                + (
-                    f" • **AR {roster['player_level']}**"
-                    if roster.get("player_level")
-                    else ""
-                )
-                + f"\n**Owned:** {roster['owned_count']}/{roster['total_count']} characters"
-                + f" • **Tracked live:** {roster['tracked_count']}"
-            ),
-        )
-        embed.timestamp = parseTimestamp(roster.get("updated_at"))
-
-        for element in elementOrder:
-            inElement = sorted(
-                (c for c in owned if c["element"] == element),
-                key=lambda c: (-(c.get("level") or 0), c["name"]),
-            )
-            if not inElement:
-                continue
-
-            lines = []
-            for c in inElement:
-                level = f"Lv.{c['level']}" if c.get("level") is not None else "Lv.?"
-                flag = "" if c["tracked"] else " *(last known)*"
-                lines.append(f"{c['name']} — {level}{flag}")
-
-            label = "Traveler" if element == "All" else element
-            embed.add_field(
-                name=f"{elementEmoji(element)} {label} ({len(inElement)})",
-                value=capFieldLines(lines),
-                inline=True,
-            )
-
-        if roster.get("partial"):
-            embed.add_field(
-                name="⚠️ Partial data",
-                value=(
-                    "Only your pinned showcase characters are visible. Enable "
-                    '**"Display all your characters"** in-game (Character Showcase) '
-                    "for the full roster."
-                ),
-                inline=False,
-            )
-
-        if roster.get("stale"):
-            embed.set_footer(
-                text="Served from the ownership ledger — Enka was unavailable, levels are last-known."
-            )
-
-        await interaction.followup.send(embed=embed)
-
-    async def characterSlash(
-        self,
-        interaction: discord.Interaction,
-        accountKey: str,
-        name: str,
-    ) -> None:
-        await interaction.response.defer()
-        account = genshinAccounts[accountKey]
-
-        try:
-            roster = await dough.getGenshinRoster(account["uid"])
-            match = findCharacter(roster["characters"], name)
-            if not match:
-                await interaction.followup.send(
-                    content=f'❌ No character matching "{name}" was found in the catalog.'
-                )
-                return
-            detail = await dough.getGenshinCharacter(account["uid"], match["id"])
-            await interaction.followup.send(
-                embed=buildCharacterEmbed(detail, account["label"])
-            )
-        except (
-            DoughminationError,
-            RuntimeError,
-            aiohttp.ClientError,
-            TimeoutError,
-        ) as error:
-            await interaction.followup.send(
-                embed=buildErrorEmbed(error, account["label"], "❓ Not Found")
-            )
-
-    @app_commands.command(
-        name="main-chara", description="Character detail on the Main account"
-    )
-    @app_commands.describe(
-        name="Character name",
-    )
-    @app_commands.autocomplete(name=charaAutocomplete)
-    @doughchecks.has_permissions(embed_links=True)
-    async def mainCharaSlash(self, interaction: discord.Interaction, name: str) -> None:
-        await self.characterSlash(interaction, "main", name)
-
-    @app_commands.command(
-        name="alt-chara", description="Character detail on the Alt account"
-    )
-    @app_commands.describe(
-        name="Character name",
-    )
-    @app_commands.autocomplete(name=charaAutocomplete)
-    @doughchecks.has_permissions(embed_links=True)
-    async def altCharaSlash(self, interaction: discord.Interaction, name: str) -> None:
-        await self.characterSlash(interaction, "alt", name)
+        view = GenshinView(clean, roster, interaction.user.id)
+        view.message = await interaction.followup.send(view=view, wait=True)
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -1,4 +1,3 @@
-import datetime as dt
 import re
 from urllib.parse import urlsplit
 
@@ -8,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 from utils.markdown import escapeMarkdown
 
 apiBase = "https://api.girlcockx.com"
@@ -49,10 +49,8 @@ def extractStatusId(url: str) -> str | None:
     return match.group(1) if match else None
 
 
-def errorEmbed(title: str, description: str) -> discord.Embed:
-    return discord.Embed(
-        color=discord.Color.red(), title=title, description=description
-    )
+def errorPanel(title: str, description: str) -> components.Panel:
+    return components.panel(title=title, body=description, color=components.RED)
 
 
 def formatDuration(seconds: float) -> str:
@@ -89,25 +87,27 @@ class Twitter(commands.Cog):
         statusId = extractStatusId(url)
         if statusId is None:
             await interaction.followup.send(
-                embed=errorEmbed(
+                view=errorPanel(
                     "❌ Invalid link",
                     "That doesn't look like a `twitter.com` or `x.com` post link.",
                 )
             )
             return
 
-        embed, videoUrl = await self.fetchTweetEmbed(statusId)
-        await interaction.followup.send(embed=embed)
+        panel, videoUrl = await self.fetchTweetPanel(statusId)
+        await interaction.followup.send(view=panel)
         if videoUrl:
             await interaction.followup.send(content=videoUrl)
 
-    async def fetchTweetEmbed(self, statusId: str) -> tuple[discord.Embed, str | None]:
+    async def fetchTweetPanel(
+        self, statusId: str
+    ) -> tuple[components.Panel, str | None]:
         try:
             async with self.session.get(f"{apiBase}/status/{statusId}") as resp:
                 body = await resp.json(content_type=None)
         except (aiohttp.ClientError, TimeoutError):
             return (
-                errorEmbed(
+                errorPanel(
                     "❌ Error", "Couldn't reach girlcockx.com — try again in a moment."
                 ),
                 None,
@@ -121,41 +121,27 @@ class Twitter(commands.Cog):
                 if message in ("NOT_FOUND", "PRIVATE_TWEET", "SUSPENDED")
                 else f"girlcockx.com returned an error: {message}"
             )
-            return errorEmbed("❓ Post not found", description), None
+            return errorPanel("❓ Post not found", description), None
 
-        return self.buildTweetEmbed(tweet)
+        return self.buildTweetPanel(tweet)
 
-    def buildTweetEmbed(self, tweet: dict) -> tuple[discord.Embed, str | None]:
+    def buildTweetPanel(self, tweet: dict) -> tuple[components.Panel, str | None]:
         author = tweet["author"]
         tweetUrl = tweet.get("url")
 
         text = tweet.get("text")
-        embed = discord.Embed(
-            color=discord.Color.fuchsia(),
-            title=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
-            description=linkifyMentions(text) if text else None,
-            url=tweetUrl,
-        )
-        embed.set_author(
-            name=f"@{author['screen_name']}",
-            url=tweetUrl,
-            icon_url=author.get("avatar_url"),
-        )
-
-        if tweet.get("created_timestamp"):
-            embed.timestamp = dt.datetime.fromtimestamp(
-                tweet["created_timestamp"], tz=dt.UTC
-            )
+        body = linkifyMentions(text) if text else None
 
         media = tweet.get("media") or {}
         photos = media.get("photos") or []
         videos = media.get("videos") or []
         allMedia = media.get("all") or []
 
+        image = None
         if photos:
-            embed.set_image(url=photos[0]["url"])
+            image = photos[0]["url"]
         elif videos and videos[0].get("thumbnail_url"):
-            embed.set_image(url=videos[0]["thumbnail_url"])
+            image = videos[0]["thumbnail_url"]
 
         stats = []
         if tweet.get("likes") is not None:
@@ -181,11 +167,14 @@ class Twitter(commands.Cog):
             )
             videoUrl = bestVideoUrl(video)
 
-        embed.set_footer(
-            text="  ".join(stats) if stats else "girlcockx.com",
-            icon_url="https://m.doughmination.gay/img/icons/twitter.png",
+        panel = components.panel(
+            title=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
+            url=tweetUrl,
+            body=body,
+            images=[image] if image else None,
+            footer="  ".join(stats) if stats else "girlcockx.com",
         )
-        return embed, videoUrl
+        return panel, videoUrl
 
 
 async def setup(bot: commands.Bot) -> None:

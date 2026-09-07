@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 
 mainSpecs = {
     "CPU": "[AMD Ryzen 9 9950X3D](https://uk.pcpartpicker.com/product/Pk62FT/amd-ryzen-9-9950x3d-43-ghz-16-core-processor-100-100000719wof)",
@@ -43,22 +44,54 @@ pcPages = [
 ]
 
 
-def buildPcEmbed(index: int) -> discord.Embed:
+def pcPageBody(index: int) -> str:
     title, specs = pcPages[index]
-    embed = discord.Embed(title=title, color=discord.Color.fuchsia())
-    for name, value in specs.items():
-        embed.add_field(name=name, value=value, inline=False)
-    embed.set_footer(text=f"Page {index + 1}/{len(pcPages)}")
-    return embed
+    lines = [f"## {title}", ""]
+    lines += [f"**{name}**\n{value}" for name, value in specs.items()]
+    lines += ["", f"-# Page {index + 1}/{len(pcPages)}"]
+    return "\n".join(lines)
 
 
-class PcView(discord.ui.View):
+class PcNav(discord.ui.ActionRow["PcView"]):
+    @discord.ui.button(
+        emoji="<:rem:1539939307144613958>", style=discord.ButtonStyle.secondary
+    )
+    async def leftButton(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.index -= 1
+        view.render()
+        await interaction.response.edit_message(view=view)
+
+    @discord.ui.button(
+        emoji="<:ram:1539939306167337060>", style=discord.ButtonStyle.secondary
+    )
+    async def rightButton(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ) -> None:
+        view = self.view
+        if view is None:
+            return
+        view.index += 1
+        view.render()
+        await interaction.response.edit_message(view=view)
+
+
+class PcView(discord.ui.LayoutView):
     def __init__(self, authorId: int) -> None:
         super().__init__(timeout=120)
         self.authorId = authorId
         self.index = 0
         self.message: discord.Message | None = None
-        self._updateButtons()
+
+        self.box = discord.ui.Container(accent_colour=components.FUCHSIA)
+        self.nav = PcNav()
+
+        self.add_item(self.box)
+        self.render()
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.authorId:
@@ -69,38 +102,18 @@ class PcView(discord.ui.View):
             return False
         return True
 
-    def _updateButtons(self) -> None:
-        self.leftButton.disabled = self.index == 0
-        self.rightButton.disabled = self.index == len(pcPages) - 1
+    def render(self) -> None:
+        self.nav.leftButton.disabled = self.index == 0
+        self.nav.rightButton.disabled = self.index == len(pcPages) - 1
 
-    @discord.ui.button(
-        emoji="<:rem:1539939307144613958>", style=discord.ButtonStyle.secondary
-    )
-    async def leftButton(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        self.index -= 1
-        self._updateButtons()
-        await interaction.response.edit_message(
-            embed=buildPcEmbed(self.index), view=self
-        )
-
-    @discord.ui.button(
-        emoji="<:ram:1539939306167337060>", style=discord.ButtonStyle.secondary
-    )
-    async def rightButton(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ) -> None:
-        self.index += 1
-        self._updateButtons()
-        await interaction.response.edit_message(
-            embed=buildPcEmbed(self.index), view=self
-        )
+        self.box.clear_items()
+        self.box.add_item(discord.ui.TextDisplay(pcPageBody(self.index)))
+        self.box.add_item(self.nav)
 
     async def on_timeout(self) -> None:
-        for child in self.children:
-            if isinstance(child, discord.ui.Button):
-                child.disabled = True
+        self.render()
+        self.nav.leftButton.disabled = True
+        self.nav.rightButton.disabled = True
         if self.message is not None:
             await self.message.edit(view=self)
 
@@ -116,10 +129,7 @@ class Pc(commands.Cog):
     async def pcSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         view = PcView(interaction.user.id)
-        message = await interaction.followup.send(
-            embed=buildPcEmbed(0), view=view, wait=True
-        )
-        view.message = message
+        view.message = await interaction.followup.send(view=view, wait=True)
 
 
 async def setup(bot: commands.Bot) -> None:

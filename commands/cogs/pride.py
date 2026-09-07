@@ -7,6 +7,7 @@ from discord.ext import commands
 from PIL import Image, UnidentifiedImageError
 
 from sandrone import doughchecks
+from utils import components
 from utils.pride import (
     PrideOptions,
     Rendered,
@@ -78,7 +79,7 @@ class Pride(commands.Cog):
             for name, value in styles.items()
         ]
     )
-    @doughchecks.has_permissions(embed_links=True, attach_files=True)
+    @doughchecks.has_permissions(attach_files=True)
     async def prideSlash(
         self,
         interaction: discord.Interaction,
@@ -99,7 +100,7 @@ class Pride(commands.Cog):
         unknown = [name for name, slug in zip(requested, chosen) if slug is None]
         if unknown:
             await interaction.followup.send(
-                embed=self.errorEmbed(
+                view=components.error(
                     f"I have no flag called `{'`, `'.join(unknown)}` — "
                     "pick one from the suggestions."
                 )
@@ -124,7 +125,7 @@ class Pride(commands.Cog):
             )
         except discord.HTTPException:
             await interaction.followup.send(
-                embed=self.errorEmbed("Couldn't download that profile picture.")
+                view=components.error("Couldn't download that profile picture.")
             )
             return
 
@@ -135,26 +136,27 @@ class Pride(commands.Cog):
             )
         except (UnidentifiedImageError, OSError, ValueError) as error:
             await interaction.followup.send(
-                embed=self.errorEmbed(f"Couldn't render that one: `{error}`")
+                view=components.error(f"Couldn't render that one: `{error}`")
             )
             return
 
         filename = f"pride.{result.extension}"
-        embed = discord.Embed(
-            color=discord.Color.fuchsia(),
-            title=" + ".join(flagLabels[slug] for slug in chosen if slug is not None),
+        note = (
+            "The animation wouldn't fit under the upload limit here, "
+            "so here's a still instead."
+            if animated and result.extension == "png"
+            else None
         )
-        embed.set_author(name=target.display_name, icon_url=target.display_avatar.url)
-        embed.set_image(url=f"attachment://{filename}")
-        if animated and result.extension == "png":
-            embed.description = (
-                "The animation wouldn't fit under the upload limit here, "
-                "so here's a still instead."
-            )
-        embed.set_footer(text=self.footerText(result))
 
+        view = components.panel(
+            title=" + ".join(flagLabels[slug] for slug in chosen if slug is not None),
+            body=f"-# {target.display_name}" + (f"\n\n{note}" if note else ""),
+            images=[f"attachment://{filename}"],
+            footer=self.footerText(result),
+        )
         await interaction.followup.send(
-            embed=embed, file=discord.File(io.BytesIO(result.data), filename=filename)
+            view=view,
+            file=discord.File(io.BytesIO(result.data), filename=filename),
         )
 
     def draw(
@@ -181,9 +183,6 @@ class Pride(commands.Cog):
         parts.append(f"{len(result.data) / 1024:.0f} KiB")
         parts.append("Sandrone")
         return " · ".join(parts)
-
-    def errorEmbed(self, message: str) -> discord.Embed:
-        return discord.Embed(color=discord.Color.red(), description=f":x: {message}")
 
 
 async def setup(bot: commands.Bot) -> None:

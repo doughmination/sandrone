@@ -1,4 +1,3 @@
-import datetime as dt
 import re
 from urllib.parse import urlsplit
 
@@ -8,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 from utils.markdown import escapeMarkdown
 
 apiBase = "https://public.api.bsky.app/xrpc"
@@ -41,10 +41,8 @@ def extractPostRef(url: str) -> tuple[str, str] | None:
     return (match.group(1), match.group(2)) if match else None
 
 
-def errorEmbed(title: str, description: str) -> discord.Embed:
-    return discord.Embed(
-        color=discord.Color.red(), title=title, description=description
-    )
+def errorPanel(title: str, description: str) -> components.Panel:
+    return components.panel(title=title, body=description, color=components.RED)
 
 
 def mediaEmbed(embed: dict) -> dict:
@@ -95,7 +93,7 @@ class Bluesky(commands.Cog):
         ref = extractPostRef(url)
         if ref is None:
             await interaction.followup.send(
-                embed=errorEmbed(
+                view=errorPanel(
                     "❌ Invalid link",
                     "That doesn't look like a `bsky.app` or `xsky.app` post link.",
                 )
@@ -103,14 +101,14 @@ class Bluesky(commands.Cog):
             return
 
         actor, rkey = ref
-        embed, linkUrl = await self.fetchPostEmbed(actor, rkey)
-        await interaction.followup.send(embed=embed)
+        panel, linkUrl = await self.fetchPostPanel(actor, rkey)
+        await interaction.followup.send(view=panel)
         if linkUrl:
             await interaction.followup.send(content=linkUrl)
 
-    async def fetchPostEmbed(
+    async def fetchPostPanel(
         self, actor: str, rkey: str
-    ) -> tuple[discord.Embed, str | None]:
+    ) -> tuple[components.Panel, str | None]:
         atUri = f"at://{actor}/app.bsky.feed.post/{rkey}"
         try:
             async with self.session.get(
@@ -121,14 +119,14 @@ class Bluesky(commands.Cog):
                 body = await resp.json(content_type=None)
         except (aiohttp.ClientError, TimeoutError, ValueError):
             return (
-                errorEmbed(
+                errorPanel(
                     "❌ Error", "Couldn't reach Bluesky — try again in a moment."
                 ),
                 None,
             )
 
         if not isinstance(body, dict):
-            return errorEmbed(
+            return errorPanel(
                 "❌ Error", "Bluesky sent back something unexpected."
             ), None
 
@@ -136,14 +134,14 @@ class Bluesky(commands.Cog):
             error = body.get("error", "")
             if error in ("NotFound", "InvalidRequest"):
                 return (
-                    errorEmbed(
+                    errorPanel(
                         "❓ Post not found",
                         "That post doesn't exist, was deleted, or the handle is wrong.",
                     ),
                     None,
                 )
             return (
-                errorEmbed("❌ Error", f"Bluesky returned an error: {error or status}"),
+                errorPanel("❌ Error", f"Bluesky returned an error: {error or status}"),
                 None,
             )
 
@@ -151,49 +149,39 @@ class Bluesky(commands.Cog):
         threadType = thread.get("$type")
         if threadType == "app.bsky.feed.defs#notFoundPost":
             return (
-                errorEmbed(
+                errorPanel(
                     "❓ Post not found", "That post doesn't exist or was deleted."
                 ),
                 None,
             )
         if threadType == "app.bsky.feed.defs#blockedPost":
             return (
-                errorEmbed(
+                errorPanel(
                     "🚫 Blocked",
                     "That post is from an account that's blocked or blocking.",
                 ),
                 None,
             )
         if not thread.get("post"):
-            return errorEmbed("❓ Post not found", "Couldn't read that post."), None
+            return errorPanel("❓ Post not found", "Couldn't read that post."), None
 
-        return self.buildPostEmbed(thread["post"], actor, rkey)
+        return self.buildPostPanel(thread["post"], actor, rkey)
 
-    def buildPostEmbed(
+    def buildPostPanel(
         self, post: dict, actor: str, rkey: str
-    ) -> tuple[discord.Embed, str | None]:
+    ) -> tuple[components.Panel, str | None]:
         author = post.get("author") or {}
         record = post.get("record") or {}
         handle = author.get("handle") or actor
         postUrl = f"{xskyBase}/profile/{handle}/post/{rkey}"
 
-        embed = discord.Embed(color=blueskyColor, url=postUrl)
-        embed.set_author(
-            name=f"{escapeMarkdown(author.get('displayName') or handle)} (@{handle})",
-            url=f"https://bsky.app/profile/{handle}",
-            icon_url=author.get("avatar") or None,
-        )
-
-        created = record.get("createdAt")
-        if created:
-            try:
-                embed.timestamp = dt.datetime.fromisoformat(created)
-            except ValueError:
-                pass
-
-        parts = []
+        authorName = escapeMarkdown(author.get("displayName") or handle)
+        parts = [f"### [{authorName} (@{handle})](https://bsky.app/profile/{handle})"]
         if record.get("text"):
             parts.append(escapeMarkdown(record["text"]))
+
+        image: str | None = None
+        thumbnail: str | None = None
 
         embedData = post.get("embed") or {}
         media = mediaEmbed(embedData)
@@ -204,16 +192,16 @@ class Bluesky(commands.Cog):
         if mediaType in ("app.bsky.embed.images#view", "app.bsky.embed.gallery#view"):
             images = media.get("images") or media.get("items") or []
             if images:
-                embed.set_image(url=images[0]["fullsize"])
+                image = images[0]["fullsize"]
             extra = len(images) - 1
         elif mediaType == "app.bsky.embed.video#view":
             if media.get("thumbnail"):
-                embed.set_image(url=media["thumbnail"])
+                image = media["thumbnail"]
             isVideo = True
         elif mediaType == "app.bsky.embed.external#view":
             external = media.get("external") or {}
             if external.get("thumb"):
-                embed.set_thumbnail(url=external["thumb"])
+                thumbnail = external["thumb"]
             card = "\n".join(
                 line
                 for line in (
@@ -234,16 +222,13 @@ class Bluesky(commands.Cog):
             heading = f"📝 Quoting {qName} (@{qHandle})"
             parts.append(f"{heading}:\n{qText}" if qText else heading)
 
-            if not embed.image.url:
+            if not image:
                 for quotedEmbed in quoted.get("embeds") or []:
                     thumb, quotedIsVideo = firstMediaThumb(quotedEmbed)
                     if thumb:
-                        embed.set_image(url=thumb)
+                        image = thumb
                         isVideo = isVideo or quotedIsVideo
                         break
-
-        description = "\n\n".join(parts)
-        embed.description = description[:4096] or None
 
         stats = []
         for emoji, key in (
@@ -260,12 +245,15 @@ class Bluesky(commands.Cog):
         if isVideo:
             stats.append("🎥 Video")
 
-        embed.set_footer(
-            text="  ".join(stats) if stats else "xsky.app",
-            icon_url="https://m.doughmination.gay/img/icons/bluesky.png",
+        panel = components.panel(
+            url=postUrl,
+            body="\n\n".join(parts)[:3500] or None,
+            thumbnail=thumbnail,
+            images=[image] if image else None,
+            footer="  ".join(stats) if stats else "xsky.app",
+            color=blueskyColor,
         )
-
-        return embed, postUrl if isVideo else None
+        return panel, postUrl if isVideo else None
 
 
 async def setup(bot: commands.Bot) -> None:

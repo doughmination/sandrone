@@ -30,6 +30,11 @@ def renderFields(fields: list[Field]) -> str:
     return "\n\n".join(f"**{name}**\n{value}" for name, value in fields)
 
 
+def linkButton(label: str, url: str, emoji: str | None = None) -> ui.Button:
+    """A URL button — opens a link, has no callback, and never times out."""
+    return ui.Button(label=label, url=url, emoji=emoji, style=discord.ButtonStyle.link)
+
+
 def container(
     *,
     title: str | None = None,
@@ -39,6 +44,7 @@ def container(
     thumbnail: str | None = None,
     images: list[str] | None = None,
     files: list[str] | None = None,
+    buttons: list[ui.Button] | None = None,
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
 ) -> ui.Container:
@@ -47,6 +53,7 @@ def container(
     ``images`` take URLs or ``attachment://name`` refs; ``files`` take
     ``attachment://name`` refs and render as downloadable file components.
     A V2 message hides any uploaded attachment it does not reference.
+    ``buttons`` render as a row inside the box, above the footer.
     """
     lead = [part for part in (heading(title, url) if title else None, body) if part]
     leadText = "\n\n".join(lead)
@@ -75,6 +82,12 @@ def container(
     for ref in files or []:
         blocks.append(ui.File(ref))
 
+    if buttons:
+        row = ui.ActionRow()
+        for btn in buttons:
+            row.add_item(btn)
+        blocks.append(row)
+
     if footer:
         blocks.append(ui.Separator(visible=False))
         blocks.append(ui.TextDisplay(f"-# {footer}"))
@@ -94,6 +107,7 @@ def panel(
     thumbnail: str | None = None,
     images: list[str] | None = None,
     files: list[str] | None = None,
+    buttons: list[ui.Button] | None = None,
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
 ) -> Panel:
@@ -106,6 +120,7 @@ def panel(
             thumbnail=thumbnail,
             images=images,
             files=files,
+            buttons=buttons,
             footer=footer,
             color=color,
         )

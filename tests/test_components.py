@@ -49,6 +49,24 @@ def test_error_uses_red_accent() -> None:
     assert ":x: nope" in body
 
 
+def test_buttons_render_as_a_row_inside_the_container() -> None:
+    box = components.container(
+        body="pick one",
+        buttons=[
+            components.linkButton("A", "https://example.com/a"),
+            components.linkButton("B", "https://example.com/b", emoji="🔗"),
+        ],
+        footer="f",
+    )
+
+    rows = [c for c in box.children if isinstance(c, ui.ActionRow)]
+    assert len(rows) == 1
+    buttons = [c for c in rows[0].children if isinstance(c, ui.Button)]
+    assert [b.label for b in buttons] == ["A", "B"]
+    assert all(b.style is discord.ButtonStyle.link for b in buttons)
+    assert all(b.url is not None for b in buttons)
+
+
 def test_container_renders_without_any_pieces() -> None:
     box = components.container()
 

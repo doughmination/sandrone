@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 
 xSnips = {
     "adb": "Starting December 5, 2025, the active developer badge has been **removed**, and is **no longer** obtainable. There are also *no* plans for a new badge replacing this.",
@@ -33,24 +34,14 @@ class Snippets(commands.Cog):
     @doughchecks.has_permissions(embed_links=True)
     async def snippetSlash(self, interaction: discord.Interaction, snip: str) -> None:
         await interaction.response.defer()
-        embed = await self.getSnippetEmbed(snip)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.getSnippetPanel(snip))
 
-    async def getSnippetEmbed(self, snip: str) -> discord.Embed:
+    async def getSnippetPanel(self, snip: str) -> components.Panel:
         reply = xSnips.get(snip)
         if reply is None:
-            return discord.Embed(
-                color=discord.Color.red(),
-                description=f":x: There's no snippet called `{snip}`.",
-            )
+            return components.error(f"There's no snippet called `{snip}`.")
 
-        user = self.bot.user
-        embed = discord.Embed(color=discord.Color.fuchsia())
-        embed.add_field(name=" ", value=reply)
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        return embed
+        return components.panel(body=reply, footer="Sandrone")
 
 
 async def setup(bot: commands.Bot) -> None:

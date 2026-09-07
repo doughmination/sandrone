@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 gifUrls = {
     "angry-cat": "angy-car",
@@ -29,27 +29,18 @@ class Gifs(commands.Cog):
     @app_commands.command(name="fungif", description="Send some fun gifs!")
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=gifAuto)
-    @doughchecks.has_permissions(embed_links=True)
     async def gifSlash(self, interaction: discord.Interaction, gif: str) -> None:
         await interaction.response.defer()
-        reply = await self.getGifUrl(gif)
-        await interaction.followup.send(embed=reply)
+        await interaction.followup.send(view=await self.getGifUrl(gif))
 
-    async def getGifUrl(self, gif: str) -> discord.Embed:
+    async def getGifUrl(self, gif: str) -> components.Panel:
         slug = gifUrls.get(gif)
         if slug is None:
-            return discord.Embed(
-                color=discord.Color.red(),
-                description=f":x: There's no gif called `{gif}`.",
-            )
+            return components.error(f"There's no gif called `{gif}`.")
 
-        user = self.bot.user
-        embed = discord.Embed(color=discord.Color.fuchsia())
-        embed.set_image(url=f"https://m.doughmination.gay/gif/{slug}.gif")
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        return components.panel(
+            images=[f"https://m.doughmination.gay/gif/{slug}.gif"], footer="Sandrone"
         )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

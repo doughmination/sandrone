@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 responses = [
     "Hmph. Fine, yes. Not that I did the math for your sake or anything.",
@@ -36,20 +36,17 @@ class EightBall(commands.Cog):
         description="Ask Sandrone a question. Don't expect her to be nice about it.",
     )
     @app_commands.describe(question="The question you want answered")
-    @doughchecks.has_permissions(embed_links=True)
     async def eightballSlash(
         self, interaction: discord.Interaction, question: str
     ) -> None:
-        user = self.bot.user
-        embed = discord.Embed(color=discord.Color.fuchsia())
-        embed.add_field(name="You asked", value=question, inline=False)
-        embed.add_field(
-            name="Sandrone says", value=random.choice(responses), inline=False
+        view = components.panel(
+            fields=[
+                ("You asked", question),
+                ("Sandrone says", random.choice(responses)),
+            ],
+            footer="Sandrone",
         )
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:

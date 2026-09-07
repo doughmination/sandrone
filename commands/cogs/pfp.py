@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 scopes = {
     "Global": "global",
@@ -25,7 +25,6 @@ class Pfp(commands.Cog):
             for name, value in scopes.items()
         ]
     )
-    @doughchecks.has_permissions(embed_links=True)
     async def pfpSlash(
         self,
         interaction: discord.Interaction,
@@ -35,12 +34,11 @@ class Pfp(commands.Cog):
         await interaction.response.defer()
         target = user or interaction.user
         scope = server.value if server else "global"
-        embed = await self.getPfpEmbed(target, scope)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.getPfpPanel(target, scope))
 
-    async def getPfpEmbed(
+    async def getPfpPanel(
         self, user: discord.Member | discord.User, scope: str
-    ) -> discord.Embed:
+    ) -> components.Panel:
         if scope == "guild":
             avatar = getattr(user, "guild_avatar", None) or self.globalAvatar(user)
             title = f"{user.name}'s Server pfp"
@@ -48,15 +46,7 @@ class Pfp(commands.Cog):
             avatar = self.globalAvatar(user)
             title = f"{user.name}'s Global pfp"
 
-        embed = discord.Embed(color=discord.Color.fuchsia(), title=title)
-        embed.set_image(url=avatar.url)
-
-        botUser = self.bot.user
-        embed.set_footer(
-            text="Sandrone",
-            icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
-        )
-        return embed
+        return components.panel(title=title, images=[avatar.url], footer="Sandrone")
 
     def globalAvatar(self, user: discord.Member | discord.User) -> discord.Asset:
         return user.avatar or user.default_avatar

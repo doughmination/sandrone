@@ -4,7 +4,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config, doughchecks
+from sandrone import config
+from utils import components
 from utils.cog_state import loadDisabled, setDisabled
 from utils.colors import cf
 
@@ -113,7 +114,6 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
         description="Show which cogs are loaded and whether they'll survive a restart",
     )
     @ownerOnly()
-    @doughchecks.has_permissions(embed_links=True)
     async def listCogs(self, interaction: discord.Interaction) -> None:
         disabled = loadDisabled()
         lines = []
@@ -129,16 +129,12 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
                 )
             lines.append(f"`{name}` — {status}")
 
-        user = self.bot.user
-        embed = discord.Embed(
+        view = components.panel(
             title="Cog status",
-            description="\n".join(lines) if lines else "No cogs found.",
-            color=discord.Color.fuchsia(),
+            body="\n".join(lines) if lines else "No cogs found.",
+            footer="Sandrone",
         )
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await interaction.response.send_message(view=view, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

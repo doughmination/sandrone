@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import config, doughchecks
+from utils import components
 
 
 class Invite(commands.Cog):
@@ -13,33 +14,26 @@ class Invite(commands.Cog):
     @doughchecks.has_permissions(embed_links=True)
     async def inviteSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-        invite = await self.buildInviteEmbed()
-        await interaction.followup.send(embed=invite)
+        await interaction.followup.send(view=await self.buildInvitePanel())
 
-    async def buildInviteEmbed(self) -> discord.Embed:
+    async def buildInvitePanel(self) -> components.Panel:
         user = self.bot.user
         if user is None:
             raise RuntimeError("Bot is not logged in yet")
 
-        embed = discord.Embed(color=discord.Color.fuchsia(), title="Invite Links:")
-        embed.add_field(
-            name=" ",
-            value=f"[Invite Link](https://discord.com/oauth2/authorize?client_id={user.id})",
+        links = "\n".join(
+            (
+                f"[Invite Link](https://discord.com/oauth2/authorize?client_id={user.id})",
+                "[Discord Server](https://discord.gg/N8gCjS294R)",
+                "[Website](https://sandrone.doughmination.gay)",
+                "[Source Code](https://github.com/doughmination/sandrone)",
+            )
         )
-        embed.add_field(
-            name=" ", value="\n[Discord Server](https://discord.gg/N8gCjS294R)"
+        return components.panel(
+            title="Invite Links",
+            body=links,
+            footer=f"Sandrone v{config.version}",
         )
-        embed.add_field(
-            name=" ", value="\n[Website](https://sandrone.doughmination.gay)"
-        )
-        embed.add_field(
-            name=" ", value="\n[Source Code](https://github.com/doughmination/sandrone)"
-        )
-        embed.set_footer(
-            text=f"Sandrone v{config.version}",
-            icon_url=user.avatar.url if user.avatar else None,
-        )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

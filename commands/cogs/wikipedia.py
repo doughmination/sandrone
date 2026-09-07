@@ -4,6 +4,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import config, doughchecks
+from utils import components
 
 
 def formatText(text: str) -> str:
@@ -19,19 +20,19 @@ class Wikipedia(commands.Cog):
     @doughchecks.has_permissions(embed_links=True)
     async def wikiSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
-        defin = await self.wikiDefEmbed(query)
-        await interaction.followup.send(embed=defin)
+        await interaction.followup.send(view=await self.wikiDefPanel(query))
 
-    async def wikiDefEmbed(self, query: str) -> discord.Embed:
+    async def wikiDefPanel(self, query: str) -> components.Panel:
         wiki = wikipediaapi.AsyncWikipedia(
             user_agent=f"Sandrone-{config.version} (https://github.com/doughmination/sandrone)",
             language="en",
         )
         wikiPage = wiki.page(query)
         if not await wikiPage.exists():
-            embed = discord.Embed(color=discord.Color.red())
-            embed.description = ":x: That Wikipedia page does not exist. Try adjusting your capitalisation, as results are occasionally case-sensitive!"
-            return embed
+            return components.error(
+                "That Wikipedia page does not exist. Try adjusting your "
+                "capitalisation, as results are occasionally case-sensitive!"
+            )
         elif "Category:All disambiguation pages" in (await wikiPage.categories):
             pageSummary = f'Disambiguations for "{query}":'
             pageLinks = await wikiPage.links
@@ -44,22 +45,19 @@ class Wikipedia(commands.Cog):
             pageImages = await wikiPage.images
             pageSummary = formatText(await wikiPage.summary)
 
-        embed = discord.Embed(
-            title=wikiPage.title,
-            description=pageSummary,
-            url=(await wikiPage.fullurl),
-            color=discord.Color.fuchsia(),
-        )
-        embed.set_footer(
-            text="Powered by Wikipedia",
-            icon_url="https://upload.wikimedia.org/wikipedia/commons/2/2e/Wikipedia_W_favicon_on_white_background.png",
-        )
         if pageImages:
             img = next(iter(pageImages.values()))
-            embed.set_thumbnail(url=await img.url)
+            thumbnail = await img.url
         else:
-            embed.set_thumbnail(url="https://m.doughmination.gay/img/search.png")
-        return embed
+            thumbnail = "https://m.doughmination.gay/img/search.png"
+
+        return components.panel(
+            title=wikiPage.title,
+            url=(await wikiPage.fullurl),
+            body=pageSummary,
+            thumbnail=thumbnail,
+            footer="Powered by Wikipedia",
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

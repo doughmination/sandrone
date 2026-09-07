@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 
 class TheGame(commands.Cog):
@@ -12,15 +12,11 @@ class TheGame(commands.Cog):
     @app_commands.command(
         name="explain-the-game", description="You just lost the game haha!"
     )
-    @doughchecks.has_permissions(embed_links=True)
     async def gameSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-        reply = await self.buildTheGameRules()
-        await interaction.followup.send(embed=reply)
+        await interaction.followup.send(view=await self.buildTheGameRules())
 
-    async def buildTheGameRules(self) -> discord.Embed:
-        user = self.bot.user
-        embed = discord.Embed(color=discord.Color.fuchsia(), title="Rules of The Game")
+    async def buildTheGameRules(self) -> components.Panel:
         parts: list[str] = []
         parts.append("**Rule 1:**\nThe Game is 'The Game'.")
         parts.append(
@@ -44,12 +40,11 @@ class TheGame(commands.Cog):
         parts.append(
             '\n\n**Rule 8:**\nIf you lose The Game, and someone (foolishly) asks "whats The Game?", please either explain it to them, or direct them toward this command, as an unspoken purpose to The Game is to get as many people playing as possible'
         )
-        embed.description = "".join(parts)
-        embed.set_footer(
-            text="And you lost the game!",
-            icon_url=user.avatar.url if user and user.avatar else None,
+        return components.panel(
+            title="Rules of The Game",
+            body="".join(parts),
+            footer="And you lost the game!",
         )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

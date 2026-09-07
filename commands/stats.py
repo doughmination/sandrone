@@ -5,7 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config, doughchecks
+from sandrone import config
+from utils import components
 
 
 class Stats(commands.Cog):
@@ -41,7 +42,6 @@ class Stats(commands.Cog):
         return self.region
 
     @app_commands.command(name="stats", description="Show the bot's ping and uptime")
-    @doughchecks.has_permissions(embed_links=True)
     async def stats(self, interaction: discord.Interaction) -> None:
         user = self.bot.user
         await interaction.response.defer()
@@ -53,17 +53,17 @@ class Stats(commands.Cog):
         latency = round(self.bot.latency * 1000)
         botName = user.name if user else "Bot"
 
-        embed = discord.Embed(title=f"{botName}'s stats", color=discord.Color.fuchsia())
-        embed.add_field(name="Ping:", value=f"{latency}ms")
-        embed.add_field(
-            name="Uptime:", value=f"{days}d, {hours}h, {minutes}m, {seconds}s"
+        view = components.panel(
+            title=f"{botName}'s stats",
+            fields=[
+                ("Ping", f"{latency}ms"),
+                ("Uptime", f"{days}d, {hours}h, {minutes}m, {seconds}s"),
+                ("Version", config.version),
+                ("Region", await self.getRegion()),
+            ],
+            footer="Sandrone",
         )
-        embed.add_field(name="Version:", value=config.version)
-        embed.add_field(name="Region:", value=await self.getRegion())
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 
 class Animals(commands.Cog):
@@ -12,21 +12,13 @@ class Animals(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="kitty", description="KITTY!")
-    @doughchecks.has_permissions(embed_links=True)
     async def kittySlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
-        embed = await self.getCatEmbed()
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.getCatPanel())
 
-    async def getCatEmbed(self) -> discord.Embed:
-        user = self.bot.user
-        catEmbed = discord.Embed(color=discord.Color.fuchsia())
+    async def getCatPanel(self) -> components.Panel:
         catUrl = f"https://cataas.com/cat?v={uuid.uuid4()}"
-        catEmbed.set_image(url=catUrl)
-        catEmbed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        return catEmbed
+        return components.panel(images=[catUrl], footer="Sandrone")
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -38,10 +38,16 @@ def container(
     fields: list[Field] | None = None,
     thumbnail: str | None = None,
     images: list[str] | None = None,
+    files: list[str] | None = None,
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
 ) -> ui.Container:
-    """Build a Container from embed-shaped pieces, laid out the V2 way."""
+    """Build a Container from embed-shaped pieces, laid out the V2 way.
+
+    ``images`` take URLs or ``attachment://name`` refs; ``files`` take
+    ``attachment://name`` refs and render as downloadable file components.
+    A V2 message hides any uploaded attachment it does not reference.
+    """
     lead = [part for part in (heading(title, url) if title else None, body) if part]
     leadText = "\n\n".join(lead)
 
@@ -66,6 +72,9 @@ def container(
             ui.MediaGallery(*(discord.MediaGalleryItem(url) for url in images))
         )
 
+    for ref in files or []:
+        blocks.append(ui.File(ref))
+
     if footer:
         blocks.append(ui.Separator(visible=False))
         blocks.append(ui.TextDisplay(f"-# {footer}"))
@@ -84,6 +93,7 @@ def panel(
     fields: list[Field] | None = None,
     thumbnail: str | None = None,
     images: list[str] | None = None,
+    files: list[str] | None = None,
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
 ) -> Panel:
@@ -95,6 +105,7 @@ def panel(
             fields=fields,
             thumbnail=thumbnail,
             images=images,
+            files=files,
             footer=footer,
             color=color,
         )

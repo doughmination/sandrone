@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 from utils.markdown import caretAt, codeBlock
 
 maxInput = 500
@@ -90,65 +90,52 @@ class Regex(commands.Cog):
         name="regex", description="Check a regular expression and flag its problems"
     )
     @app_commands.describe(pattern="The regular expression to check")
-    @doughchecks.has_permissions(embed_links=True)
     async def regexSlash(
         self,
         interaction: discord.Interaction,
         pattern: app_commands.Range[str, 1, maxInput],
     ) -> None:
-        await interaction.response.send_message(embed=self.getRegexEmbed(pattern))
+        await interaction.response.send_message(view=self.getRegexPanel(pattern))
 
-    def getRegexEmbed(self, pattern: str) -> discord.Embed:
-        user = self.bot.user
+    def getRegexPanel(self, pattern: str) -> components.Panel:
         try:
             compiled = re.compile(pattern)
         except re.error as error:
-            embed = self.buildErrorEmbed(pattern, error)
-        else:
-            embed = self.buildValidEmbed(pattern, compiled)
+            return self.buildErrorPanel(pattern, error)
+        return self.buildValidPanel(pattern, compiled)
 
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        return embed
-
-    def buildErrorEmbed(self, pattern: str, error: re.error) -> discord.Embed:
-        embed = discord.Embed(
-            color=discord.Color.red(),
-            title="❌ Invalid pattern",
-            description=f"**{error.msg}**",
-        )
-
+    def buildErrorPanel(self, pattern: str, error: re.error) -> components.Panel:
         position = error.pos if error.pos is not None else 0
-        embed.add_field(
-            name=f"Column {position + 1}",
-            value=codeBlock(caretAt(pattern, position)),
-            inline=False,
+        return components.panel(
+            title="❌ Invalid pattern",
+            body=f"**{error.msg}**",
+            fields=[
+                (f"Column {position + 1}", codeBlock(caretAt(pattern, position))),
+            ],
+            footer="Sandrone",
+            color=components.RED,
         )
-        return embed
 
-    def buildValidEmbed(self, pattern: str, compiled: re.Pattern[str]) -> discord.Embed:
+    def buildValidPanel(
+        self, pattern: str, compiled: re.Pattern[str]
+    ) -> components.Panel:
         warnings, notes = findIssues(pattern, compiled)
-        embed = discord.Embed(
-            color=discord.Color.orange() if warnings else discord.Color.green(),
-            title="⚠️ Valid, with caveats" if warnings else "✅ Valid pattern",
-            description=codeBlock(pattern),
-        )
-
-        embed.add_field(name="Groups", value=describeGroups(compiled), inline=True)
-        embed.add_field(name="Flags", value=describeFlags(compiled), inline=True)
-
+        fields = [
+            ("Groups", describeGroups(compiled)),
+            ("Flags", describeFlags(compiled)),
+        ]
         if warnings:
-            embed.add_field(
-                name="Issues", value="\n\n".join(warnings)[:fieldLimit], inline=False
-            )
+            fields.append(("Issues", "\n\n".join(warnings)[:fieldLimit]))
         if notes:
-            embed.add_field(
-                name="Worth knowing",
-                value="\n\n".join(notes)[:fieldLimit],
-                inline=False,
-            )
-        return embed
+            fields.append(("Worth knowing", "\n\n".join(notes)[:fieldLimit]))
+
+        return components.panel(
+            title="⚠️ Valid, with caveats" if warnings else "✅ Valid pattern",
+            body=codeBlock(pattern),
+            fields=fields,
+            footer="Sandrone",
+            color=discord.Color.orange() if warnings else discord.Color.green(),
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

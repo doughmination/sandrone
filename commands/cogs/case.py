@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 from utils.markdown import codeBlock
 
 maxInput = 500
@@ -85,35 +85,28 @@ class Case(commands.Cog):
             for name, value in caseStyles.items()
         ]
     )
-    @doughchecks.has_permissions(embed_links=True)
     async def caseSlash(
         self,
         interaction: discord.Interaction,
         text: app_commands.Range[str, 1, maxInput],
         to: app_commands.Choice[str],
     ) -> None:
-        await interaction.response.send_message(embed=self.getCaseEmbed(text, to.value))
+        await interaction.response.send_message(view=self.getCasePanel(text, to.value))
 
-    def getCaseEmbed(self, text: str, style: str) -> discord.Embed:
+    def getCasePanel(self, text: str, style: str) -> components.Panel:
         words = splitWords(text)
         if not words:
-            return discord.Embed(
-                color=discord.Color.red(),
-                description=":x: There are no letters or digits in that to re-case.",
+            return components.error(
+                "There are no letters or digits in that to re-case."
             )
 
-        user = self.bot.user
-        embed = discord.Embed(color=discord.Color.fuchsia())
-        embed.add_field(name=detectCase(text), value=codeBlock(text), inline=False)
-        embed.add_field(
-            name=styleLabels[style],
-            value=codeBlock(applyCase(words, style)),
-            inline=False,
+        return components.panel(
+            fields=[
+                (detectCase(text), codeBlock(text)),
+                (styleLabels[style], codeBlock(applyCase(words, style))),
+            ],
+            footer="Sandrone",
         )
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
-        )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 
 
 def formatText(text: str) -> str:
@@ -35,15 +36,9 @@ class UrbanDictionary(commands.Cog):
     @doughchecks.has_permissions(embed_links=True)
     async def urbDictSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
-        embed = await self.getUrbDefEmbed(query)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.getUrbDefPanel(query))
 
-    async def getUrbDefEmbed(self, query: str) -> discord.Embed:
-        embed = discord.Embed(
-            color=discord.Color.fuchsia(),
-            title=f"Searched '{query}' and found:",
-        )
-
+    async def getUrbDefPanel(self, query: str) -> components.Panel:
         params = {"term": query}
         try:
             async with self.session.get(
@@ -51,24 +46,18 @@ class UrbanDictionary(commands.Cog):
             ) as resp:
                 data = await resp.json(content_type=None)
         except (aiohttp.ClientError, TimeoutError, ValueError):
-            embed.title = None
-            embed.color = discord.Color.red()
-            embed.description = (
-                ":x: Couldn't reach Urban Dictionary — try again in a moment."
+            return components.error(
+                "Couldn't reach Urban Dictionary — try again in a moment."
             )
-            return embed
 
         definitions = data.get("list") if isinstance(data, dict) else None
         if not definitions:
-            embed.title = None
-            embed.color = discord.Color.red()
-            embed.description = ":x: Could not find that definition in Urban Dictionary, try /wiki instead"
-            return embed
+            return components.error(
+                "Could not find that definition in Urban Dictionary, try /wiki instead"
+            )
 
         reply = definitions[0]
 
-        embed.url = reply.get("permalink")
-        embed.set_thumbnail(url="https://m.doughmination.gay/img/search.png")
         parts: list[str] = []
         parts.append(f"**Definition:**\n{formatText(reply.get('definition') or '')}")
         if reply.get("example"):
@@ -76,12 +65,14 @@ class UrbanDictionary(commands.Cog):
         parts.append(
             f"\n\n-# <:likes:1540415874794528768>: {reply.get('thumbs_up')} | <:dislikes:1540415873678844035>: {reply.get('thumbs_down')}"
         )
-        embed.description = "".join(parts)
-        embed.set_footer(
-            text=f"by {reply.get('author')}, Urban Dictionary",
-            icon_url="https://www.urbandictionary.com/favicon-32x32.png",
+
+        return components.panel(
+            title=f"Searched '{query}' and found:",
+            url=reply.get("permalink"),
+            body="".join(parts),
+            thumbnail="https://m.doughmination.gay/img/search.png",
+            footer=f"by {reply.get('author')}, Urban Dictionary",
         )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

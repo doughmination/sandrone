@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 from utils.doughmination import DoughminationError, ProfileNotFoundError, dough
 
 statusEmoji = {
@@ -16,7 +16,6 @@ statusEmoji = {
 }
 
 embedColor = discord.Color.fuchsia()
-errorColor = discord.Color.red()
 
 
 def parseTimestamp(ms: int | None) -> dt.datetime:
@@ -31,7 +30,6 @@ class Profile(commands.Cog):
 
     @app_commands.command(name="profile", description="Get a user's Discord profile")
     @app_commands.describe(user="The user to look up (defaults to you)")
-    @doughchecks.has_permissions(embed_links=True)
     async def profileSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
@@ -51,23 +49,19 @@ class Profile(commands.Cog):
             aiohttp.ClientError,
             TimeoutError,
         ) as error:
-            embed = discord.Embed(
-                color=errorColor,
-                title="❌ Could not fetch profile",
-                description=str(error),
+            await interaction.followup.send(
+                view=components.panel(
+                    title="❌ Could not fetch profile",
+                    body=str(error),
+                    footer="Sandrone",
+                    color=components.RED,
+                )
             )
-            embed.timestamp = dt.datetime.now(dt.UTC)
-            botUser = self.bot.user
-            embed.set_footer(
-                text="Sandrone",
-                icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
-            )
-            await interaction.followup.send(embed=embed)
             return
 
-        await interaction.followup.send(embed=self.buildProfileEmbed(profile))
+        await interaction.followup.send(view=self.buildProfilePanel(profile))
 
-    def buildProfileEmbed(self, profile: dict) -> discord.Embed:
+    def buildProfilePanel(self, profile: dict) -> components.Panel:
         user = profile["user"]
         presence = profile.get("presence")
         badges = profile.get("badges") or []
@@ -84,42 +78,24 @@ class Profile(commands.Cog):
             if user.get("accent_color") is not None
             else embedColor
         )
-        embed = discord.Embed(color=color)
-        embed.set_author(
-            name=f"{displayName} (@{user['username']})", icon_url=user.get("avatar_url")
-        )
-        embed.set_thumbnail(url=user.get("avatar_url"))
-        embed.add_field(name="User ID", value=user["id"], inline=True)
-        embed.add_field(
-            name="Status",
-            value=f"{emoji} {presence['status'] if presence else 'unknown'}",
-            inline=True,
-        )
-        embed.timestamp = parseTimestamp(profile.get("updated_at"))
 
-        if user.get("banner_url"):
-            embed.set_image(url=user["banner_url"])
-
+        fields: list[components.Field] = [
+            ("User ID", str(user["id"])),
+            ("Status", f"{emoji} {presence['status'] if presence else 'unknown'}"),
+        ]
         if user.get("pronouns"):
-            embed.add_field(name="Pronouns", value=user["pronouns"], inline=True)
-
+            fields.append(("Pronouns", user["pronouns"]))
         if user.get("bio"):
-            embed.add_field(name="Bio", value=user["bio"][:1024], inline=False)
-
+            fields.append(("Bio", user["bio"][:1024]))
         if user.get("premium"):
-            embed.add_field(name="Nitro", value=user["premium"]["type"], inline=True)
-
+            fields.append(("Nitro", user["premium"]["type"]))
         if user.get("clan"):
-            embed.add_field(name="Clan Tag", value=user["clan"]["tag"], inline=True)
-
+            fields.append(("Clan Tag", user["clan"]["tag"]))
         if timezone:
-            embed.add_field(name="Timezone", value=timezone["timezone"], inline=True)
-
+            fields.append(("Timezone", timezone["timezone"]))
         if badges:
             badgeList = ", ".join(b["description"] for b in badges[:10])
-            embed.add_field(
-                name=f"Badges [{len(badges)}]", value=badgeList, inline=False
-            )
+            fields.append((f"Badges [{len(badges)}]", badgeList))
 
         socials = [
             f"{a['type']}: {a['name']}"
@@ -127,16 +103,17 @@ class Profile(commands.Cog):
             if a.get("type") != "domain"
         ][:10]
         if socials:
-            embed.add_field(
-                name="Connected Accounts", value="\n".join(socials), inline=False
-            )
+            fields.append(("Connected Accounts", "\n".join(socials)))
 
-        botUser = self.bot.user
-        embed.set_footer(
-            text="Sandrone",
-            icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
+        return components.panel(
+            title=f"{displayName} (@{user['username']})",
+            body=f"-# updated {parseTimestamp(profile.get('updated_at')):%Y-%m-%d}",
+            fields=fields,
+            thumbnail=user.get("avatar_url"),
+            images=[user["banner_url"]] if user.get("banner_url") else None,
+            footer="Sandrone",
+            color=color,
         )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

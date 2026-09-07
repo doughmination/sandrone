@@ -6,6 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 
 
 class Codeberg(commands.Cog):
@@ -23,21 +24,15 @@ class Codeberg(commands.Cog):
         self, interaction: discord.Interaction, username: str
     ) -> None:
         await interaction.response.defer()
-        embed = await self.fetchUserEmbed(username)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.fetchUserPanel(username))
 
-    async def fetchUserEmbed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.fuchsia(), title=username)
-
+    async def fetchUserPanel(self, username: str) -> components.Panel:
         try:
             async with self.session.get(
                 f"https://codeberg.org/api/v1/users/{username}"
             ) as resp:
                 if resp.status != 200:
-                    embed.title = None
-                    embed.color = discord.Color.red()
-                    embed.description = ":x: That Codeberg account does not exist."
-                    return embed
+                    return components.error("That Codeberg account does not exist.")
                 data = await resp.json()
 
             login = data.get("username") or username
@@ -49,14 +44,7 @@ class Codeberg(commands.Cog):
                     resp.headers.get("X-Total-Count") if resp.status == 200 else None
                 )
         except (aiohttp.ClientError, TimeoutError):
-            embed.title = None
-            embed.color = discord.Color.red()
-            embed.description = ":x: Couldn't reach Codeberg — try again in a moment."
-            return embed
-
-        embed.set_thumbnail(url=data.get("avatar_url"))
-        embed.set_footer(text=f"User ID: {data.get('id')}")
-        embed.url = data.get("html_url")
+            return components.error("Couldn't reach Codeberg — try again in a moment.")
 
         website = data.get("website")
 
@@ -84,8 +72,13 @@ class Codeberg(commands.Cog):
         if data.get("is_admin"):
             parts.append("\n\n**This user is a Codeberg site administrator.**")
 
-        embed.description = "".join(parts)
-        return embed
+        return components.panel(
+            title=username,
+            url=data.get("html_url"),
+            body="".join(parts),
+            thumbnail=data.get("avatar_url"),
+            footer=f"User ID: {data.get('id')}",
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -7,6 +7,7 @@ from github import Auth, Github, GithubException
 
 from sandrone import config, doughchecks
 from sandrone.config import githubToken as GITHUB_TOKEN
+from utils import components
 from utils.colors import cf
 
 ownerGithub = "doughmination"
@@ -44,29 +45,20 @@ class GitHub(commands.Cog):
         self, interaction: discord.Interaction, username: str
     ) -> None:
         await interaction.response.defer()
-        embed = await self.fetchUserEmbed(username)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.fetchUserPanel(username))
 
-    async def fetchUserEmbed(self, username: str) -> discord.Embed:
+    async def fetchUserPanel(self, username: str) -> components.Panel:
         username = username.removeprefix("@")
-        return await asyncio.to_thread(self._buildEmbed, username)
+        return await asyncio.to_thread(self._buildPanel, username)
 
-    def _buildEmbed(self, username: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.fuchsia(), title=username)
+    def _buildPanel(self, username: str) -> components.Panel:
         gh = Github(auth=Auth.Token(config.requireGithubToken()))
         try:
             try:
                 user = gh.get_user(username)
                 _ = user.id
             except GithubException:
-                embed.title = None
-                embed.color = discord.Color.red()
-                embed.description = ":x: That GitHub account does not exist."
-                return embed
-
-            embed.url = user.html_url
-            embed.set_thumbnail(url=user.avatar_url)
-            embed.set_footer(text=f"User ID: {user.id}")
+                return components.error("That GitHub account does not exist.")
 
             parts: list[str] = []
             if user.bio:
@@ -102,11 +94,13 @@ class GitHub(commands.Cog):
             if user.site_admin:
                 parts.append("\n\n**This user is a GitHub site administrator.**")
 
-            embed.description = "".join(parts)
-            embed.set_footer(
-                text=" ", icon_url="https://m.doughmination.gay/img/icons/github.png"
+            return components.panel(
+                title=username,
+                url=user.html_url,
+                body="".join(parts),
+                thumbnail=user.avatar_url,
+                footer=f"User ID: {user.id} · GitHub",
             )
-            return embed
         finally:
             gh.close()
 
@@ -131,20 +125,15 @@ class GitHub(commands.Cog):
         self, interaction: discord.Interaction, repository: str
     ) -> None:
         await interaction.response.defer()
-        embed = await self.fetchRepoEmbed(repository)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.fetchRepoPanel(repository))
 
-    async def fetchRepoEmbed(self, repository: str) -> discord.Embed:
-        return await asyncio.to_thread(self._buildRepoEmbed, repository)
+    async def fetchRepoPanel(self, repository: str) -> components.Panel:
+        return await asyncio.to_thread(self._buildRepoPanel, repository)
 
-    def _buildRepoEmbed(self, repository: str) -> discord.Embed:
-        embed = discord.Embed(color=discord.Color.fuchsia())
-
+    def _buildRepoPanel(self, repository: str) -> components.Panel:
         fullName = normalizeRepo(repository)
         if fullName is None:
-            embed.color = discord.Color.red()
-            embed.description = ":x: Give the repository as `username/repo`."
-            return embed
+            return components.error("Give the repository as `username/repo`.")
 
         gh = Github(auth=Auth.Token(config.requireGithubToken()))
         try:
@@ -152,32 +141,23 @@ class GitHub(commands.Cog):
                 repo = gh.get_repo(fullName)
                 _ = repo.id
             except GithubException:
-                embed.color = discord.Color.red()
-                embed.description = ":x: That repository does not exist."
-                return embed
+                return components.error("That repository does not exist.")
 
-            embed.title = repo.full_name
-            embed.url = repo.html_url
-            embed.set_thumbnail(url=repo.owner.avatar_url)
-            if repo.description:
-                embed.description = repo.description
-
-            embed.add_field(
-                name="Stars",
-                value=f"[{repo.stargazers_count}]({repo.html_url}/stargazers)",
+            return components.panel(
+                title=repo.full_name,
+                url=repo.html_url,
+                body=repo.description or None,
+                fields=[
+                    ("Stars", f"[{repo.stargazers_count}]({repo.html_url}/stargazers)"),
+                    ("Forks", f"[{repo.forks_count}]({repo.html_url}/forks)"),
+                    (
+                        "Open issues",
+                        f"[{repo.open_issues_count}]({repo.html_url}/issues)",
+                    ),
+                ],
+                thumbnail=repo.owner.avatar_url,
+                footer="GitHub",
             )
-            embed.add_field(
-                name="Forks",
-                value=f"[{repo.forks_count}]({repo.html_url}/forks)",
-            )
-            embed.add_field(
-                name="Open issues",
-                value=f"[{repo.open_issues_count}]({repo.html_url}/issues)",
-            )
-            embed.set_footer(
-                text=" ", icon_url="https://m.doughmination.gay/img/icons/github.png"
-            )
-            return embed
         finally:
             gh.close()
 

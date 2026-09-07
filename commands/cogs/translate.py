@@ -6,7 +6,7 @@ from argostranslate import package, translate
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 titleBrackets = (("『", "』"), ("《", "》"))
 placeholderPattern = re.compile(r"X(\d+)X")
@@ -43,7 +43,6 @@ class Translate(commands.Cog):
         to="The language to translate into (defaults to English)",
     )
     @app_commands.autocomplete(source=languageAutocomplete, to=languageAutocomplete)
-    @doughchecks.has_permissions(embed_links=True)
     async def translateSlash(
         self,
         interaction: discord.Interaction,
@@ -52,30 +51,30 @@ class Translate(commands.Cog):
         to: str | None = None,
     ) -> None:
         await interaction.response.defer()
-        embed = await self.getTranslationEmbed(text, source, to or defaultTarget)
-        await interaction.followup.send(embed=embed)
+        view = await self.getTranslationPanel(text, source, to or defaultTarget)
+        await interaction.followup.send(view=view)
 
-    async def getTranslationEmbed(
+    async def getTranslationPanel(
         self, text: str, source: str, to: str
-    ) -> discord.Embed:
+    ) -> components.Panel:
         names = await self.ensureIndex()
         if not names:
-            return self.errorEmbed(
+            return components.error(
                 "Couldn't reach the Argos package index — try again in a moment."
             )
 
         unknown = [code for code in (source, to) if code not in names]
         if unknown:
-            return self.errorEmbed(
+            return components.error(
                 f"I have no model for `{'`, `'.join(unknown)}` — "
                 "pick a language from the suggestions."
             )
 
         if source == to:
-            return self.errorEmbed("Those are the same language.")
+            return components.error("Those are the same language.")
 
         if not await self.ensureInstalled(source, to):
-            return self.errorEmbed(
+            return components.error(
                 f"Argos has no model that can go {names[source]} → {names[to]}."
             )
 
@@ -84,19 +83,18 @@ class Translate(commands.Cog):
         try:
             result = await asyncio.to_thread(translate.translate, protected, source, to)
         except (OSError, RuntimeError, ValueError) as error:
-            return self.errorEmbed(f"Translation failed: `{error}`")
+            return components.error(f"Translation failed: `{error}`")
 
         if titles:
             result = self.restoreTitles(result, titles)
 
-        embed = discord.Embed(color=discord.Color.fuchsia())
-        embed.add_field(name=names[source], value=text[:fieldLimit], inline=False)
-        embed.add_field(name=names[to], value=result[:fieldLimit], inline=False)
-        embed.set_footer(
-            text="Powered by Argos Translate",
-            icon_url="https://m.doughmination.gay/img/search.png",
+        return components.panel(
+            fields=[
+                (names[source], text[:fieldLimit]),
+                (names[to], result[:fieldLimit]),
+            ],
+            footer="Powered by Argos Translate",
         )
-        return embed
 
     async def ensureIndex(self) -> dict[str, str]:
         if self.languageNames:
@@ -177,9 +175,6 @@ class Translate(commands.Cog):
         if fromLang is None or toLang is None:
             return False
         return fromLang.get_translation(toLang) is not None
-
-    def errorEmbed(self, message: str) -> discord.Embed:
-        return discord.Embed(color=discord.Color.red(), description=f":x: {message}")
 
 
 async def setup(bot: commands.Bot) -> None:

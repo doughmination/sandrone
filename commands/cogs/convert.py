@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 
 class Unit(NamedTuple):
@@ -282,15 +282,16 @@ class Convert(commands.Cog):
         to="The unit to convert into",
     )
     @app_commands.autocomplete(source=sourceAutocomplete, to=targetAutocomplete)
-    @doughchecks.has_permissions(embed_links=True)
     async def convertSlash(
         self, interaction: discord.Interaction, value: float, source: str, to: str
     ) -> None:
         await interaction.response.send_message(
-            embed=self.getConversionEmbed(value, source, to)
+            view=self.getConversionPanel(value, source, to)
         )
 
-    def getConversionEmbed(self, value: float, source: str, to: str) -> discord.Embed:
+    def getConversionPanel(
+        self, value: float, source: str, to: str
+    ) -> components.Panel:
         sourceUnit = resolveUnit(source)
         targetUnit = resolveUnit(to)
 
@@ -300,42 +301,35 @@ class Convert(commands.Cog):
                 for raw, unit in ((source, sourceUnit), (to, targetUnit))
                 if unit is None
             ]
-            return self.errorEmbed(
+            return components.error(
                 f"I have no unit called `{'`, `'.join(unknown)}` — "
                 "pick one from the suggestions."
             )
 
         if sourceUnit.category != targetUnit.category:
-            return self.errorEmbed(
+            return components.error(
                 f"{sourceUnit.label} is {categoryLabels[sourceUnit.category].lower()} "
                 f"and {targetUnit.label} is "
                 f"{categoryLabels[targetUnit.category].lower()} — those don't convert."
             )
 
         if not math.isfinite(value):
-            return self.errorEmbed("That isn't a number I can convert.")
+            return components.error("That isn't a number I can convert.")
 
         result = convertValue(value, sourceUnit, targetUnit)
         if not math.isfinite(result):
-            return self.errorEmbed("That conversion overflowed — try a smaller number.")
+            return components.error(
+                "That conversion overflowed — try a smaller number."
+            )
 
-        user = self.bot.user
-        embed = discord.Embed(
-            color=discord.Color.fuchsia(),
+        return components.panel(
             title=(
                 f"{formatValue(value)} {sourceUnit.symbol}"
                 f" → {formatValue(result)} {targetUnit.symbol}"
             ),
-            description=f"{sourceUnit.name} → {targetUnit.name}",
+            body=f"{sourceUnit.name} → {targetUnit.name}",
+            footer=f"{categoryLabels[sourceUnit.category]} · Sandrone",
         )
-        embed.set_footer(
-            text=f"{categoryLabels[sourceUnit.category]} · Sandrone",
-            icon_url=user.avatar.url if user and user.avatar else None,
-        )
-        return embed
-
-    def errorEmbed(self, message: str) -> discord.Embed:
-        return discord.Embed(color=discord.Color.red(), description=f":x: {message}")
 
 
 async def setup(bot: commands.Bot) -> None:

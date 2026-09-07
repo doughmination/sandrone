@@ -6,11 +6,12 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import doughchecks
+from utils import components
 from utils.markdown import caretAt, codeBlock
 
 maxInput = 4000
-# Embed descriptions cap at 4096; leave room for the code fence.
-embedLimit = 3900
+# A V2 message caps at 4000 chars of text; leave room for the fence and fields.
+embedLimit = 3500
 
 indentStyles = {
     "2 spaces": "2",
@@ -53,7 +54,7 @@ class JsonFormat(commands.Cog):
             for name, value in indentStyles.items()
         ]
     )
-    @doughchecks.has_permissions(embed_links=True, attach_files=True)
+    @doughchecks.has_permissions(attach_files=True)
     async def jsonSlash(
         self,
         interaction: discord.Interaction,
@@ -62,61 +63,63 @@ class JsonFormat(commands.Cog):
     ) -> None:
         await interaction.response.defer()
 
-        embed, file = self.getJsonReply(data, indent.value if indent else "2")
-        await interaction.followup.send(embed=embed, file=file or discord.utils.MISSING)
+        view, file = self.getJsonReply(data, indent.value if indent else "2")
+        await interaction.followup.send(view=view, file=file or discord.utils.MISSING)
 
     def getJsonReply(
         self, data: str, indent: str
-    ) -> tuple[discord.Embed, discord.File | None]:
-        user = self.bot.user
+    ) -> tuple[components.Panel, discord.File | None]:
         try:
             parsed = json.loads(data)
         except json.JSONDecodeError as error:
-            embed = self.buildErrorEmbed(data, error)
-            embed.set_footer(
-                text="Sandrone",
-                icon_url=user.avatar.url if user and user.avatar else None,
-            )
-            return embed, None
+            return self.buildErrorPanel(data, error), None
 
         pretty = json.dumps(parsed, indent=indentValues[indent], ensure_ascii=False)
+        fields = [
+            ("Contains", describeData(parsed)),
+            ("Size", f"{len(data):,} → {len(pretty):,} chars"),
+        ]
 
-        embed = discord.Embed(color=discord.Color.fuchsia(), title="✅ Formatted JSON")
-        embed.add_field(name="Contains", value=describeData(parsed), inline=True)
-        embed.add_field(
-            name="Size",
-            value=f"{len(data):,} → {len(pretty):,} chars",
-            inline=True,
-        )
-
-        attachment: discord.File | None = None
         if len(pretty) <= embedLimit:
-            embed.description = codeBlock(pretty, "json")
-        else:
-            embed.description = (
-                "That's too long to show inline, so here it is as a file."
-            )
-            attachment = discord.File(
-                io.BytesIO(pretty.encode("utf-8")), filename="formatted.json"
+            return (
+                components.panel(
+                    title="✅ Formatted JSON",
+                    body=codeBlock(pretty, "json"),
+                    fields=fields,
+                    footer="Sandrone",
+                ),
+                None,
             )
 
-        embed.set_footer(
-            text="Sandrone", icon_url=user.avatar.url if user and user.avatar else None
+        attachment = discord.File(
+            io.BytesIO(pretty.encode("utf-8")), filename="formatted.json"
         )
-        return embed, attachment
+        return (
+            components.panel(
+                title="✅ Formatted JSON",
+                body="That's too long to show inline, so here it is as a file.",
+                fields=fields,
+                files=["attachment://formatted.json"],
+                footer="Sandrone",
+            ),
+            attachment,
+        )
 
-    def buildErrorEmbed(self, data: str, error: json.JSONDecodeError) -> discord.Embed:
-        embed = discord.Embed(
-            color=discord.Color.red(),
+    def buildErrorPanel(
+        self, data: str, error: json.JSONDecodeError
+    ) -> components.Panel:
+        return components.panel(
             title="❌ That isn't valid JSON",
-            description=f"**{error.msg}**",
+            body=f"**{error.msg}**",
+            fields=[
+                (
+                    f"Line {error.lineno}, column {error.colno}",
+                    codeBlock(caretAt(data, error.pos)),
+                ),
+            ],
+            footer="Sandrone",
+            color=components.RED,
         )
-        embed.add_field(
-            name=f"Line {error.lineno}, column {error.colno}",
-            value=codeBlock(caretAt(data, error.pos)),
-            inline=False,
-        )
-        return embed
 
 
 async def setup(bot: commands.Bot) -> None:

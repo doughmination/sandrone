@@ -4,7 +4,7 @@ from discord.ext import commands
 from pluralkit import Client
 from pluralkit.v2 import Member, NotFound, PluralKitException, System, Unauthorized
 
-from sandrone import doughchecks
+from utils import components
 
 pk = Client()
 
@@ -15,7 +15,6 @@ class Pluralkit(commands.Cog):
 
     @app_commands.command(name="pksystem", description="Get a pluralkit system")
     @app_commands.describe(user="The user to look up (defaults to you)")
-    @doughchecks.has_permissions(embed_links=True)
     async def pkSystemSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
@@ -33,19 +32,18 @@ class Pluralkit(commands.Cog):
             )
             return
         except PluralKitException as error:
-            embed = discord.Embed(
-                color=discord.Color.red(),
-                title="❌ Could not fetch system",
-                description=str(error),
-            )
             await interaction.followup.send(
-                embed=embed,
+                view=components.panel(
+                    title="❌ Could not fetch system",
+                    body=str(error),
+                    color=components.RED,
+                ),
                 ephemeral=ephemeral,
             )
             return
 
         await interaction.followup.send(
-            embed=self.buildSystemEmbed(system, target),
+            view=self.buildSystemPanel(system, target),
             ephemeral=ephemeral,
         )
 
@@ -53,7 +51,6 @@ class Pluralkit(commands.Cog):
         name="pkfront", description="Get a pluralkit system's current front"
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
-    @doughchecks.has_permissions(embed_links=True)
     async def pkFrontSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
@@ -77,101 +74,80 @@ class Pluralkit(commands.Cog):
             )
             return
         except PluralKitException as error:
-            embed = discord.Embed(
-                color=discord.Color.red(),
-                title="❌ Could not fetch front",
-                description=str(error),
-            )
             await interaction.followup.send(
-                embed=embed,
+                view=components.panel(
+                    title="❌ Could not fetch front",
+                    body=str(error),
+                    color=components.RED,
+                ),
                 ephemeral=ephemeral,
             )
             return
 
         await interaction.followup.send(
-            embed=self.buildFrontEmbed(fronters, target),
+            view=self.buildFrontPanel(fronters, target),
             ephemeral=ephemeral,
         )
 
-    def buildSystemEmbed(
+    def buildSystemPanel(
         self, system: System, user: discord.Member | discord.User
-    ) -> discord.Embed:
+    ) -> components.Panel:
         color = (
             discord.Color(int(str(system.color), 16))
             if system.color
-            else discord.Color.fuchsia()
+            else components.FUCHSIA
         )
-        embed = discord.Embed(
-            color=color,
-            title=system.name or str(system.id),
-            description=system.description,
-        )
-        embed.set_author(name=f"{user.display_name}'s System")
+        lead = [f"-# {user.display_name}'s System", f"## {system.name or system.id}"]
+        if system.description:
+            lead.append(system.description)
 
-        if system.avatar_url:
-            embed.set_thumbnail(url=system.avatar_url)
-        if system.banner:
-            embed.set_image(url=system.banner)
-
-        embed.add_field(name="System ID", value=str(system.id), inline=True)
+        fields: list[components.Field] = [("System ID", str(system.id))]
         if system.tag:
-            embed.add_field(name="Tag", value=system.tag, inline=True)
+            fields.append(("Tag", system.tag))
         if system.pronouns:
-            embed.add_field(name="Pronouns", value=system.pronouns, inline=True)
+            fields.append(("Pronouns", system.pronouns))
 
-        embed.timestamp = system.created.datetime
-
-        botUser = self.bot.user
-        embed.set_footer(
-            text="Sandrone",
-            icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
+        return components.panel(
+            body="\n\n".join(lead),
+            fields=fields,
+            thumbnail=system.avatar_url or None,
+            images=[system.banner] if system.banner else None,
+            footer="Sandrone",
+            color=color,
         )
-        return embed
 
-    def buildFrontEmbed(
+    def buildFrontPanel(
         self, fronters: list[Member], user: discord.Member | discord.User
-    ) -> discord.Embed:
-        embed = discord.Embed(
-            color=discord.Color.fuchsia(),
-            title="Currently fronting",
-        )
-        embed.set_author(name=f"{user.display_name}'s System")
+    ) -> components.Panel:
+        lead = [f"-# {user.display_name}'s System", "## Currently fronting"]
 
         if not fronters:
-            embed.description = "No one is currently fronting."
-        else:
-            primary = fronters[0]
-
-            if primary.color:
-                embed.color = discord.Color(int(str(primary.color), 16))
-
-            if primary.avatar_url:
-                embed.set_thumbnail(url=primary.avatar_url)
-            if primary.banner:
-                embed.set_image(url=primary.banner)
-
-            names = "\n".join(m.display_name or m.name for m in fronters)
-            embed.add_field(
-                name=f"Fronter{'s' if len(fronters) != 1 else ''} ({len(fronters)})",
-                value=names,
-                inline=False,
+            return components.panel(
+                body="\n\n".join([*lead, "No one is currently fronting."]),
+                footer="Sandrone",
             )
 
-            if primary.pronouns:
-                embed.add_field(
-                    name="Pronouns",
-                    value=primary.pronouns,
-                    inline=True,
-                )
-
-            embed.timestamp = discord.utils.utcnow()
-
-        botUser = self.bot.user
-        embed.set_footer(
-            text="Sandrone",
-            icon_url=botUser.avatar.url if botUser and botUser.avatar else None,
+        primary = fronters[0]
+        color = (
+            discord.Color(int(str(primary.color), 16))
+            if primary.color
+            else components.FUCHSIA
         )
-        return embed
+        names = "\n".join(m.display_name or m.name for m in fronters)
+        fields: list[components.Field] = [
+            (f"Fronter{'s' if len(fronters) != 1 else ''} ({len(fronters)})", names)
+        ]
+        if primary.pronouns:
+            fields.append(("Pronouns", primary.pronouns))
+
+        return components.panel(
+            body="\n\n".join(lead),
+            fields=fields,
+            thumbnail=primary.avatar_url or None,
+            images=[primary.banner] if primary.banner else None,
+            footer="Sandrone",
+            color=color,
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

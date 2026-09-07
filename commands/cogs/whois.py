@@ -7,15 +7,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from utils import components
 
 ianaServer = "whois.iana.org"
 whoisPort = 43
 lookupTimeout = 10
 maxHops = 4
 
-embedColor = discord.Color.fuchsia()
-errorColor = discord.Color.red()
 thumbnail = "https://m.doughmination.gay/img/search.png"
 
 queryFormats = {
@@ -237,11 +235,9 @@ class Whois(commands.Cog):
         name="whois", description="Look up the WHOIS record for a domain or IP"
     )
     @app_commands.describe(query="The domain name or IP address to look up")
-    @doughchecks.has_permissions(embed_links=True)
     async def whoisSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
-        embed = await self.getWhoisEmbed(query)
-        await interaction.followup.send(embed=embed)
+        await interaction.followup.send(view=await self.getWhoisPanel(query))
 
     async def askServer(self, server: str, query: str) -> str:
         request = queryFormats.get(server, "{query}").format(query=query)
@@ -292,69 +288,71 @@ class Whois(commands.Cog):
                 merged[key] = values
         return merged
 
-    async def getWhoisEmbed(self, query: str) -> discord.Embed:
+    def errorPanel(self, message: str) -> components.Panel:
+        return components.panel(
+            body=f":x: {message}", thumbnail=thumbnail, color=components.RED
+        )
+
+    async def getWhoisPanel(self, query: str) -> components.Panel:
         target = normaliseQuery(query)
-        embed = discord.Embed(color=errorColor)
-        embed.set_thumbnail(url=thumbnail)
 
         isIp = isNetwork(target)
         if not target or (not isIp and "." not in target):
-            embed.description = (
-                ":x: That doesn't look like a domain or IP address. Try `example.com`."
+            return self.errorPanel(
+                "That doesn't look like a domain or IP address. Try `example.com`."
             )
-            return embed
 
         try:
             records = await self.lookup(target, isIp)
         except (OSError, TimeoutError):
-            embed.description = (
-                ":x: Couldn't reach the WHOIS servers — try again in a moment."
+            return self.errorPanel(
+                "Couldn't reach the WHOIS servers — try again in a moment."
             )
-            return embed
 
         if len(records) < 2:
-            embed.description = (
-                f":x: No WHOIS server published a record for `{target}`."
+            return self.errorPanel(
+                f"No WHOIS server published a record for `{target}`."
             )
-            return embed
 
         fields = self.mergeRecords(records)
         body = records[-1][1].lower()
         fieldSet = networkFields if isIp else domainFields
-        values = [
-            (name, formatDate(value) if isDate else value)
+        values: list[components.Field] = [
+            (name, (formatDate(value) if isDate else value)[:1024])
             for name, keys, isDate in fieldSet
             if (value := firstValue(fields, keys))
         ]
 
         if not values and any(marker in body for marker in notFoundMarkers):
-            embed.description = f":x: No WHOIS record found for `{target}`."
-            return embed
-
-        embed.color = embedColor
-        embed.title = target
-        embed.set_footer(text=f"Powered by WHOIS · {records[-1][0]}")
-
-        for name, value in values:
-            embed.add_field(name=name, value=value[:1024], inline=True)
+            return self.errorPanel(f"No WHOIS record found for `{target}`.")
 
         statuses = formatStatuses(fields)
         if statuses:
-            embed.add_field(name="Status", value=statuses[:1024], inline=False)
+            values.append(("Status", statuses[:1024]))
 
         nameServers = formatNameServers(fields)
         if nameServers and not isIp:
-            embed.add_field(name="Name Servers", value=nameServers, inline=False)
+            values.append(("Name Servers", nameServers))
 
-        if not embed.fields:
+        if not values:
             snippet = records[-1][1].strip()[:1000]
-            embed.description = (
-                f"```\n{snippet}\n```"
-                if snippet
-                else ":x: The WHOIS server returned nothing useful."
+            return components.panel(
+                title=target,
+                body=(
+                    f"```\n{snippet}\n```"
+                    if snippet
+                    else ":x: The WHOIS server returned nothing useful."
+                ),
+                thumbnail=thumbnail,
+                footer=f"Powered by WHOIS · {records[-1][0]}",
             )
 
-        return embed
+        return components.panel(
+            title=target,
+            fields=values,
+            thumbnail=thumbnail,
+            footer=f"Powered by WHOIS · {records[-1][0]}",
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

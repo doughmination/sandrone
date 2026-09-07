@@ -25,7 +25,7 @@ class Invite(commands.Cog):
             (
                 f"[Invite Link](https://discord.com/oauth2/authorize?client_id={user.id})",
                 "[Discord Server](https://discord.gg/N8gCjS294R)",
-                "[Website](https://sandrone.doughmination.gay)",
+                "[Website](https://sandrone.is-a.bot)",
                 "[Source Code](https://github.com/doughmination/sandrone)",
             )
         )

@@ -22,8 +22,6 @@ apiErrors = (DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError
 CACHE_DIR = Path("img/genshin-cache")
 ROSTER_TTL = 20.0
 
-# Stateless controls: everything the paginator needs rides in the custom_id, so
-# the buttons keep working forever with no live view object to time out.
 CONTROL_TEMPLATE = (
     r"gsc:(?P<action>[a-z]+):(?P<uid>\d{9,10}):(?P<index>\d+):(?P<menu>\d+)"
 )

@@ -7,6 +7,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 ianaServer = "whois.iana.org"
@@ -235,6 +236,7 @@ class Whois(commands.Cog):
         name="whois", description="Look up the WHOIS record for a domain or IP"
     )
     @app_commands.describe(query="The domain name or IP address to look up")
+    @mood.sassy
     async def whoisSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getWhoisPanel(query))

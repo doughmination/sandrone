@@ -41,7 +41,7 @@ async def handleAppCommandError(
         return
 
     if isinstance(error, mood.SassyDenial):
-        return
+        return # We don't do anything as the mood.py file handles the output from this error!
 
     if isinstance(error, app_commands.CheckFailure):
         await respond(interaction, "You do not have permission to execute this command")

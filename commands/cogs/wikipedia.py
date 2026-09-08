@@ -3,7 +3,7 @@ import wikipediaapi
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config, doughchecks
+from sandrone import config, doughchecks, mood
 from utils import components
 
 
@@ -18,6 +18,7 @@ class Wikipedia(commands.Cog):
     @app_commands.command(name="wikipedia", description="Look a term on Wikipedia")
     @app_commands.describe(query="The query")
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def wikiSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.wikiDefPanel(query))

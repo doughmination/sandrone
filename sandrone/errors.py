@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 
 from utils.colors import cf
+from sandrone import mood
 
 
 def formatPermissions(permissions: list[str]) -> str:
@@ -37,6 +38,9 @@ async def handleAppCommandError(
 
     if isinstance(error, app_commands.NoPrivateMessage):
         await respond(interaction, "This command can only be used in a server.")
+        return
+
+    if isinstance(error, mood.SassyDenial):
         return
 
     if isinstance(error, app_commands.CheckFailure):

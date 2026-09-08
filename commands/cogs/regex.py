@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from utils import components
 from utils.markdown import caretAt, codeBlock
+from sandrone import mood
 
 maxInput = 500
 fieldLimit = 1024
@@ -90,6 +91,7 @@ class Regex(commands.Cog):
         name="regex", description="Check a regular expression and flag its problems"
     )
     @app_commands.describe(pattern="The regular expression to check")
+    @mood.sassy
     async def regexSlash(
         self,
         interaction: discord.Interaction,

@@ -118,8 +118,8 @@ class Bot(commands.Bot):
 def createBot() -> Bot:
     intents = discord.Intents.default()
     activity = discord.Activity(
-        type=discord.ActivityType.watching,
-        name="Columbina <3",
+        type=discord.ActivityType.listening,
+        name="I love Columbina <3",
     )
     return Bot(command_prefix=config.prefix, intents=intents, activity=activity)
 

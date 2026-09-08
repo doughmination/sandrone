@@ -5,6 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 from utils.doughmination import DoughminationError, ProfileNotFoundError, dough
 
@@ -30,6 +31,7 @@ class Profile(commands.Cog):
 
     @app_commands.command(name="profile", description="Get a user's Discord profile")
     @app_commands.describe(user="The user to look up (defaults to you)")
+    @mood.sassy
     async def profileSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:

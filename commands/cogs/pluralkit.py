@@ -5,6 +5,7 @@ from pluralkit import Client
 from pluralkit.v2 import Member, NotFound, PluralKitException, System, Unauthorized
 
 from utils import components
+from sandrone import mood
 
 pk = Client()
 
@@ -15,6 +16,7 @@ class Pluralkit(commands.Cog):
 
     @app_commands.command(name="pksystem", description="Get a pluralkit system")
     @app_commands.describe(user="The user to look up (defaults to you)")
+    @mood.sassy
     async def pkSystemSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:

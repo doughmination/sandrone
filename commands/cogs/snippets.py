@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 from utils import components
 
 xSnips = {
@@ -32,6 +32,7 @@ class Snippets(commands.Cog):
     @app_commands.describe(snip="The snippet to repost")
     @app_commands.autocomplete(snip=snippetAuto)
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def snippetSlash(self, interaction: discord.Interaction, snip: str) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getSnippetPanel(snip))

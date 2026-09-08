@@ -5,7 +5,7 @@ import qrcode
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 
 
 class Qr(commands.Cog):
@@ -15,6 +15,7 @@ class Qr(commands.Cog):
     @app_commands.command(name="qr", description="Generate a QR Code")
     @app_commands.describe(text="The text or URI to generate")
     @doughchecks.has_permissions(attach_files=True)
+    @mood.sassy
     async def qrSlash(self, interaction: discord.Interaction, text: str) -> None:
         await interaction.response.defer()
         reply = await self.getQr(text)

@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from utils import components
-
+from sandrone import mood
 
 class TheGame(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -12,6 +12,7 @@ class TheGame(commands.Cog):
     @app_commands.command(
         name="explain-the-game", description="You just lost the game haha!"
     )
+    @mood.sassy
     async def gameSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.buildTheGameRules())

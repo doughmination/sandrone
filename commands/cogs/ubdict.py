@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 from utils import components
 
 
@@ -34,6 +34,7 @@ class UrbanDictionary(commands.Cog):
     )
     @app_commands.describe(query="The query")
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def urbDictSlash(self, interaction: discord.Interaction, query: str) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getUrbDefPanel(query))

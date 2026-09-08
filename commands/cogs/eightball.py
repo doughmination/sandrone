@@ -26,6 +26,11 @@ responses = [
     "Hah?! How should I know that? Figure it out on your own for once.",
 ]
 
+"""
+TODO: Add a thing if it's asked if we love Columbina, then we break charater, and start saying smthn like 'yes yes yes yes yes yes' xD
+Not sure on hoow to implement this just yet lol
+Regex probs would be useful here...?
+"""
 
 class EightBall(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:

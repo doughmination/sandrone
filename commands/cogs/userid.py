@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 
 class UserId(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -9,8 +10,9 @@ class UserId(commands.Cog):
 
     @app_commands.command(name="uid", description="Get a user's ID")
     @app_commands.describe(user="The user to get the ID of (Default to you)")
+    @mood.sassy
     async def idSlash(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+        self, interaction: discord.Interaction, user: discord.User | None = None
     ) -> None:
         await interaction.response.defer()
         target = user or interaction.user

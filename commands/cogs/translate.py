@@ -7,6 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from utils import components
+from sandrone import mood
 
 titleBrackets = (("『", "』"), ("《", "》"))
 placeholderPattern = re.compile(r"X(\d+)X")
@@ -43,6 +44,7 @@ class Translate(commands.Cog):
         to="The language to translate into (defaults to English)",
     )
     @app_commands.autocomplete(source=languageAutocomplete, to=languageAutocomplete)
+    @mood.sassy
     async def translateSlash(
         self,
         interaction: discord.Interaction,

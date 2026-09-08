@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 from utils import components
 from utils.markdown import escapeMarkdown
 
@@ -81,6 +81,7 @@ class Twitter(commands.Cog):
     )
     @app_commands.describe(url="A twitter.com or x.com post link")
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def tweetSlash(self, interaction: discord.Interaction, url: str) -> None:
         await interaction.response.defer()
 

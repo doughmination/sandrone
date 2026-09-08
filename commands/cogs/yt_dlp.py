@@ -12,7 +12,7 @@ from discord.ext import commands
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import YoutubeDLError
 
-from sandrone import config
+from sandrone import config, mood
 from utils import downloads
 
 opts = {
@@ -65,6 +65,7 @@ class YtDlp(commands.Cog):
             app_commands.Choice(name=name, value=value) for name, value in opts.items()
         ]
     )
+    @mood.sassy
     async def ytDlpSlash(
         self,
         interaction: discord.Interaction,

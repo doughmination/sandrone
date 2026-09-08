@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 from PIL import Image, UnidentifiedImageError
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 from utils import components
 from utils.pride import (
     PrideOptions,
@@ -80,6 +80,7 @@ class Pride(commands.Cog):
         ]
     )
     @doughchecks.has_permissions(attach_files=True)
+    @mood.sassy
     async def prideSlash(
         self,
         interaction: discord.Interaction,

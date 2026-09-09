@@ -52,6 +52,14 @@ async def serveDownload(request: web.Request) -> web.FileResponse:
 
     return web.FileResponse(path)
 
+async def openDocs(request) -> web.HTTPMovedPermanently:
+    raise web.HTTPMovedPermanently("https://docs.doughmination.gay/projects/sandrone")
+
+async def inviteBot(request) -> web.HTTPMovedPermanently:
+    raise web.HTTPMovedPermanently(f"https://discord.com/oauth2/authorize?client_id={config.requireClientID()}")
+
+async def supportServer(request) -> web.HTTPMovedPermanently:
+    raise web.HTTPMovedPermanently("https://discord.gg/N8gCjS294R")
 
 async def notFound(request: web.Request) -> web.FileResponse:
     path = webAsset("404.html")
@@ -68,6 +76,9 @@ async def serveAsset(request: web.Request) -> web.FileResponse:
 def createApp() -> web.Application:
     app = web.Application()
     app.router.add_get("/", index)
+    app.router.add_get("/docs", openDocs)
+    app.router.add_get("/invite", inviteBot)
+    app.router.add_get("/support", supportServer)
     app.router.add_get("/d/{slot}/{name}", serveDownload)
     app.router.add_get("/{asset:.*}", serveAsset)
     return app

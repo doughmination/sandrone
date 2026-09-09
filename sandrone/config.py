@@ -20,6 +20,7 @@ if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
         version = data["project"]["version"]
 
 TOKEN = os.getenv("BOT_TOKEN")
+clientId = int(os.getenv("CLIENT_ID"))
 devMode = os.getenv("DEV_MODE", "false").lower() == "true"
 githubToken = os.getenv("GITHUB_TOKEN")
 
@@ -53,6 +54,12 @@ def requireToken() -> str:
         )
     return TOKEN
 
+def requireClientID() -> int:
+    if clientId is None:
+        raise RuntimeError(
+            "CLIENT_ID is not set. Add it to your .env before starting the bot."
+        )
+    return clientId
 
 def requireGithubToken() -> str:
     if not githubToken:

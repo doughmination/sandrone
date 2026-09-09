@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 
 from utils import components
+from sandrone import config
 
 """
 1 in 10 chance to fail lol
@@ -110,7 +111,7 @@ def judge(interaction: discord.Interaction, user: discord.User | discord.Member)
     uid = user.id
     if uid in judge_certain_user:
         return judge_certain_user[uid]
-    botUser = interaction.client.user
+    botUser = config.clientId
     if botUser is not None and uid == botUser.id:
         return "Sandrone thinks she is the best person ever"
     rng = random.Random(uid)

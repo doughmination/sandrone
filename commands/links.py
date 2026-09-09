@@ -22,13 +22,13 @@ class Invite(commands.Cog):
             body="Add the bot, join the support server, or dig into the source.",
             buttons=[
                 components.linkButton(
-                    "Invite", "https://invite.sandrone.is-a.bot", emoji="➕"
+                    "Invite", "https://sandrone.doughmination.gay/invite", emoji="➕"
                 ),
                 components.linkButton(
-                    "Support server", "https://support.sandrone.is-a.bot", emoji="💬"
+                    "Support server", "https://sandrone.doughmination.gay/support", emoji="💬"
                 ),
                 components.linkButton(
-                    "Website", "https://sandrone.is-a.bot", emoji="🌐"
+                    "Website", "https://sandrone.doughmination.gay", emoji="🌐"
                 ),
                 components.linkButton(
                     "Source", "https://github.com/doughmination/sandrone", emoji="🧑‍💻"

@@ -1,13 +1,9 @@
-import asyncio
 import json
 import os
 import time
 from pathlib import Path
-from types import SimpleNamespace
-from typing import cast
 
 import pytest
-from aiohttp import web
 
 from sandrone import config
 from utils import downloads
@@ -123,11 +119,13 @@ def test_valid_cache_metadata_is_returned(downloadRoot: Path) -> None:
     assert cached["size"] == 5
 
 
-def test_server_rejects_unmanaged_directories(downloadRoot: Path) -> None:
-    directory = downloadRoot / "source"
-    directory.mkdir()
-    (directory / "secret.py").write_text("token = 'secret'", encoding="utf-8")
-    request = SimpleNamespace(match_info={"slot": directory.name, "name": "secret.py"})
+def test_public_url_uses_download_prefix(
+    downloadRoot: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(config, "downloadsUrl", "https://sandrone.example")
+    slot = downloads.newSlot()
 
-    with pytest.raises(web.HTTPNotFound):
-        asyncio.run(downloads.serve(cast(web.Request, request)))
+    assert (
+        downloads.publicUrl(slot, "video file.mp4")
+        == f"https://sandrone.example/d/{slot.name}/video%20file.mp4"
+    )

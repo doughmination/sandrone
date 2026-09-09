@@ -8,8 +8,6 @@ import time
 from pathlib import Path
 from urllib.parse import quote
 
-from aiohttp import web
-
 from sandrone import config
 from utils.colors import cf
 
@@ -18,8 +16,6 @@ sweepInterval = 3600
 slotPattern = re.compile(r"[A-Za-z0-9_-]{1,64}")
 metaName = ".meta.json"
 markerName = ".sandrone-download"
-
-runner: web.AppRunner | None = None
 
 
 def newSlot() -> Path:
@@ -36,7 +32,7 @@ def discard(slot: Path) -> None:
 
 
 def publicUrl(slot: Path, name: str) -> str:
-    return f"{config.downloadsUrl}/{slot.name}/{quote(name, safe='')}"
+    return f"{config.downloadsUrl}/d/{slot.name}/{quote(name, safe='')}"
 
 
 def validName(name: object) -> bool:
@@ -141,65 +137,3 @@ async def sweepForever() -> None:
         if removed:
             print(cf.grey(f"[downloads] removed {removed} expired download(s)"))
         await asyncio.sleep(sweepInterval)
-
-
-async def serve(request: web.Request) -> web.FileResponse:
-    slot = request.match_info["slot"]
-    name = request.match_info["name"]
-    if not slotPattern.fullmatch(slot) or name.startswith(".") or not validName(name):
-        raise web.HTTPNotFound
-
-    directory = managedSlot(config.downloadsDir / slot)
-    if directory is None:
-        raise web.HTTPNotFound
-
-    path = (directory / name).resolve()
-    if path.parent != directory or not path.is_file():
-        raise web.HTTPNotFound
-
-    now = time.time()
-    try:
-        os.utime(path.parent, (now, now))
-        os.utime(path, (now, now))
-    except OSError:
-        pass
-
-    return web.FileResponse(path)
-
-
-async def startServer() -> None:
-    global runner
-
-    if runner is not None:
-        return
-
-    config.downloadsDir.mkdir(parents=True, exist_ok=True)
-    app = web.Application()
-    app.router.add_get("/{slot}/{name}", serve)
-
-    runner = web.AppRunner(app, access_log=None)
-    await runner.setup()
-    try:
-        await web.TCPSite(runner, config.downloadsHost, config.downloadsPort).start()
-    except OSError as error:
-        await runner.cleanup()
-        runner = None
-        print(
-            cf.red(f"[downloads] could not listen on {config.downloadsPort}: {error}")
-        )
-        return
-
-    print(
-        cf.cyan(
-            f"[downloads] serving {config.downloadsDir} on "
-            f"{config.downloadsHost}:{config.downloadsPort} as {config.downloadsUrl}"
-        )
-    )
-
-
-async def stopServer() -> None:
-    global runner
-
-    if runner is not None:
-        await runner.cleanup()
-        runner = None

@@ -19,9 +19,11 @@ from typing import Any
 
 from PIL import Image, ImageDraw, ImageFont
 
+from sandrone import config
+
 CANVAS = (1462, 609)
 
-FONT_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
+FONT_DIR = config.assetsDir / "fonts"
 FONT_FILES = {
     "regular": FONT_DIR / "IBMPlexSans-Regular.ttf",
     "medium": FONT_DIR / "IBMPlexSans-Medium.ttf",

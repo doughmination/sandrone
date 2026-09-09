@@ -9,7 +9,8 @@ load_dotenv()
 repoRoot = Path(__file__).resolve().parent.parent
 commandsDir = repoRoot / "commands"
 cogsDir = commandsDir / "cogs"
-assetsDir = repoRoot / "assets"
+webDir = repoRoot / "web"
+assetsDir = webDir / "assets"
 
 version = "unknown"
 pyproject_toml_file = repoRoot / "pyproject.toml"

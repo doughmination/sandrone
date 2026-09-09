@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 from watchfiles import Change, awatch
 
-from sandrone import config
+from sandrone import config, website
 from sandrone.errors import handleAppCommandError
 from utils import downloads
 from utils.cog_state import discoverCogHandles, loadDisabled
@@ -59,7 +59,7 @@ class Bot(commands.Bot):
 
         await self.tree.sync()
 
-        await downloads.startServer()
+        await website.startServer()
         self.loop.create_task(downloads.sweepForever())
 
         if config.devMode:
@@ -176,6 +176,6 @@ async def runBot() -> None:
         with contextlib.suppress(asyncio.CancelledError):
             await start_task
 
-        await downloads.stopServer()
+        await website.stopServer()
         await dough.close()
         print(cf.grey("[shutdown] bot closed"))

@@ -19,7 +19,6 @@ if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
         version = data["project"]["version"]
 
 TOKEN = os.getenv("BOT_TOKEN")
-prefix = os.getenv("BOT_PREFIX", "!")
 devMode = os.getenv("DEV_MODE", "false").lower() == "true"
 githubToken = os.getenv("GITHUB_TOKEN")
 

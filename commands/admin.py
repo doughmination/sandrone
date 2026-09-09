@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from sandrone import config
 from utils import components
-from utils.cog_state import loadDisabled, setDisabled
+from utils.cog_state import discoverCogHandles, loadDisabled, setDisabled
 from utils.colors import cf
 
 cogsPackage = "commands.cogs"
@@ -14,7 +14,7 @@ cogsDir = Path(__file__).parent / "cogs"
 
 
 def discoverCogNames() -> list[str]:
-    return sorted(path.stem for path in cogsDir.glob("*.py") if path.stem != "__init__")
+    return discoverCogHandles(cogsDir)
 
 
 def ownerOnly():

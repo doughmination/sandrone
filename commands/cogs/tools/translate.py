@@ -6,8 +6,8 @@ from argostranslate import package, translate
 from discord import app_commands
 from discord.ext import commands
 
-from utils import components
 from sandrone import mood
+from utils import components
 
 titleBrackets = (("『", "』"), ("《", "》"))
 placeholderPattern = re.compile(r"X(\d+)X")

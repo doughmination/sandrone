@@ -1,4 +1,4 @@
-from commands.cogs.pride import resolveFlag
+from commands.cogs.media.pride import resolveFlag
 
 
 def test_flag_names_are_normalized() -> None:

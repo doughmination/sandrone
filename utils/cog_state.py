@@ -4,6 +4,22 @@ from pathlib import Path
 statePath = Path(__file__).parent.parent / "cog_state.json"
 
 
+def discoverCogHandles(cogsDir: Path) -> list[str]:
+    """Every cog under ``cogsDir``, named by its path relative to that dir.
+
+    ``eightball.py`` -> ``"eightball"``; ``fun/eightball.py`` -> ``"fun.eightball"``.
+    The handle is what a human types into ``/cog load`` and what gets stored in
+    ``cog_state.json``; prefix it with ``commands.cogs.`` to get an import path.
+    """
+    handles = []
+    for path in cogsDir.rglob("*.py"):
+        if path.stem == "__init__":
+            continue
+        relative = path.relative_to(cogsDir).with_suffix("")
+        handles.append(".".join(relative.parts))
+    return sorted(handles)
+
+
 def loadDisabled() -> set[str]:
     if not statePath.exists():
         return set()

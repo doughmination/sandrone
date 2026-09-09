@@ -32,6 +32,7 @@ Not sure on hoow to implement this just yet lol
 Regex probs would be useful here...?
 """
 
+
 class EightBall(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot

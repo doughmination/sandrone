@@ -5,7 +5,7 @@ from typing import cast
 import pytest
 from discord.ext import commands
 
-from commands.cogs.yt_dlp import Result, YtDlp
+from commands.cogs.media.yt_dlp import Result, YtDlp
 from sandrone import config
 from utils import downloads
 

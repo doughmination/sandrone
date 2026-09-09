@@ -10,7 +10,7 @@ from watchfiles import Change, awatch
 from sandrone import config
 from sandrone.errors import handleAppCommandError
 from utils import downloads
-from utils.cog_state import loadDisabled
+from utils.cog_state import discoverCogHandles, loadDisabled
 from utils.colors import cf
 from utils.doughmination import dough
 
@@ -38,9 +38,9 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         disabled = loadDisabled()
-        extensions = discoverExtensions(
-            config.commandsDir, "commands"
-        ) + discoverExtensions(config.cogsDir, "commands.cogs")
+        extensions = discoverExtensions(config.commandsDir, "commands") + [
+            f"commands.cogs.{handle}" for handle in discoverCogHandles(config.cogsDir)
+        ]
         for extension in extensions:
             if (
                 extension.startswith("commands.cogs.")
@@ -73,17 +73,29 @@ class Bot(commands.Bot):
             for change, path in changes:
                 if change == Change.deleted or not path.endswith(".py"):
                     continue
+                if Path(path).stem == "__init__":
+                    continue
 
-                name = Path(path).stem
-                if name in disabled:
+                try:
+                    handle = ".".join(
+                        Path(path)
+                        .resolve()
+                        .relative_to(config.cogsDir.resolve())
+                        .with_suffix("")
+                        .parts
+                    )
+                except ValueError:
+                    continue
+
+                if handle in disabled:
                     print(
                         cf.grey(
-                            f"[dev-reload] skipped commands.cogs.{name} (disabled via /cog unload)"
+                            f"[dev-reload] skipped commands.cogs.{handle} (disabled via /cog unload)"
                         )
                     )
                     continue
 
-                extension = f"commands.cogs.{name}"
+                extension = f"commands.cogs.{handle}"
                 try:
                     if extension in self.extensions:
                         await self.reload_extension(extension)

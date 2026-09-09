@@ -1,8 +1,8 @@
 import discord
 from discord import app_commands
 
-from utils.colors import cf
 from sandrone import mood
+from utils.colors import cf
 
 
 def formatPermissions(permissions: list[str]) -> str:
@@ -41,7 +41,7 @@ async def handleAppCommandError(
         return
 
     if isinstance(error, mood.SassyDenial):
-        return # We don't do anything as the mood.py file handles the output from this error!
+        return  # We don't do anything as the mood.py file handles the output from this error!
 
     if isinstance(error, app_commands.CheckFailure):
         await respond(interaction, "You do not have permission to execute this command")

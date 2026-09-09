@@ -19,10 +19,12 @@ sassy_replies = [
     "Your command has been rejected on the grounds that Sandrone doesn't feel like it.",
 ]
 
+
 class SassyDenial(app_commands.CheckFailure):
     pass
 
-async def sassy(interaction: discord.Interaction) -> bool:
+
+async def _sassyCheck(interaction: discord.Interaction) -> bool:
     if random.randint(1, 10) != 1:
         return True
 
@@ -38,7 +40,8 @@ async def sassy(interaction: discord.Interaction) -> bool:
 
     raise SassyDenial()
 
-sassy = app_commands.check(sassy)
+
+sassy = app_commands.check(_sassyCheck)
 
 
 """
@@ -47,7 +50,7 @@ Used for the /judge command
 
 judge_certain_user = {
     1025770042245251122: "Sandrone chooses not to comment on her creator.",
-    1542295080524845148: "The puppet decided that the real Sandrone is much nicer."
+    1542295080524845148: "The puppet decided that the real Sandrone is much nicer.",
 }
 
 judge_replies = [
@@ -102,12 +105,44 @@ judge_replies = [
     "Verdict: tolerable. Barely.",
 ]
 
-def judge(interaction: discord.Interaction, user: discord.abc.User) -> str:
+
+def judge(interaction: discord.Interaction, user: discord.User | discord.Member) -> str:
     uid = user.id
     if uid in judge_certain_user:
         return judge_certain_user[uid]
-    elif uid == interaction.client.user.id:
+    botUser = interaction.client.user
+    if botUser is not None and uid == botUser.id:
         return "Sandrone thinks she is the best person ever"
     rng = random.Random(uid)
     verdict = rng.choice(judge_replies)
     return verdict
+
+
+# Puppet Incidents — spontaneous nonsense Sandrone drops in the active channel
+
+incident_replies = [
+    "The puppet has escaped the workshop.",
+    "The puppet has discovered doors.",
+    "Sandrone has misplaced her screwdriver. She suspects everyone.",
+    "The puppet is carrying a chair. It refuses to explain itself.",
+    "The puppet has learned a new word. Sandrone will not say which.",
+    "Something in the workshop is ticking. Sandrone did not build anything that ticks.",
+    "The puppet has been standing in the corner for six hours. This is fine.",
+    "Sandrone has counted her tools. There are more than there should be.",
+    "The puppet found the vents. Nobody tell it where they lead.",
+    "A drawer that was locked is now open. Sandrone is choosing not to investigate.",
+    "The puppet has assembled something. It has too many legs.",
+    "Sandrone left the room for one minute. The furniture has been rearranged.",
+    "The puppet is watching the ceiling. The ceiling has not moved. Yet.",
+    "Sandrone has found a screw on the floor. She does not know what it came from. This is concerning.",
+    "The puppet has started collecting spoons. Nobody has questioned this out loud.",
+    "There is a second puppet now. Sandrone is aware. It is being handled.",
+    "The puppet has climbed onto the workbench and will not come down.",
+    "Sandrone's blueprints have been reorganised by colour. She did not do this.",
+    "The puppet has been humming the same three notes since this morning.",
+    "A tool is missing. The puppet is making direct eye contact. Sandrone has drawn her own conclusions.",
+]
+
+
+def randomIncident() -> str:
+    return random.choice(incident_replies)

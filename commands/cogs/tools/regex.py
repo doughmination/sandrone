@@ -4,9 +4,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 from utils.markdown import caretAt, codeBlock
-from sandrone import mood
 
 maxInput = 500
 fieldLimit = 1024

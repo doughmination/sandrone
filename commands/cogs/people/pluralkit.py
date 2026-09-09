@@ -4,8 +4,8 @@ from discord.ext import commands
 from pluralkit import Client
 from pluralkit.v2 import Member, NotFound, PluralKitException, System, Unauthorized
 
-from utils import components
 from sandrone import mood
+from utils import components
 
 pk = Client()
 

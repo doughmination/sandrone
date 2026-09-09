@@ -11,7 +11,7 @@ body {
   padding: 2rem;
   background:
     linear-gradient(rgb(0 0 0 / 55%), rgb(0 0 0 / 55%)),
-    url("/assets/banner.png") center / cover no-repeat fixed;
+    url("/assets/banner-full.png") center / cover no-repeat fixed;
 }
 
 main {

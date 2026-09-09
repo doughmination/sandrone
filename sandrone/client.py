@@ -133,7 +133,7 @@ def createBot() -> Bot:
         type=discord.ActivityType.listening,
         name="I love Columbina <3",
     )
-    return Bot(intents=intents, activity=activity)
+    return Bot(command_prefix=(), intents=intents, activity=activity)
 
 
 async def runBot() -> None:

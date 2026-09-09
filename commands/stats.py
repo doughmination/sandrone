@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config
+from sandrone import config, mood
 from utils import components
 
 
@@ -42,6 +42,7 @@ class Stats(commands.Cog):
         return self.region
 
     @app_commands.command(name="stats", description="Show the bot's ping and uptime")
+    @mood.sassy
     async def stats(self, interaction: discord.Interaction) -> None:
         user = self.bot.user
         await interaction.response.defer()

@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 gifUrls = {
@@ -29,6 +30,7 @@ class Gifs(commands.Cog):
     @app_commands.command(name="fungif", description="Send some fun gifs!")
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=gifAuto)
+    @mood.sassy
     async def gifSlash(self, interaction: discord.Interaction, gif: str) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getGifUrl(gif))

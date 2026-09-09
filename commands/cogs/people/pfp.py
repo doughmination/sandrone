@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 
@@ -11,6 +12,7 @@ class Pfp(commands.Cog):
 
     @app_commands.command(name="pfp", description="Get a user's Profile Image")
     @app_commands.describe(user="The user you want to check (defaults to you)")
+    @mood.sassy
     async def pfpSlash(
         self,
         interaction: discord.Interaction,

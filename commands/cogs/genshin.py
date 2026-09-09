@@ -11,6 +11,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components, genshin_card
 from utils.doughmination import DoughminationError, GenshinNotFoundError, dough
 
@@ -352,6 +353,7 @@ class Genshin(commands.Cog):
         name="genshin", description="Look up a Genshin Impact account by UID"
     )
     @app_commands.describe(uid="The 9–10 digit Genshin UID to look up")
+    @mood.sassy
     async def genshinSlash(self, interaction: discord.Interaction, uid: str) -> None:
         await interaction.response.defer()
 

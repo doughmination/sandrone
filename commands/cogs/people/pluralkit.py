@@ -53,6 +53,7 @@ class Pluralkit(commands.Cog):
         name="pkfront", description="Get a pluralkit system's current front"
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
+    @mood.sassy
     async def pkFrontSlash(
         self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:

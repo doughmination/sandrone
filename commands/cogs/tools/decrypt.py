@@ -5,6 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
+
 decoderSystem = {
     "Base64": "b64",
     "Base32": "b32",
@@ -28,6 +30,7 @@ class Decrypt(commands.Cog):
             for name, value in decoderSystem.items()
         ]
     )
+    @mood.sassy
     async def decryptSlash(
         self,
         interaction: discord.Interaction,

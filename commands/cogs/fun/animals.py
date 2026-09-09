@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 
@@ -12,6 +13,7 @@ class Animals(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="kitty", description="KITTY!")
+    @mood.sassy
     async def kittySlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getCatPanel())

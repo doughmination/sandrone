@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 from utils.markdown import codeBlock
 
@@ -85,6 +86,7 @@ class Case(commands.Cog):
             for name, value in caseStyles.items()
         ]
     )
+    @mood.sassy
     async def caseSlash(
         self,
         interaction: discord.Interaction,

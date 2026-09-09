@@ -5,6 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 
@@ -282,6 +283,7 @@ class Convert(commands.Cog):
         to="The unit to convert into",
     )
     @app_commands.autocomplete(source=sourceAutocomplete, to=targetAutocomplete)
+    @mood.sassy
     async def convertSlash(
         self, interaction: discord.Interaction, value: float, source: str, to: str
     ) -> None:

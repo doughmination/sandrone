@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config
+from sandrone import config, mood
 from utils import components
 
 
@@ -11,6 +11,7 @@ class Invite(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="links", description="All related links")
+    @mood.sassy
     async def inviteSlash(self, interaction: discord.Interaction) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.buildInvitePanel())

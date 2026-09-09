@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from github import Auth, Github, GithubException
 
-from sandrone import config, doughchecks
+from sandrone import config, doughchecks, mood
 from sandrone.config import githubToken as GITHUB_TOKEN
 from utils import components
 from utils.colors import cf
@@ -41,6 +41,7 @@ class GitHub(commands.Cog):
     @app_commands.command(name="github", description="Look up a GitHub user")
     @app_commands.describe(username="The GitHub username to fetch information on")
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def githubSlash(
         self, interaction: discord.Interaction, username: str
     ) -> None:
@@ -121,6 +122,7 @@ class GitHub(commands.Cog):
     @app_commands.command(name="repo", description="Look up a GitHub repository")
     @app_commands.describe(repository="The repository to fetch, as username/repo")
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def repoSlash(
         self, interaction: discord.Interaction, repository: str
     ) -> None:

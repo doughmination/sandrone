@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 responses = [
@@ -42,6 +43,7 @@ class EightBall(commands.Cog):
         description="Ask Sandrone a question. Don't expect her to be nice about it.",
     )
     @app_commands.describe(question="The question you want answered")
+    @mood.sassy
     async def eightballSlash(
         self, interaction: discord.Interaction, question: str
     ) -> None:

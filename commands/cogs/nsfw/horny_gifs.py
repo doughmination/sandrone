@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
 from utils import components
 
 nsfwGifUrls = {
@@ -36,6 +37,7 @@ class NsfwGifs(commands.Cog):
     @app_commands.command(name="nsfwgif", description="Moans!", nsfw=True)
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=nsfwGifAuto)
+    @mood.sassy
     async def nsfwGifSlash(self, interaction: discord.Interaction, gif: str) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getNsfwGifUrl(gif))

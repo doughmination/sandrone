@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 from utils import components
 from utils.markdown import escapeMarkdown
 
@@ -87,6 +87,7 @@ class Bluesky(commands.Cog):
     )
     @app_commands.describe(url="A bsky.app or xsky.app post link")
     @doughchecks.has_permissions(embed_links=True)
+    @mood.sassy
     async def blueskySlash(self, interaction: discord.Interaction, url: str) -> None:
         await interaction.response.defer()
 

@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks
+from sandrone import doughchecks, mood
 from utils import components
 from utils.markdown import caretAt, codeBlock
 
@@ -55,6 +55,7 @@ class JsonFormat(commands.Cog):
         ]
     )
     @doughchecks.has_permissions(attach_files=True)
+    @mood.sassy
     async def jsonSlash(
         self,
         interaction: discord.Interaction,

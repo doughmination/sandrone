@@ -5,6 +5,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from sandrone import mood
+
 encoderSystem = {
     "Base64": "b64",
     "Base32": "b32",
@@ -28,6 +30,7 @@ class Encrypt(commands.Cog):
             for name, value in encoderSystem.items()
         ]
     )
+    @mood.sassy
     async def encryptSlash(
         self,
         interaction: discord.Interaction,

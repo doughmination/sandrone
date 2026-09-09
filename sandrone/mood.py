@@ -111,8 +111,7 @@ def judge(interaction: discord.Interaction, user: discord.User | discord.Member)
     uid = user.id
     if uid in judge_certain_user:
         return judge_certain_user[uid]
-    botUser = config.clientId
-    if botUser is not None and uid == botUser.id:
+    if uid == config.clientId:
         return "Sandrone thinks she is the best person ever"
     rng = random.Random(uid)
     verdict = rng.choice(judge_replies)

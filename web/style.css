@@ -1,0 +1,51 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 2rem;
+  background:
+    linear-gradient(rgb(0 0 0 / 55%), rgb(0 0 0 / 55%)),
+    url("/assets/banner.png") center / cover no-repeat fixed;
+}
+
+main {
+  max-width: 40rem;
+  margin: 4rem auto;
+}
+
+.eyebrow {
+  margin: 0 0 0.5rem;
+  color: #bbb;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0 0 0.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0 0 1.5rem;
+  color: #bbb;
+  font-size: 1rem;
+}
+
+a {
+  color: #ddd;
+}
+
+a:hover {
+  color: #fff;
+}
+
+p {
+  line-height: 1.5;
+}v

@@ -2,7 +2,6 @@ import random
 from datetime import datetime, timedelta
 
 import discord
-from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import utcnow
 
@@ -88,17 +87,17 @@ class Incidents(commands.Cog):
         self.lastActivity = None
         return True
 
-    @app_commands.command(
+    @commands.hybrid_command(
         name="incident",
         description="(owner) Force a puppet incident in the last active channel",
     )
     @ownerOnly()
-    async def incidentSlash(self, interaction: discord.Interaction) -> None:
+    async def incident(self, ctx: commands.Context) -> None:
         fired = await self.fireIncident()
         message = (
             "Incident dispatched." if fired else "No suitable active channel right now."
         )
-        await interaction.response.send_message(message, ephemeral=True)
+        await ctx.send(message, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

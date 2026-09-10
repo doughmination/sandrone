@@ -18,16 +18,15 @@ def discoverCogNames() -> list[str]:
 
 
 def ownerOnly():
-    async def predicate(interaction: discord.Interaction) -> bool:
-        return interaction.user.id in config.owners
+    async def predicate(ctx: commands.Context) -> bool:
+        return ctx.author.id in config.owners
 
-    return app_commands.check(predicate)
+    return commands.check(predicate)
 
 
-class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
+class CogManager(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        super().__init__()
 
     async def loadAutocomplete(
         self, interaction: discord.Interaction, current: str
@@ -49,72 +48,81 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             and current.lower() in name.lower()
         ][:25]
 
-    @app_commands.command(name="load", description="Load a cog from commands.cogs")
+    @commands.hybrid_group(
+        name="cog",
+        description="Manage bot cogs",
+        invoke_without_command=True,
+    )
+    @ownerOnly()
+    async def cog(self, ctx: commands.Context) -> None:
+        await ctx.send("Use `cog load`, `cog unload`, or `cog list`.", ephemeral=True)
+
+    @cog.command(name="load", description="Load a cog from commands.cogs")
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
     @app_commands.autocomplete(name=loadAutocomplete)
     @ownerOnly()
-    async def load(self, interaction: discord.Interaction, name: str) -> None:
-        await interaction.response.defer()
+    async def load(self, ctx: commands.Context, name: str) -> None:
+        await ctx.defer()
 
         if name not in discoverCogNames():
-            await interaction.followup.send(
+            await ctx.send(
                 f"No cog named `{name}` in `{cogsPackage}`."
             )
             return
 
         extension = f"{cogsPackage}.{name}"
         if extension in self.bot.extensions:
-            await interaction.followup.send(f"`{name}` is already loaded.")
+            await ctx.send(f"`{name}` is already loaded.")
             return
 
         try:
             await self.bot.load_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to load {extension}: {e}"))
-            await interaction.followup.send(f"Failed to load `{name}`: {e}")
+            await ctx.send(f"Failed to load `{name}`: {e}")
             return
 
         setDisabled(name, False)
-        print(cf.yellow(f"[cog] loaded {extension} (requested by {interaction.user})"))
+        print(cf.yellow(f"[cog] loaded {extension} (requested by {ctx.author})"))
         await self.bot.tree.sync()
-        await interaction.followup.send(
+        await ctx.send(
             f"Loaded `{name}`. Will stay loaded across restarts."
         )
 
-    @app_commands.command(name="unload", description="Unload a cog from commands.cogs")
+    @cog.command(name="unload", description="Unload a cog from commands.cogs")
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
     @app_commands.autocomplete(name=unloadAutocomplete)
     @ownerOnly()
-    async def unload(self, interaction: discord.Interaction, name: str) -> None:
-        await interaction.response.defer()
+    async def unload(self, ctx: commands.Context, name: str) -> None:
+        await ctx.defer()
 
         extension = f"{cogsPackage}.{name}"
         if extension not in self.bot.extensions:
-            await interaction.followup.send(f"`{name}` is not loaded.")
+            await ctx.send(f"`{name}` is not loaded.")
             return
 
         try:
             await self.bot.unload_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to unload {extension}: {e}"))
-            await interaction.followup.send(f"Failed to unload `{name}`: {e}")
+            await ctx.send(f"Failed to unload `{name}`: {e}")
             return
 
         setDisabled(name, True)
         print(
-            cf.yellow(f"[cog] unloaded {extension} (requested by {interaction.user})")
+            cf.yellow(f"[cog] unloaded {extension} (requested by {ctx.author})")
         )
         await self.bot.tree.sync()
-        await interaction.followup.send(
+        await ctx.send(
             f"Unloaded `{name}`. Will stay unloaded across restarts."
         )
 
-    @app_commands.command(
+    @cog.command(
         name="list",
         description="Show which cogs are loaded and whether they'll survive a restart",
     )
     @ownerOnly()
-    async def listCogs(self, interaction: discord.Interaction) -> None:
+    async def listCogs(self, ctx: commands.Context) -> None:
         disabled = loadDisabled()
         lines = []
         for name in discoverCogNames():
@@ -134,7 +142,7 @@ class CogManager(commands.GroupCog, name="cog", description="Manage bot cogs"):
             body="\n".join(lines) if lines else "No cogs found.",
             footer="Sandrone",
         )
-        await interaction.response.send_message(view=view, ephemeral=True)
+        await ctx.send(view=view, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

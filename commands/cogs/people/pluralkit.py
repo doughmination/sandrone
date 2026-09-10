@@ -14,27 +14,29 @@ class Pluralkit(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="pksystem", description="Get a pluralkit system")
+    @commands.hybrid_command(
+        name="pksystem", description="Get a pluralkit system", aliases=["pk", "system"]
+    )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
-    async def pkSystemSlash(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+    async def pksystem(
+        self, ctx: commands.Context, user: discord.Member | None = None
     ) -> None:
         ephemeral = user is not None
-        target = user or interaction.user
+        target = user or ctx.author
 
-        await interaction.response.defer(ephemeral=ephemeral)
+        await ctx.defer(ephemeral=ephemeral)
 
         try:
             system = await pk.get_system(target.id)
         except NotFound:
-            await interaction.followup.send(
+            await ctx.send(
                 f"❌ {target.mention} doesn't have a registered PluralKit system.",
                 ephemeral=ephemeral,
             )
             return
         except PluralKitException as error:
-            await interaction.followup.send(
+            await ctx.send(
                 view=components.panel(
                     title="❌ Could not fetch system",
                     body=str(error),
@@ -44,40 +46,42 @@ class Pluralkit(commands.Cog):
             )
             return
 
-        await interaction.followup.send(
+        await ctx.send(
             view=self.buildSystemPanel(system, target),
             ephemeral=ephemeral,
         )
 
-    @app_commands.command(
-        name="pkfront", description="Get a pluralkit system's current front"
+    @commands.hybrid_command(
+        name="pkfront",
+        description="Get a pluralkit system's current front",
+        aliases=["front", "fronters"],
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
-    async def pkFrontSlash(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+    async def pkfront(
+        self, ctx: commands.Context, user: discord.Member | None = None
     ) -> None:
         ephemeral = user is not None
-        target = user or interaction.user
+        target = user or ctx.author
 
-        await interaction.response.defer(ephemeral=ephemeral)
+        await ctx.defer(ephemeral=ephemeral)
 
         try:
             fronters = [member async for member in pk.get_fronters(target.id)]
         except NotFound:
-            await interaction.followup.send(
+            await ctx.send(
                 f"❌ {target.mention} doesn't have a registered PluralKit system.",
                 ephemeral=ephemeral,
             )
             return
         except Unauthorized:
-            await interaction.followup.send(
+            await ctx.send(
                 f"❌ {target.mention}'s current front is private.",
                 ephemeral=ephemeral,
             )
             return
         except PluralKitException as error:
-            await interaction.followup.send(
+            await ctx.send(
                 view=components.panel(
                     title="❌ Could not fetch front",
                     body=str(error),
@@ -87,7 +91,7 @@ class Pluralkit(commands.Cog):
             )
             return
 
-        await interaction.followup.send(
+        await ctx.send(
             view=self.buildFrontPanel(fronters, target),
             ephemeral=ephemeral,
         )

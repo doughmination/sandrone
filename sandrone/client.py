@@ -7,8 +7,8 @@ import discord
 from discord.ext import commands
 from watchfiles import Change, awatch
 
-from sandrone import config, website
-from sandrone.errors import handleAppCommandError
+from sandrone import config, prefix, website
+from sandrone.errors import handleAppCommandError, handleCommandError
 from utils import downloads
 from utils.cog_state import discoverCogHandles, loadDisabled
 from utils.colors import cf
@@ -35,6 +35,13 @@ class Bot(commands.Bot):
         self.tree.allowed_installs.user = True
 
         self.tree.error(handleAppCommandError)
+
+    async def on_command_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ) -> None:
+        # Hybrid commands route slash failures here too, so this is the
+        # main error path rather than a prefix-only one.
+        await handleCommandError(ctx, error)
 
     async def setup_hook(self) -> None:
         disabled = loadDisabled()
@@ -129,11 +136,22 @@ class Bot(commands.Bot):
 
 def createBot() -> Bot:
     intents = discord.Intents.default()
+    # Privileged — tick "Message Content Intent" in the Developer Portal, or she
+    # will only hear the @mention form of a prefix command.
+    intents.message_content = True
     activity = discord.Activity(
         type=discord.ActivityType.listening,
         name="I love Columbina <3",
     )
-    return Bot(command_prefix=(), intents=intents, activity=activity)
+    return Bot(
+        command_prefix=prefix.resolvePrefix,
+        intents=intents,
+        activity=activity,
+        case_insensitive=True,
+        strip_after_prefix=True,
+        # commands/help.py provides its own; the built-in would clash on the name.
+        help_command=None,
+    )
 
 
 async def runBot() -> None:

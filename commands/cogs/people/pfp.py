@@ -10,17 +10,19 @@ class Pfp(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="pfp", description="Get a user's Profile Image")
+    @commands.hybrid_command(
+        name="pfp", description="Get a user's Profile Image", aliases=["avatar", "av"]
+    )
     @app_commands.describe(user="The user you want to check (defaults to you)")
     @mood.sassy
-    async def pfpSlash(
+    async def pfp(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,
         user: discord.Member | discord.User | None = None,
     ) -> None:
-        await interaction.response.defer()
-        target = user or interaction.user
-        await interaction.followup.send(view=self.getPfpPanel(target))
+        await ctx.defer()
+        target = user or ctx.author
+        await ctx.send(view=self.getPfpPanel(target))
 
     def getPfpPanel(self, user: discord.Member | discord.User) -> components.Panel:
         globalAvatar = user.avatar or user.default_avatar

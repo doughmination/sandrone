@@ -9,15 +9,20 @@ class UserId(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="uid", description="Get a user's ID")
+    @commands.hybrid_command(
+        name="uid", description="Get a user's ID", aliases=["userid", "id"]
+    )
     @app_commands.describe(user="The user to get the ID of (Default to you)")
     @mood.sassy
-    async def idSlash(
-        self, interaction: discord.Interaction, user: discord.User | None = None
+    async def uid(
+        self, ctx: commands.Context, user: discord.User | None = None
     ) -> None:
-        await interaction.response.defer()
-        target = user or interaction.user
-        await interaction.followup.send(f"{target.mention}'s ID is `{target.id}`")
+        await ctx.defer()
+        target = user or ctx.author
+        await ctx.send(
+            f"{target.mention}'s ID is `{target.id}`",
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

@@ -12,14 +12,16 @@ class Qr(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="qr", description="Generate a QR Code")
+    @commands.hybrid_command(
+        name="qr", description="Generate a QR Code", aliases=["qrcode"]
+    )
     @app_commands.describe(text="The text or URI to generate")
     @doughchecks.has_permissions(attach_files=True)
     @mood.sassy
-    async def qrSlash(self, interaction: discord.Interaction, text: str) -> None:
-        await interaction.response.defer()
+    async def qr(self, ctx: commands.Context, *, text: str) -> None:
+        await ctx.defer()
         reply = await self.getQr(text)
-        await interaction.followup.send(file=reply)
+        await ctx.send(file=reply)
 
     async def getQr(self, text: str) -> discord.File:
         qr = qrcode.make(text)

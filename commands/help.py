@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import mood
+from sandrone import config, mood
 from utils import components
 
 MENU_TEMPLATE = r"help:(?P<section>[a-z0-9_]+)"
@@ -36,6 +36,7 @@ SECTIONS: dict[str, Section] = {
     "people": Section("People", "👤", "Users, profiles, and systems.", 40),
     "tools": Section("Tools", "🛠️", "Small utilities that do one job.", 50),
     "nsfw": Section("NSFW", "🔞", "Age-restricted channels only.", 60),
+    "nerd": Section("Nerd", "🤓", "Nerd stuff like Maths", 70),
     OTHER: Section("Other", "📦", "Cogs that never picked a folder.", 800),
     CORE: Section("Core", "⚙️", "The bot's own plumbing.", 900),
 }
@@ -162,6 +163,8 @@ def helpContainer(
         body = (
             "These are the functions currently installed and operational. "
             "Try not to break anything.\n\n"
+            f"Every command works as a slash command or by name — "
+            f"`{config.prefixNames[0]} help`, or just @mention her.\n\n"
         )
         body += overviewBody(buckets) or "Nothing is loaded. How embarrassing."
         footer = (
@@ -218,17 +221,21 @@ class HelpMenu(discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE
         )
 
 
-@app_commands.command(name="help", description="Show Sandrone's available commands")
+@commands.hybrid_command(
+    name="help",
+    description="Show Sandrone's available commands",
+    aliases=["commands", "h"],
+)
 @mood.sassy
-async def helpSlash(interaction: discord.Interaction) -> None:
-    client = cast(TreeClient, interaction.client)
-    await interaction.response.send_message(view=helpPanel(client.tree.get_commands()))
+async def helpCommand(ctx: commands.Context) -> None:
+    client = cast(TreeClient, ctx.bot)
+    await ctx.send(view=helpPanel(client.tree.get_commands()))
 
 
 async def setup(bot: commands.Bot) -> None:
     bot.add_dynamic_items(HelpMenu)
-    bot.tree.add_command(helpSlash)
+    bot.add_command(helpCommand)  # registers the app command alongside it
 
 
 async def teardown(bot: commands.Bot) -> None:
-    bot.tree.remove_command(helpSlash.name)
+    bot.remove_command(helpCommand.name)

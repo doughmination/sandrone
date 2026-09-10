@@ -1,7 +1,7 @@
 import base64
 import codecs
+from typing import Literal
 
-import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -14,13 +14,20 @@ encoderSystem = {
     "Caesar Cipher": "caesar",
 }
 
+# A Literal (rather than app_commands.Choice) so the prefix parser can try the
+# first word against it and fall back to the default when it doesn't match —
+# @app_commands.choices below still supplies the pretty slash-menu labels.
+EncoderMethod = Literal[*tuple(encoderSystem.values())]
+
 
 class Encrypt(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(
-        name="encrypt", description="Encode some text using a chosen method"
+    @commands.hybrid_command(
+        name="encrypt",
+        description="Encode some text using a chosen method",
+        aliases=["encode", "enc"],
     )
     @app_commands.describe(input="What do you want to encrypt?")
     @app_commands.describe(method="The encoding/encryption algorithm")
@@ -31,18 +38,17 @@ class Encrypt(commands.Cog):
         ]
     )
     @mood.sassy
-    async def encryptSlash(
+    async def encrypt(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,
+        method: EncoderMethod | None = None,
+        *,
         input: str,
-        method: app_commands.Choice[str] | None = None,
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.defer(ephemeral=True)
 
-        chosen_value = method.value if method else "b64"
-
-        reply = await self.encodeMessage(input, chosen_value)
-        await interaction.followup.send(reply, ephemeral=True)
+        reply = await self.encodeMessage(input, method or "b64")
+        await ctx.send(reply, ephemeral=True)
 
     async def encodeMessage(self, input: str, method: str) -> str:
         if method == "b64":

@@ -1,6 +1,5 @@
 import asyncio
 
-import discord
 from discord import app_commands
 from discord.ext import commands
 from github import Auth, Github, GithubException
@@ -38,15 +37,17 @@ class GitHub(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="github", description="Look up a GitHub user")
+    @commands.hybrid_command(
+        name="github", description="Look up a GitHub user", aliases=["gh"]
+    )
     @app_commands.describe(username="The GitHub username to fetch information on")
     @doughchecks.has_permissions(embed_links=True)
     @mood.sassy
-    async def githubSlash(
-        self, interaction: discord.Interaction, username: str
+    async def github(
+        self, ctx: commands.Context, username: str
     ) -> None:
-        await interaction.response.defer()
-        await interaction.followup.send(view=await self.fetchUserPanel(username))
+        await ctx.defer()
+        await ctx.send(view=await self.fetchUserPanel(username))
 
     async def fetchUserPanel(self, username: str) -> components.Panel:
         username = username.removeprefix("@")
@@ -119,15 +120,17 @@ class GitHub(commands.Cog):
             return None
         return None
 
-    @app_commands.command(name="repo", description="Look up a GitHub repository")
+    @commands.hybrid_command(
+        name="repo", description="Look up a GitHub repository", aliases=["repository"]
+    )
     @app_commands.describe(repository="The repository to fetch, as username/repo")
     @doughchecks.has_permissions(embed_links=True)
     @mood.sassy
-    async def repoSlash(
-        self, interaction: discord.Interaction, repository: str
+    async def repo(
+        self, ctx: commands.Context, repository: str
     ) -> None:
-        await interaction.response.defer()
-        await interaction.followup.send(view=await self.fetchRepoPanel(repository))
+        await ctx.defer()
+        await ctx.send(view=await self.fetchRepoPanel(repository))
 
     async def fetchRepoPanel(self, repository: str) -> components.Panel:
         return await asyncio.to_thread(self._buildRepoPanel, repository)

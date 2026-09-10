@@ -1,5 +1,6 @@
 import asyncio
 import io
+from typing import Literal
 
 import discord
 from discord import app_commands
@@ -28,6 +29,10 @@ styles = {
     "Square": "square",
     "Overlay": "overlay",
 }
+
+# Literal, not app_commands.Choice, so the prefix parser can convert it and
+# backtrack when the word isn't a style. Display names come from @choices.
+PrideStyle = Literal[*tuple(styles.values())]
 
 
 def resolveFlag(name: str | None) -> str | None:
@@ -58,8 +63,10 @@ class Pride(commands.Cog):
             or any(query in alias for alias in flagAliases.get(slug, ()))
         ][:25]
 
-    @app_commands.command(
-        name="pride", description="Put a pride flag around someone's profile picture"
+    @commands.hybrid_command(
+        name="pride",
+        description="Put a pride flag around someone's profile picture",
+        aliases=["flag", "pridepfp"],
     )
     @app_commands.describe(
         user="Whose profile picture to use (defaults to you)",
@@ -81,26 +88,26 @@ class Pride(commands.Cog):
     )
     @doughchecks.has_permissions(attach_files=True)
     @mood.sassy
-    async def prideSlash(
+    async def pride(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,
         user: discord.Member | discord.User | None = None,
         flag: str | None = None,
         flag2: str | None = None,
-        style: app_commands.Choice[str] | None = None,
-        size: app_commands.Range[int, 10, 100] = 90,
-        opacity: app_commands.Range[int, 0, 100] = 100,
-        rotation: app_commands.Range[int, 0, 360] = 0,
+        style: PrideStyle | None = None,
+        size: commands.Range[int, 10, 100] = 90,
+        opacity: commands.Range[int, 0, 100] = 100,
+        rotation: commands.Range[int, 0, 360] = 0,
         gradient: bool = False,
         animated: bool = False,
     ) -> None:
-        await interaction.response.defer()
+        await ctx.defer()
 
         requested = [name for name in (flag or "pride", flag2) if name]
         chosen = [resolveFlag(name) for name in requested]
         unknown = [name for name, slug in zip(requested, chosen) if slug is None]
         if unknown:
-            await interaction.followup.send(
+            await ctx.send(
                 view=components.error(
                     f"I have no flag called `{'`, `'.join(unknown)}` — "
                     "pick one from the suggestions."
@@ -108,10 +115,10 @@ class Pride(commands.Cog):
             )
             return
 
-        target = user or interaction.user
+        target = user or ctx.author
         options = PrideOptions(
             columns=tuple(flagColours[slug] for slug in chosen if slug is not None),
-            cutout=style.value if style else "circle",
+            cutout=style or "circle",
             cutoutSize=int(size),
             opacity=int(opacity),
             rotation=int(rotation),
@@ -125,18 +132,18 @@ class Pride(commands.Cog):
                 .read()
             )
         except discord.HTTPException:
-            await interaction.followup.send(
+            await ctx.send(
                 view=components.error("Couldn't download that profile picture.")
             )
             return
 
-        budget = self.uploadBudget(interaction)
+        budget = self.uploadBudget(ctx)
         try:
             result = await asyncio.to_thread(
                 self.draw, source, options, animated, budget
             )
         except (UnidentifiedImageError, OSError, ValueError) as error:
-            await interaction.followup.send(
+            await ctx.send(
                 view=components.error(f"Couldn't render that one: `{error}`")
             )
             return
@@ -155,7 +162,7 @@ class Pride(commands.Cog):
             images=[f"attachment://{filename}"],
             footer=self.footerText(result),
         )
-        await interaction.followup.send(
+        await ctx.send(
             view=view,
             file=discord.File(io.BytesIO(result.data), filename=filename),
         )
@@ -169,12 +176,8 @@ class Pride(commands.Cog):
             return render(avatar, options, budget)
         return renderPng(avatar, options)
 
-    def uploadBudget(self, interaction: discord.Interaction) -> int:
-        limit = (
-            interaction.guild.filesize_limit
-            if interaction.guild
-            else defaultUploadLimit
-        )
+    def uploadBudget(self, ctx: commands.Context) -> int:
+        limit = ctx.guild.filesize_limit if ctx.guild else defaultUploadLimit
         return max(limit - uploadOverhead, uploadOverhead)
 
     def footerText(self, result: Rendered) -> str:

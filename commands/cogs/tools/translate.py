@@ -35,8 +35,9 @@ class Translate(commands.Cog):
             if query in name.lower() or query == code
         ][:25]
 
-    @app_commands.command(
-        name="translate", description="Translate text between languages"
+    # Language codes lead so `text` can be consume-rest on the prefix side.
+    @commands.hybrid_command(
+        name="translate", description="Translate text between languages", aliases=["tr"]
     )
     @app_commands.describe(
         text="The text to translate",
@@ -45,16 +46,27 @@ class Translate(commands.Cog):
     )
     @app_commands.autocomplete(source=languageAutocomplete, to=languageAutocomplete)
     @mood.sassy
-    async def translateSlash(
+    async def translate(
         self,
-        interaction: discord.Interaction,
-        text: app_commands.Range[str, 1, maxInput],
+        ctx: commands.Context,
         source: str,
         to: str | None = None,
+        *,
+        text: commands.Range[str, 1, maxInput],
     ) -> None:
-        await interaction.response.defer()
+        await ctx.defer()
+
+        # On the prefix path `to` is optional but positional, so "translate es
+        # hola que tal" would otherwise read "hola" as the target language.
+        # Anything that isn't a known code belongs to the text.
+        if to is not None:
+            names = await self.ensureIndex()
+            if names and to not in names:
+                text = f"{to} {text}"
+                to = None
+
         view = await self.getTranslationPanel(text, source, to or defaultTarget)
-        await interaction.followup.send(view=view)
+        await ctx.send(view=view)
 
     async def getTranslationPanel(
         self, text: str, source: str, to: str

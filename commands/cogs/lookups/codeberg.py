@@ -1,7 +1,6 @@
 import datetime as dt
 
 import aiohttp
-import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -17,15 +16,17 @@ class Codeberg(commands.Cog):
     async def cog_unload(self) -> None:
         await self.session.close()
 
-    @app_commands.command(name="codeberg", description="Look up a Codeberg user")
+    @commands.hybrid_command(
+        name="codeberg", description="Look up a Codeberg user", aliases=["cb"]
+    )
     @app_commands.describe(username="The Codeberg username to fetch information on")
     @doughchecks.has_permissions(embed_links=True)
     @mood.sassy
-    async def codebergSlash(
-        self, interaction: discord.Interaction, username: str
+    async def codeberg(
+        self, ctx: commands.Context, username: str
     ) -> None:
-        await interaction.response.defer()
-        await interaction.followup.send(view=await self.fetchUserPanel(username))
+        await ctx.defer()
+        await ctx.send(view=await self.fetchUserPanel(username))
 
     async def fetchUserPanel(self, username: str) -> components.Panel:
         try:

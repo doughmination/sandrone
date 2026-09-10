@@ -1,5 +1,6 @@
 import io
 import json
+from typing import Literal
 
 import discord
 from discord import app_commands
@@ -20,6 +21,8 @@ indentStyles = {
 }
 
 indentValues: dict[str, int | str] = {"2": 2, "4": 4, "tab": "\t"}
+
+IndentStyle = Literal[*tuple(indentStyles.values())]
 
 typeNames = {
     str: "String",
@@ -43,7 +46,11 @@ class JsonFormat(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="json", description="Pretty-print compact JSON")
+    # `indent` leads so `data` can be consume-rest on the prefix side; a first
+    # word that isn't an indent style backtracks and becomes part of `data`.
+    @commands.hybrid_command(
+        name="json", description="Pretty-print compact JSON", aliases=["jsonfmt"]
+    )
     @app_commands.describe(
         data="The JSON to format",
         indent="How far to indent each level (defaults to 2 spaces)",
@@ -56,16 +63,17 @@ class JsonFormat(commands.Cog):
     )
     @doughchecks.has_permissions(attach_files=True)
     @mood.sassy
-    async def jsonSlash(
+    async def json(
         self,
-        interaction: discord.Interaction,
-        data: app_commands.Range[str, 1, maxInput],
-        indent: app_commands.Choice[str] | None = None,
+        ctx: commands.Context,
+        indent: IndentStyle | None = None,
+        *,
+        data: commands.Range[str, 1, maxInput],
     ) -> None:
-        await interaction.response.defer()
+        await ctx.defer()
 
-        view, file = self.getJsonReply(data, indent.value if indent else "2")
-        await interaction.followup.send(view=view, file=file or discord.utils.MISSING)
+        view, file = self.getJsonReply(data, indent or "2")
+        await ctx.send(view=view, file=file or discord.utils.MISSING)
 
     def getJsonReply(
         self, data: str, indent: str

@@ -27,13 +27,15 @@ class Gifs(commands.Cog):
             if current.lower() in name.lower()
         ][:25]
 
-    @app_commands.command(name="fungif", description="Send some fun gifs!")
+    @commands.hybrid_command(
+        name="fungif", description="Send some fun gifs!", aliases=["gif"]
+    )
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=gifAuto)
     @mood.sassy
-    async def gifSlash(self, interaction: discord.Interaction, gif: str) -> None:
-        await interaction.response.defer()
-        await interaction.followup.send(view=await self.getGifUrl(gif))
+    async def fungif(self, ctx: commands.Context, gif: str) -> None:
+        await ctx.defer()
+        await ctx.send(view=await self.getGifUrl(gif))
 
     async def getGifUrl(self, gif: str) -> components.Panel:
         slug = gifUrls.get(gif)

@@ -82,18 +82,20 @@ class Bluesky(commands.Cog):
     async def cog_unload(self) -> None:
         await self.session.close()
 
-    @app_commands.command(
-        name="bluesky", description="Embed a Bluesky post via xsky.app"
+    @commands.hybrid_command(
+        name="bluesky",
+        description="Embed a Bluesky post via xsky.app",
+        aliases=["bsky"],
     )
     @app_commands.describe(url="A bsky.app or xsky.app post link")
     @doughchecks.has_permissions(embed_links=True)
     @mood.sassy
-    async def blueskySlash(self, interaction: discord.Interaction, url: str) -> None:
-        await interaction.response.defer()
+    async def bluesky(self, ctx: commands.Context, url: str) -> None:
+        await ctx.defer()
 
         ref = extractPostRef(url)
         if ref is None:
-            await interaction.followup.send(
+            await ctx.send(
                 view=errorPanel(
                     "❌ Invalid link",
                     "That doesn't look like a `bsky.app` or `xsky.app` post link.",
@@ -103,9 +105,9 @@ class Bluesky(commands.Cog):
 
         actor, rkey = ref
         panel, linkUrl = await self.fetchPostPanel(actor, rkey)
-        await interaction.followup.send(view=panel)
+        await ctx.send(view=panel)
         if linkUrl:
-            await interaction.followup.send(content=linkUrl)
+            await ctx.send(content=linkUrl)
 
     async def fetchPostPanel(
         self, actor: str, rkey: str

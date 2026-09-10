@@ -51,6 +51,14 @@ siteUrl = (
 downloadsRetention = int(os.getenv("DOWNLOADS_RETENTION_HOURS", "24"))
 downloadsMaxSize = int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
 
+# Text-command prefixes, matched case-insensitively by sandrone.prefix.
+# A mention always works too; these are the spoken-name forms.
+# "marionette" is the canonical Harbinger spelling, "marrionette" the common
+# misspelling. Drop "sandrone" here if you'd rather she only answer to the title.
+prefixNames: list[str] = sorted(
+    ("marrionette", "marionette", "sandrone"), key=len, reverse=True
+)
+
 owners: list[int] = [
     1464890289922641993,
     1025770042245251122,

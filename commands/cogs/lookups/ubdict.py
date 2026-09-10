@@ -2,7 +2,6 @@ import re
 import urllib.parse
 
 import aiohttp
-import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -29,15 +28,17 @@ class UrbanDictionary(commands.Cog):
     async def cog_unload(self) -> None:
         await self.session.close()
 
-    @app_commands.command(
-        name="urban-dictionary", description="Lookup a definition on UrbDictionary"
+    @commands.hybrid_command(
+        name="urban-dictionary",
+        description="Lookup a definition on UrbDictionary",
+        aliases=["urban", "ud", "urbandictionary"],
     )
     @app_commands.describe(query="The query")
     @doughchecks.has_permissions(embed_links=True)
     @mood.sassy
-    async def urbDictSlash(self, interaction: discord.Interaction, query: str) -> None:
-        await interaction.response.defer()
-        await interaction.followup.send(view=await self.getUrbDefPanel(query))
+    async def urbanDictionary(self, ctx: commands.Context, *, query: str) -> None:
+        await ctx.defer()
+        await ctx.send(view=await self.getUrbDefPanel(query))
 
     async def getUrbDefPanel(self, query: str) -> components.Panel:
         params = {"term": query}

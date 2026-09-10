@@ -1,7 +1,7 @@
 import base64
 import codecs
+from typing import Literal
 
-import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -14,13 +14,18 @@ decoderSystem = {
     "Caesar Cipher": "caesar",
 }
 
+# See encrypt.py — Literal so the prefix parser can backtrack past a missing method.
+DecoderMethod = Literal[*tuple(decoderSystem.values())]
+
 
 class Decrypt(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(
-        name="decrypt", description="Decode or decrypt some text using a chosen method"
+    @commands.hybrid_command(
+        name="decrypt",
+        description="Decode or decrypt some text using a chosen method",
+        aliases=["decode", "dec"],
     )
     @app_commands.describe(input="What do you want to decrypt?")
     @app_commands.describe(method="The decoding/decryption algorithm")
@@ -31,16 +36,16 @@ class Decrypt(commands.Cog):
         ]
     )
     @mood.sassy
-    async def decryptSlash(
+    async def decrypt(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,
+        method: DecoderMethod | None = None,
+        *,
         input: str,
-        method: app_commands.Choice[str] | None = None,
     ) -> None:
-        await interaction.response.defer(ephemeral=True)
-        chosen_value = method.value if method else "b64"
-        reply = await self.decodeMessage(input, chosen_value)
-        await interaction.followup.send(reply, ephemeral=True)
+        await ctx.defer(ephemeral=True)
+        reply = await self.decodeMessage(input, method or "b64")
+        await ctx.send(reply, ephemeral=True)
 
     async def decodeMessage(self, input: str, method: str) -> str:
         try:

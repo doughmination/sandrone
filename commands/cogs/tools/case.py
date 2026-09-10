@@ -1,6 +1,6 @@
 import re
+from typing import Literal
 
-import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -22,6 +22,8 @@ caseStyles = {
 }
 
 styleLabels = {value: name for name, value in caseStyles.items()}
+
+CaseStyle = Literal[*tuple(caseStyles.values())]
 
 # Runs of capitals stay together unless a lowercase letter follows, so
 # "parseXMLHttpRequest" splits as parse / XML / Http / Request.
@@ -75,7 +77,9 @@ class Case(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="case", description="Convert text between cases")
+    # `to` comes first so the prefix form reads "case snake some text here" and
+    # `text` can swallow the rest of the line.
+    @commands.hybrid_command(name="case", description="Convert text between cases")
     @app_commands.describe(
         text="The text to convert",
         to="The case to convert into",
@@ -87,13 +91,14 @@ class Case(commands.Cog):
         ]
     )
     @mood.sassy
-    async def caseSlash(
+    async def case(
         self,
-        interaction: discord.Interaction,
-        text: app_commands.Range[str, 1, maxInput],
-        to: app_commands.Choice[str],
+        ctx: commands.Context,
+        to: CaseStyle,
+        *,
+        text: commands.Range[str, 1, maxInput],
     ) -> None:
-        await interaction.response.send_message(view=self.getCasePanel(text, to.value))
+        await ctx.send(view=self.getCasePanel(text, to))
 
     def getCasePanel(self, text: str, style: str) -> components.Panel:
         words = splitWords(text)

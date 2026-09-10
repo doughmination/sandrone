@@ -3,7 +3,7 @@ import io
 import re
 import shutil
 from pathlib import Path
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 from urllib.parse import parse_qs, urlsplit
 
 import discord
@@ -19,6 +19,8 @@ opts = {
     "Audio": "mp3",
     "Video": "mp4",
 }
+
+ContainerType = Literal[*tuple(opts.values())]
 
 containerSuffixes = {
     "mp3": {".mp3"},
@@ -54,8 +56,10 @@ class YtDlp(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(
-        name="yt-dlp", description="Get a YouTube video as a file or audio"
+    @commands.hybrid_command(
+        name="yt-dlp",
+        description="Get a YouTube video as a file or audio",
+        aliases=["ytdlp", "yt", "dl"],
     )
     @app_commands.describe(
         url="YouTube URL", type="Audio or Video? (defaults to Video)"
@@ -66,21 +70,17 @@ class YtDlp(commands.Cog):
         ]
     )
     @mood.sassy
-    async def ytDlpSlash(
+    async def ytDlp(
         self,
-        interaction: discord.Interaction,
+        ctx: commands.Context,
         url: str,
-        type: app_commands.Choice[str] | None = None,
+        type: ContainerType | None = None,
     ) -> None:
-        await interaction.response.defer()
-        container = type.value if type else "mp4"
-        uploadLimit = (
-            interaction.guild.filesize_limit
-            if interaction.guild
-            else defaultUploadLimit
-        )
+        await ctx.defer()
+        container = type or "mp4"
+        uploadLimit = ctx.guild.filesize_limit if ctx.guild else defaultUploadLimit
         content, file = await self.getVideoOrAudio(url, container, uploadLimit)
-        await interaction.followup.send(content, file=file or discord.utils.MISSING)
+        await ctx.send(content, file=file or discord.utils.MISSING)
 
     async def getVideoOrAudio(
         self, url: str, container: str, uploadLimit: int

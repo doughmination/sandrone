@@ -2,9 +2,10 @@ import random
 
 import discord
 from discord import app_commands
+from discord.ext import commands
 
-from utils import components
 from sandrone import config
+from utils import components
 
 """
 1 in 10 chance to fail lol
@@ -21,15 +22,19 @@ sassy_replies = [
 ]
 
 
-class SassyDenial(app_commands.CheckFailure):
-    pass
+class SassyDenial(commands.CheckFailure, app_commands.CheckFailure):
+    """Refusal to run a command.
+
+    Subclasses both check-failure types so it is recognised whether it surfaces
+    through ``on_command_error`` (every hybrid invocation) or ``tree.on_error``.
+    """
 
 
-async def _sassyCheck(interaction: discord.Interaction) -> bool:
+async def _sassyCheck(ctx: commands.Context) -> bool:
     if random.randint(1, 10) != 1:
         return True
 
-    await interaction.response.send_message(
+    await ctx.send(
         view=components.panel(
             body=(
                 "<:sandrone_refuses:1546669792595939468> "
@@ -42,7 +47,9 @@ async def _sassyCheck(interaction: discord.Interaction) -> bool:
     raise SassyDenial()
 
 
-sassy = app_commands.check(_sassyCheck)
+# commands.check (not app_commands.check) so it runs for both slash and prefix
+# invocations of a hybrid command.
+sassy = commands.check(_sassyCheck)
 
 
 """
@@ -107,7 +114,7 @@ judge_replies = [
 ]
 
 
-def judge(interaction: discord.Interaction, user: discord.User | discord.Member) -> str:
+def judge(user: discord.User | discord.Member) -> str:
     uid = user.id
     if uid in judge_certain_user:
         return judge_certain_user[uid]

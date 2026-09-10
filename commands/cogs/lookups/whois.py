@@ -3,7 +3,6 @@ import datetime as dt
 import ipaddress
 import re
 
-import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -232,14 +231,16 @@ class Whois(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(
-        name="whois", description="Look up the WHOIS record for a domain or IP"
+    @commands.hybrid_command(
+        name="whois",
+        description="Look up the WHOIS record for a domain or IP",
+        aliases=["dns", "lookup"],
     )
     @app_commands.describe(query="The domain name or IP address to look up")
     @mood.sassy
-    async def whoisSlash(self, interaction: discord.Interaction, query: str) -> None:
-        await interaction.response.defer()
-        await interaction.followup.send(view=await self.getWhoisPanel(query))
+    async def whois(self, ctx: commands.Context, *, query: str) -> None:
+        await ctx.defer()
+        await ctx.send(view=await self.getWhoisPanel(query))
 
     async def askServer(self, server: str, query: str) -> str:
         request = queryFormats.get(server, "{query}").format(query=query)

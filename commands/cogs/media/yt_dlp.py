@@ -3,7 +3,7 @@ import io
 import re
 import shutil
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import NamedTuple
 from urllib.parse import parse_qs, urlsplit
 
 import discord
@@ -14,13 +14,15 @@ from yt_dlp.utils import YoutubeDLError
 
 from sandrone import config, mood
 from utils import downloads
+from utils.choices import ChoiceSet
 
 opts = {
     "Audio": "mp3",
     "Video": "mp4",
 }
 
-ContainerType = Literal[*tuple(opts.values())]
+containers = ChoiceSet(opts)
+ContainerType = containers.converter
 
 containerSuffixes = {
     "mp3": {".mp3"},
@@ -60,15 +62,12 @@ class YtDlp(commands.Cog):
         name="yt-dlp",
         description="Get a YouTube video as a file or audio",
         aliases=["ytdlp", "yt", "dl"],
+        ignore_extra=False,
     )
     @app_commands.describe(
         url="YouTube URL", type="Audio or Video? (defaults to Video)"
     )
-    @app_commands.choices(
-        type=[
-            app_commands.Choice(name=name, value=value) for name, value in opts.items()
-        ]
-    )
+    @app_commands.choices(type=containers.options)
     @mood.sassy
     async def ytDlp(
         self,
@@ -77,7 +76,7 @@ class YtDlp(commands.Cog):
         type: ContainerType | None = None,
     ) -> None:
         await ctx.defer()
-        container = type or "mp4"
+        container = containers.resolve(type, "mp4")
         uploadLimit = ctx.guild.filesize_limit if ctx.guild else defaultUploadLimit
         content, file = await self.getVideoOrAudio(url, container, uploadLimit)
         await ctx.send(content, file=file or discord.utils.MISSING)

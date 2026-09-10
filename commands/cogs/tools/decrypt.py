@@ -1,11 +1,11 @@
 import base64
 import codecs
-from typing import Literal
 
 from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
+from utils.choices import ChoiceSet
 
 decoderSystem = {
     "Base64": "b64",
@@ -14,8 +14,10 @@ decoderSystem = {
     "Caesar Cipher": "caesar",
 }
 
-# See encrypt.py — Literal so the prefix parser can backtrack past a missing method.
-DecoderMethod = Literal[*tuple(decoderSystem.values())]
+# See encrypt.py — a converter, so the prefix parser can backtrack past a
+# missing method and still accept the menu labels.
+decoders = ChoiceSet(decoderSystem)
+DecoderMethod = decoders.converter
 
 
 class Decrypt(commands.Cog):
@@ -29,12 +31,7 @@ class Decrypt(commands.Cog):
     )
     @app_commands.describe(input="What do you want to decrypt?")
     @app_commands.describe(method="The decoding/decryption algorithm")
-    @app_commands.choices(
-        method=[
-            app_commands.Choice(name=name, value=value)
-            for name, value in decoderSystem.items()
-        ]
-    )
+    @app_commands.choices(method=decoders.options)
     @mood.sassy
     async def decrypt(
         self,
@@ -44,7 +41,7 @@ class Decrypt(commands.Cog):
         input: str,
     ) -> None:
         await ctx.defer(ephemeral=True)
-        reply = await self.decodeMessage(input, method or "b64")
+        reply = await self.decodeMessage(input, decoders.resolve(method, "b64"))
         await ctx.send(reply, ephemeral=True)
 
     async def decodeMessage(self, input: str, method: str) -> str:

@@ -1,6 +1,5 @@
 import asyncio
 import io
-from typing import Literal
 
 import discord
 from discord import app_commands
@@ -9,6 +8,7 @@ from PIL import Image, UnidentifiedImageError
 
 from sandrone import doughchecks, mood
 from utils import components
+from utils.choices import ChoiceSet
 from utils.pride import (
     PrideOptions,
     Rendered,
@@ -30,9 +30,10 @@ styles = {
     "Overlay": "overlay",
 }
 
-# Literal, not app_commands.Choice, so the prefix parser can convert it and
-# backtrack when the word isn't a style. Display names come from @choices.
-PrideStyle = Literal[*tuple(styles.values())]
+# A converter, not app_commands.Choice, so the prefix parser can convert it
+# and backtrack when the word isn't a style. Display names come from @choices.
+prideStyles = ChoiceSet(styles)
+PrideStyle = prideStyles.converter
 
 
 def resolveFlag(name: str | None) -> str | None:
@@ -67,6 +68,7 @@ class Pride(commands.Cog):
         name="pride",
         description="Put a pride flag around someone's profile picture",
         aliases=["flag", "pridepfp"],
+        ignore_extra=False,
     )
     @app_commands.describe(
         user="Whose profile picture to use (defaults to you)",
@@ -80,12 +82,7 @@ class Pride(commands.Cog):
         animated="Spin the flag, as a GIF",
     )
     @app_commands.autocomplete(flag=flagAutocomplete, flag2=flagAutocomplete)
-    @app_commands.choices(
-        style=[
-            app_commands.Choice(name=name, value=value)
-            for name, value in styles.items()
-        ]
-    )
+    @app_commands.choices(style=prideStyles.options)
     @doughchecks.has_permissions(attach_files=True)
     @mood.sassy
     async def pride(
@@ -118,7 +115,7 @@ class Pride(commands.Cog):
         target = user or ctx.author
         options = PrideOptions(
             columns=tuple(flagColours[slug] for slug in chosen if slug is not None),
-            cutout=style or "circle",
+            cutout=prideStyles.resolve(style, "circle"),
             cutoutSize=int(size),
             opacity=int(opacity),
             rotation=int(rotation),

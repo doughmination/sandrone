@@ -15,7 +15,10 @@ class Pluralkit(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="pksystem", description="Get a pluralkit system", aliases=["pk", "system"]
+        name="pksystem",
+        description="Get a pluralkit system",
+        aliases=["pk", "system"],
+        ignore_extra=False,
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
@@ -55,6 +58,7 @@ class Pluralkit(commands.Cog):
         name="pkfront",
         description="Get a pluralkit system's current front",
         aliases=["front", "fronters"],
+        ignore_extra=False,
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy

@@ -1,11 +1,11 @@
 import re
-from typing import Literal
 
 from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
 from utils import components
+from utils.choices import ChoiceSet
 from utils.markdown import codeBlock
 
 maxInput = 500
@@ -23,7 +23,8 @@ caseStyles = {
 
 styleLabels = {value: name for name, value in caseStyles.items()}
 
-CaseStyle = Literal[*tuple(caseStyles.values())]
+cases = ChoiceSet(caseStyles)
+CaseStyle = cases.converter
 
 # Runs of capitals stay together unless a lowercase letter follows, so
 # "parseXMLHttpRequest" splits as parse / XML / Http / Request.
@@ -84,12 +85,7 @@ class Case(commands.Cog):
         text="The text to convert",
         to="The case to convert into",
     )
-    @app_commands.choices(
-        to=[
-            app_commands.Choice(name=name, value=value)
-            for name, value in caseStyles.items()
-        ]
-    )
+    @app_commands.choices(to=cases.options)
     @mood.sassy
     async def case(
         self,
@@ -98,7 +94,7 @@ class Case(commands.Cog):
         *,
         text: commands.Range[str, 1, maxInput],
     ) -> None:
-        await ctx.send(view=self.getCasePanel(text, to))
+        await ctx.send(view=self.getCasePanel(text, cases.resolve(to, "lower")))
 
     def getCasePanel(self, text: str, style: str) -> components.Panel:
         words = splitWords(text)

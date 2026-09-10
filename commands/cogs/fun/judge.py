@@ -11,7 +11,9 @@ class Judge(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="judge", description="Get Sandrone's Judgement on a user"
+        name="judge",
+        description="Get Sandrone's Judgement on a user",
+        ignore_extra=False,
     )
     @app_commands.describe(user="The user to judge")
     @mood.sassy

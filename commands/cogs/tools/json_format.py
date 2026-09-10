@@ -1,6 +1,5 @@
 import io
 import json
-from typing import Literal
 
 import discord
 from discord import app_commands
@@ -8,6 +7,7 @@ from discord.ext import commands
 
 from sandrone import doughchecks, mood
 from utils import components
+from utils.choices import ChoiceSet
 from utils.markdown import caretAt, codeBlock
 
 maxInput = 4000
@@ -22,7 +22,8 @@ indentStyles = {
 
 indentValues: dict[str, int | str] = {"2": 2, "4": 4, "tab": "\t"}
 
-IndentStyle = Literal[*tuple(indentStyles.values())]
+indents = ChoiceSet(indentStyles)
+IndentStyle = indents.converter
 
 typeNames = {
     str: "String",
@@ -55,12 +56,7 @@ class JsonFormat(commands.Cog):
         data="The JSON to format",
         indent="How far to indent each level (defaults to 2 spaces)",
     )
-    @app_commands.choices(
-        indent=[
-            app_commands.Choice(name=name, value=value)
-            for name, value in indentStyles.items()
-        ]
-    )
+    @app_commands.choices(indent=indents.options)
     @doughchecks.has_permissions(attach_files=True)
     @mood.sassy
     async def json(
@@ -72,7 +68,7 @@ class JsonFormat(commands.Cog):
     ) -> None:
         await ctx.defer()
 
-        view, file = self.getJsonReply(data, indent or "2")
+        view, file = self.getJsonReply(data, indents.resolve(indent, "2"))
         await ctx.send(view=view, file=file or discord.utils.MISSING)
 
     def getJsonReply(

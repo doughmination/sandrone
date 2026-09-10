@@ -33,6 +33,7 @@ class Profile(commands.Cog):
         name="profile",
         description="Get a user's Discord profile",
         aliases=["whoisuser", "userinfo"],
+        ignore_extra=False,
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy

@@ -57,12 +57,26 @@ def appParameters(command: commands.Command) -> dict[str, app_commands.Parameter
     return {param.name: param for param in app.parameters}
 
 
-def token(param: commands.Parameter) -> str:
+def optionValues(
+    param: commands.Parameter, appParam: app_commands.Parameter | None
+) -> tuple[str, ...]:
+    """The canonical options for a parameter.
+
+    A ChoiceSet widens its ``Literal`` with label spellings so the prefix parser
+    accepts them; those are for parsing, not for display, so the slash choices
+    win wherever they exist.
+    """
+    if appParam is not None and appParam.choices is not MISSING and appParam.choices:
+        return tuple(str(choice.value) for choice in appParam.choices)
+    return literalValues(param.converter)
+
+
+def token(param: commands.Parameter, appParam: app_commands.Parameter | None) -> str:
     """One parameter as it should appear in the usage line."""
-    literals = literalValues(param.converter)
+    options = optionValues(param, appParam)
     inner = param.name
-    if literals:
-        joined = "|".join(literals)
+    if options:
+        joined = "|".join(options)
         if len(joined) <= inlineChoiceLimit:
             inner = joined
 
@@ -73,7 +87,11 @@ def token(param: commands.Parameter) -> str:
 
 
 def signatureFor(command: commands.Command) -> str:
-    return " ".join(token(param) for param in command.clean_params.values())
+    appParams = appParameters(command)
+    return " ".join(
+        token(param, appParams.get(name))
+        for name, param in command.clean_params.items()
+    )
 
 
 def usageLine(ctx: commands.Context) -> str:
@@ -86,8 +104,8 @@ def usageLine(ctx: commands.Context) -> str:
 
 def choiceLine(param: commands.Parameter, appParam: app_commands.Parameter | None) -> str:
     """The options for a parameter, preferring the slash menu's display names."""
-    literals = literalValues(param.converter)
-    if not literals:
+    options = optionValues(param, appParam)
+    if not options:
         return ""
 
     labels: dict[str, str] = {}
@@ -96,7 +114,7 @@ def choiceLine(param: commands.Parameter, appParam: app_commands.Parameter | Non
 
     rendered = [
         f"`{value}` ({labels[value]})" if value in labels else f"`{value}`"
-        for value in literals
+        for value in options
     ]
     return "One of: " + ", ".join(rendered)
 
@@ -192,6 +210,12 @@ def describeProblem(ctx: commands.Context, error: Exception) -> str:
         return f"`{error.param.name}` isn't in a form I recognise."
 
     if isinstance(error, commands.TooManyArguments):
+        # Whatever is left in the view is the part that didn't convert — often a
+        # choice spelled wrong, which is more useful to name than to count.
+        view = getattr(ctx, "view", None)
+        leftover = view.buffer[view.index :].strip() if view is not None else ""
+        if leftover:
+            return f"I didn't know what to do with `{leftover}`."
         return "That's more than this one takes."
 
     if isinstance(error, commands.ArgumentParsingError):

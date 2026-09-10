@@ -11,7 +11,10 @@ class Pfp(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="pfp", description="Get a user's Profile Image", aliases=["avatar", "av"]
+        name="pfp",
+        description="Get a user's Profile Image",
+        aliases=["avatar", "av"],
+        ignore_extra=False,
     )
     @app_commands.describe(user="The user you want to check (defaults to you)")
     @mood.sassy

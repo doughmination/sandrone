@@ -1,11 +1,11 @@
 import base64
 import codecs
-from typing import Literal
 
 from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
+from utils.choices import ChoiceSet
 
 encoderSystem = {
     "Base64": "b64",
@@ -14,10 +14,12 @@ encoderSystem = {
     "Caesar Cipher": "caesar",
 }
 
-# A Literal (rather than app_commands.Choice) so the prefix parser can try the
-# first word against it and fall back to the default when it doesn't match —
-# @app_commands.choices below still supplies the pretty slash-menu labels.
-EncoderMethod = Literal[*tuple(encoderSystem.values())]
+# A converter (rather than app_commands.Choice) so the prefix parser can try
+# the first word against it and fall back to the default when it doesn't match.
+# It takes the menu labels as well as the values, and @app_commands.choices
+# below keeps the slash menu itself label-and-value only.
+encoders = ChoiceSet(encoderSystem)
+EncoderMethod = encoders.converter
 
 
 class Encrypt(commands.Cog):
@@ -31,12 +33,7 @@ class Encrypt(commands.Cog):
     )
     @app_commands.describe(input="What do you want to encrypt?")
     @app_commands.describe(method="The encoding/encryption algorithm")
-    @app_commands.choices(
-        method=[
-            app_commands.Choice(name=name, value=value)
-            for name, value in encoderSystem.items()
-        ]
-    )
+    @app_commands.choices(method=encoders.options)
     @mood.sassy
     async def encrypt(
         self,
@@ -47,7 +44,7 @@ class Encrypt(commands.Cog):
     ) -> None:
         await ctx.defer(ephemeral=True)
 
-        reply = await self.encodeMessage(input, method or "b64")
+        reply = await self.encodeMessage(input, encoders.resolve(method, "b64"))
         await ctx.send(reply, ephemeral=True)
 
     async def encodeMessage(self, input: str, method: str) -> str:

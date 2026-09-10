@@ -10,7 +10,10 @@ class UserId(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(
-        name="uid", description="Get a user's ID", aliases=["userid", "id"]
+        name="uid",
+        description="Get a user's ID",
+        aliases=["userid", "id"],
+        ignore_extra=False,
     )
     @app_commands.describe(user="The user to get the ID of (Default to you)")
     @mood.sassy

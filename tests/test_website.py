@@ -73,3 +73,81 @@ def test_status_omits_bot_details_when_there_is_no_bot() -> None:
 
     assert "servers" not in payload
     assert "latency" not in payload
+
+
+def renderSitemap(webRoot: Path, monkeypatch: pytest.MonkeyPatch) -> str:
+    monkeypatch.setattr(config, "siteUrl", "https://sandrone.example")
+    app = website.createApp()
+    request = make_mocked_request("GET", "/sitemap.xml", app=app)
+    return asyncio.run(website.sitemap(request)).text or ""
+
+
+def test_sitemap_lists_pages_that_exist_and_skips_the_ones_that_should_not(
+    webRoot: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (webRoot / "index.html").write_text("Sandrone", encoding="utf-8")
+    (webRoot / "privacy.html").write_text("Privacy", encoding="utf-8")
+    (webRoot / "404.html").write_text("Not found", encoding="utf-8")
+    (webRoot / "meta-example.html").write_text("Example", encoding="utf-8")
+    (webRoot / "style.css").write_text("body{}", encoding="utf-8")
+
+    body = renderSitemap(webRoot, monkeypatch)
+
+    assert "<loc>https://sandrone.example/</loc>" in body
+    assert "<loc>https://sandrone.example/privacy.html</loc>" in body
+    assert "404.html" not in body
+    assert "meta-example.html" not in body
+    assert "style.css" not in body
+
+
+def test_sitemap_ignores_pages_that_are_still_empty(
+    webRoot: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (webRoot / "index.html").write_text("Sandrone", encoding="utf-8")
+    (webRoot / "terms.html").write_text("", encoding="utf-8")
+
+    body = renderSitemap(webRoot, monkeypatch)
+
+    assert "<loc>https://sandrone.example/</loc>" in body
+    assert "terms.html" not in body
+
+
+def test_sitemap_picks_up_a_page_added_after_the_app_was_built(
+    webRoot: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (webRoot / "index.html").write_text("Sandrone", encoding="utf-8")
+    monkeypatch.setattr(config, "siteUrl", "https://sandrone.example")
+    app = website.createApp()
+
+    (webRoot / "terms.html").write_text("Terms", encoding="utf-8")
+
+    request = make_mocked_request("GET", "/sitemap.xml", app=app)
+    body = asyncio.run(website.sitemap(request)).text or ""
+
+    assert "<loc>https://sandrone.example/terms.html</loc>" in body
+
+
+def test_robots_points_at_the_sitemap_and_hides_downloads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(config, "siteUrl", "https://sandrone.example")
+    app = website.createApp()
+    request = make_mocked_request("GET", "/robots.txt", app=app)
+
+    body = asyncio.run(website.robots(request)).text or ""
+
+    assert "Sitemap: https://sandrone.example/sitemap.xml" in body
+    assert "Disallow: /d/" in body
+    assert "Disallow: /api/" in body
+
+
+def test_website_exposes_the_sitemap_and_robots_routes() -> None:
+    app = website.createApp()
+    routes = {
+        resource.canonical
+        for route in app.router.routes()
+        if (resource := route.resource) is not None
+    }
+
+    assert "/sitemap.xml" in routes
+    assert "/robots.txt" in routes

@@ -38,6 +38,16 @@ downloadsUrl = (
     if downloadsUrlValue and downloadsUrlValue.strip()
     else f"http://localhost:{downloadsPort}"
 ).rstrip("/")
+
+# Public base URL of the landing page, used for canonical links in the sitemap.
+# Falls back to the download URL, which is normally the same host.
+siteUrlValue = os.getenv("SITE_URL")
+siteUrl = (
+    siteUrlValue.strip()
+    if siteUrlValue and siteUrlValue.strip()
+    else downloadsUrl
+).rstrip("/")
+
 downloadsRetention = int(os.getenv("DOWNLOADS_RETENTION_HOURS", "24"))
 downloadsMaxSize = int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
 

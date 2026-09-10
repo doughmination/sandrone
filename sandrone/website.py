@@ -1,8 +1,10 @@
 import math
 import os
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape
 
 from aiohttp import web
 
@@ -82,6 +84,80 @@ async def inviteBot(request) -> web.HTTPMovedPermanently:
 async def supportServer(request) -> web.HTTPMovedPermanently:
     raise web.HTTPMovedPermanently("https://discord.gg/N8gCjS294R")
 
+
+# Pages that exist in web/ but have no business in a search index.
+sitemapSkip = frozenset({"404.html", "meta-example.html"})
+
+
+def publicPages() -> list[tuple[str, float]]:
+    """Every indexable page in the web directory, as (path, last modified)."""
+    pages: list[tuple[str, float]] = []
+
+    try:
+        candidates = sorted(config.webDir.iterdir())
+    except OSError:
+        return pages
+
+    for path in candidates:
+        if path.suffix != ".html" or path.name in sitemapSkip:
+            continue
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        # A page that has not been written yet is a placeholder, not a page.
+        if not path.is_file() or stat.st_size == 0:
+            continue
+        pages.append(("/" if path.name == "index.html" else f"/{path.name}", stat.st_mtime))
+
+    return pages
+
+
+async def sitemap(request: web.Request) -> web.Response:
+    """A sitemap built from whatever is actually in web/ when it is asked for."""
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+
+    for location, modified in publicPages():
+        stamp = datetime.fromtimestamp(modified, tz=UTC).date().isoformat()
+        lines.append("  <url>")
+        lines.append(f"    <loc>{escape(config.siteUrl + location)}</loc>")
+        lines.append(f"    <lastmod>{stamp}</lastmod>")
+        lines.append("  </url>")
+
+    lines.append("</urlset>")
+
+    return web.Response(
+        text="\n".join(lines) + "\n",
+        content_type="application/xml",
+        charset="utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
+async def robots(request: web.Request) -> web.Response:
+    """Crawl the landing page, leave the downloads and the API alone."""
+    body = "\n".join(
+        [
+            "User-agent: *",
+            "Allow: /",
+            "Disallow: /d/",
+            "Disallow: /api/",
+            "",
+            f"Sitemap: {config.siteUrl}/sitemap.xml",
+            "",
+        ]
+    )
+    return web.Response(
+        text=body,
+        content_type="text/plain",
+        charset="utf-8",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
 async def notFound(request: web.Request) -> web.FileResponse:
     path = webAsset("404.html")
     if path is None:
@@ -100,6 +176,8 @@ def createApp(bot: Any = None) -> web.Application:
     app[startedAtKey] = time.monotonic()
     app.router.add_get("/", index)
     app.router.add_get("/api/status", status)
+    app.router.add_get("/sitemap.xml", sitemap)
+    app.router.add_get("/robots.txt", robots)
     app.router.add_get("/docs", openDocs)
     app.router.add_get("/invite", inviteBot)
     app.router.add_get("/support", supportServer)

@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
+from utils import usage
 from utils.colors import cf
 
 
@@ -105,16 +106,14 @@ async def handleCommandError(ctx: commands.Context, error: commands.CommandError
         )
         return
 
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(
-            f"You need to give me `{error.param.name}`. "
-            f"Try `{ctx.clean_prefix}{ctx.invoked_with} <{error.param.name}>`.",
-            ephemeral=True,
-        )
-        return
-
-    if isinstance(error, (commands.BadArgument, commands.BadLiteralArgument)):
-        await ctx.send(f"That argument didn't work: {error}", ephemeral=True)
+    # Anything the user typed wrong — missing, unparseable, out of range, not a
+    # valid choice — answers with the command's actual shape instead of a
+    # bare complaint.
+    if (
+        isinstance(error, (commands.UserInputError, app_commands.TransformerError))
+        and ctx.command is not None
+    ):
+        await ctx.send(view=usage.usagePanel(ctx, error), ephemeral=True)
         return
 
     if isinstance(error, commands.CheckFailure):

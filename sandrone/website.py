@@ -1,6 +1,8 @@
+import math
 import os
 import time
 from pathlib import Path
+from typing import Any
 
 from aiohttp import web
 
@@ -9,6 +11,9 @@ from utils import downloads
 from utils.colors import cf
 
 runner: web.AppRunner | None = None
+
+botKey: web.AppKey[Any] = web.AppKey("bot")
+startedAtKey: web.AppKey[float] = web.AppKey("startedAt")
 
 
 def webAsset(name: str) -> Path | None:
@@ -52,6 +57,22 @@ async def serveDownload(request: web.Request) -> web.FileResponse:
 
     return web.FileResponse(path)
 
+async def status(request: web.Request) -> web.Response:
+    """Whatever the landing page can say about the bot without knowing who asked."""
+    bot = request.app[botKey]
+    payload: dict[str, Any] = {
+        "version": config.version,
+        "uptime": int(time.monotonic() - request.app[startedAtKey]),
+    }
+
+    if bot is not None:
+        payload["servers"] = len(bot.guilds)
+        if math.isfinite(bot.latency):
+            payload["latency"] = round(bot.latency * 1000)
+
+    return web.json_response(payload, headers={"Cache-Control": "no-store"})
+
+
 async def openDocs(request) -> web.HTTPMovedPermanently:
     raise web.HTTPMovedPermanently("https://docs.doughmination.gay/projects/sandrone")
 
@@ -73,9 +94,12 @@ async def serveAsset(request: web.Request) -> web.FileResponse:
     return web.FileResponse(path) if path is not None else await notFound(request)
 
 
-def createApp() -> web.Application:
+def createApp(bot: Any = None) -> web.Application:
     app = web.Application()
+    app[botKey] = bot
+    app[startedAtKey] = time.monotonic()
     app.router.add_get("/", index)
+    app.router.add_get("/api/status", status)
     app.router.add_get("/docs", openDocs)
     app.router.add_get("/invite", inviteBot)
     app.router.add_get("/support", supportServer)
@@ -84,14 +108,14 @@ def createApp() -> web.Application:
     return app
 
 
-async def startServer() -> None:
+async def startServer(bot: Any = None) -> None:
     global runner
 
     if runner is not None:
         return
 
     config.downloadsDir.mkdir(parents=True, exist_ok=True)
-    runner = web.AppRunner(createApp(), access_log=None)
+    runner = web.AppRunner(createApp(bot), access_log=None)
     await runner.setup()
     try:
         await web.TCPSite(runner, config.downloadsHost, config.downloadsPort).start()

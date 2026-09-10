@@ -5,21 +5,296 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sandrone</title>
+  <meta name="description"
+    content="An all-in-one Discord bot: lookups, developer tools, media embeds, pride flag avatars, YouTube downloads, and a puppet with opinions.">
+  <meta name="theme-color" content="#0b0a0d">
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" href="/assets/avatar.png" type="image/png">
+  <link rel="preload" href="/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Sandrone">
+  <meta property="og:title" content="Sandrone — Seventh Fatui Harbinger">
+  <meta property="og:description"
+    content="Lookups, developer tools, media embeds, pride flag avatars and YouTube downloads. No database, no tracking.">
+  <meta property="og:image" content="/assets/banner.png">
+  <meta name="twitter:card" content="summary_large_image">
 </head>
 
 <body>
-  <main>
-    <p class="eyebrow">Seventh Fatui Harbinger</p>
-    <h1>Sandrone</h1>
-    <p class="subtitle">The Marionette’s workshop is operational.</p>
-    <p>Use the bot’s slash commands in Discord. The rest is none of your concern.</p>
+  <a class="skip" href="#content">Skip to content</a>
 
-    <a href="/docs">Read the Docs</a>
-    <a href="/invite">Invite the Bot</a>
-    <a href="/support">Support Server</a>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="/assets/avatar.png" alt="" width="32" height="32">
+      <span>Sandrone</span>
+    </a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="#commands">Commands</a>
+      <a href="https://github.com/doughmination/sandrone">Source</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Seventh Fatui Harbinger</p>
+      <h1>Sandrone</h1>
+      <p class="subtitle">The Marionette’s workshop is operational.</p>
+      <p class="lede">
+        An all-in-one Discord bot: lookups, text and developer tools, media embeds, pride flag
+        avatars, YouTube downloads, and a handful of things that exist purely for fun. Everything
+        is a slash command. Nothing about you is stored.
+      </p>
+
+      <div class="cta">
+        <a class="button primary" href="/invite">Invite the bot</a>
+        <a class="button" href="/docs">Read the docs</a>
+        <a class="button" href="/support">Support server</a>
+      </div>
+
+      <p class="status" id="status" hidden>
+        <span class="dot"></span>
+        <span id="status-text"></span>
+      </p>
+    </div>
+  </section>
+
+  <main id="content" class="wrap">
+
+    <section aria-labelledby="what">
+      <h2 id="what">What she does</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>Lookups</h3>
+          <p>
+            GitHub users and repositories, Codeberg, Wikipedia summaries, Urban Dictionary,
+            Discord profiles and PluralKit systems — plus a real WHOIS client that speaks the
+            protocol on port 43 and follows referrals to the registrar.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Tools</h3>
+          <p>
+            Around 100 units across 12 categories, case conversion, JSON pretty-printing with a
+            caret under the syntax error, a regex linter that catches catastrophic backtracking,
+            QR codes, and translation that runs offline on the host.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Media</h3>
+          <p>
+            YouTube as MP4 or 192&nbsp;kbps MP3, X&nbsp;/&nbsp;Twitter and Bluesky posts embedded
+            properly with their video, and thirty pride flags wrapped around a profile picture —
+            still or spinning, one flag or two.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Moods</h3>
+          <p>
+            Sandrone has a personality layer nobody asked for. She refuses roughly one command in
+            ten, and occasionally posts something unprompted in whatever channel is busy. None of
+            it is stored and none of it survives a restart.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="commands-heading" id="commands">
+      <h2 id="commands-heading">Commands</h2>
+      <p class="section-lede">
+        A selection. The <a href="https://docs.doughmination.gay/projects/sandrone/commands/">command reference</a> documents every one of them,
+        including the options Discord fills in as you type.
+      </p>
+
+      <div class="groups">
+        <div class="group">
+          <h3>Bot</h3>
+          <dl>
+            <dt><code>/help</code></dt>
+            <dd>Everything currently loaded.</dd>
+            <dt><code>/stats</code></dt>
+            <dd>Ping, uptime, region, version.</dd>
+            <dt><code>/links</code></dt>
+            <dd>Every official link, in one panel.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>People</h3>
+          <dl>
+            <dt><code>/profile</code></dt>
+            <dd>Pronouns, bio, badges, connections.</dd>
+            <dt><code>/pfp</code></dt>
+            <dd>An avatar at full size, global or per-server.</dd>
+            <dt><code>/pksystem</code> <code>/pkfront</code></dt>
+            <dd>A PluralKit system, and who is fronting.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Lookups</h3>
+          <dl>
+            <dt><code>/github</code> <code>/repo</code></dt>
+            <dd>A user, or a repository from a bare URL.</dd>
+            <dt><code>/wikipedia</code></dt>
+            <dd>The lead section, with a thumbnail.</dd>
+            <dt><code>/whois</code></dt>
+            <dd>Domains and IPs, resolved to the registrar.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Tools</h3>
+          <dl>
+            <dt><code>/convert</code></dt>
+            <dd>Units that narrow each other as you type.</dd>
+            <dt><code>/json</code> <code>/regex</code></dt>
+            <dd>Format it, or find out why it is wrong.</dd>
+            <dt><code>/translate</code></dt>
+            <dd>Offline, via Argos. Your text stays here.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Media</h3>
+          <dl>
+            <dt><code>/yt-dlp</code></dt>
+            <dd>Video or audio, attached where it fits.</dd>
+            <dt><code>/tweet</code> <code>/bluesky</code></dt>
+            <dd>Posts that actually embed, video included.</dd>
+            <dt><code>/pride</code></dt>
+            <dd>Thirty flags, still or animated.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Fun</h3>
+          <dl>
+            <dt><code>/kitty</code></dt>
+            <dd>A cat. That is the whole command.</dd>
+            <dt><code>/8ball</code> <code>/judge</code></dt>
+            <dd>A verdict. Do not expect kindness.</dd>
+            <dt><code>/explain-the-game</code></dt>
+            <dd>You just lost it.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <p class="note">
+        Works in servers, in DMs, and as a user install you can carry into any server.
+      </p>
+    </section>
+
+    <section aria-labelledby="privacy">
+      <h2 id="privacy">Privacy, briefly</h2>
+      <p class="section-lede">
+        Sandrone does not have a database. Nothing about you is stored, nothing is tracked, and
+        there is nothing to sell. Commands are handled in memory and the result is thrown away.
+      </p>
+      <p class="section-lede">
+        The one exception is <code>/yt-dlp</code>: a download too large to attach is kept on the
+        host for 24&nbsp;hours behind an unguessable link, then deleted automatically. The file is
+        the YouTube content itself — never anything about who asked for it.
+      </p>
+      <p class="more">
+        <a href="https://docs.doughmination.gay/projects/sandrone/privacy/">Privacy policy</a>
+        · <a href="https://docs.doughmination.gay/projects/sandrone/downloads/">Hosted downloads →</a>
+      </p>
+    </section>
+
+    <section class="panel" aria-labelledby="genuine">
+      <h2 id="genuine">Is this the right bot?</h2>
+      <p class="section-lede">
+        Discord bots get impersonated. The avatar, the name and the “about me” can all be copied
+        exactly — the application ID cannot.
+      </p>
+
+      <p class="appid">
+        <span>Application ID</span>
+        <code>1539185764904996974</code>
+      </p>
+
+      <p class="section-lede">Sandrone only ever uses three sets of links of its own:</p>
+      <ul class="domains">
+        <li><code>discord.com</code> <code>discord.gg</code><span>Discord’s own — the invite and the support server.</span></li>
+        <li><code>sandrone.is-a.bot</code><span>The short link. It redirects to the docs.</span></li>
+        <li><code>sandrone.doughmination.gay</code><span>Where <code>/yt-dlp</code> serves an oversized download.</span></li>
+      </ul>
+
+      <p class="warn">
+        She will never ask for a password, a token or a 2FA code, never ask you to “re-verify”
+        your account, and never send you a QR code to scan with the Discord app. If something
+        claiming to be Sandrone does any of that, it is not this bot.
+      </p>
+      <p><a class="more" href="https://docs.doughmination.gay/projects/sandrone/official-links/">How to check the account itself →</a></p>
+    </section>
+
   </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div class="footer-links">
+        <div>
+          <h4>Bot</h4>
+          <a href="/invite">Invite</a>
+          <a href="/support">Support server</a>
+          <a href="/docs">Documentation</a>
+        </div>
+        <div>
+          <h4>Source</h4>
+          <a href="https://github.com/doughmination/sandrone">GitHub</a>
+          <a href="https://codeberg.org/clove/sandrone">Codeberg</a>
+          <a href="https://backup.doughmination.gay/clove/sandrone">dough-git</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="https://docs.doughmination.gay/projects/sandrone/tos/">Terms of Service</a>
+          <a href="https://docs.doughmination.gay/projects/sandrone/privacy/">Privacy Policy</a>
+          <a href="https://github.com/doughmination/sandrone/blob/main/licence.md">Licence</a>
+        </div>
+      </div>
+      <p class="disclaimer">
+        “Sandrone” is a Genshin Impact character. This is an unofficial fan project, not
+        affiliated with or endorsed by HoYoverse.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    (async () => {
+      const box = document.getElementById("status");
+      const text = document.getElementById("status-text");
+      if (!box || !text) return;
+
+      const duration = (seconds) => {
+        const d = Math.floor(seconds / 86400);
+        const h = Math.floor((seconds % 86400) / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        if (d) return `${d}d ${h}h`;
+        if (h) return `${h}h ${m}m`;
+        return `${m}m`;
+      };
+
+      try {
+        const response = await fetch("/api/status", { cache: "no-store" });
+        if (!response.ok) return;
+        const status = await response.json();
+
+        const parts = ["Workshop online"];
+        if (status.version) parts.push(`v${status.version}`);
+        if (typeof status.uptime === "number") parts.push(`up ${duration(status.uptime)}`);
+        if (typeof status.servers === "number") {
+          parts.push(`${status.servers} server${status.servers === 1 ? "" : "s"}`);
+        }
+
+        text.textContent = parts.join(" · ");
+        box.hidden = false;
+      } catch {
+        /* the page reads fine without it */
+      }
+    })();
+  </script>
 </body>
 
 </html>

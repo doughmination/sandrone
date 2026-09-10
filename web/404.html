@@ -1,18 +1,42 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Not found · Sandrone</title>
-    <link rel="stylesheet" href="/style.css">
-    <link rel="icon" href="/assets/avatar.png" type="image/png">
-  </head>
-  <body>
-    <main>
-      <p class="eyebrow">Error 404</p>
-      <h1>That is not here.</h1>
-      <p class="subtitle">Sandrone checked. You were wrong.</p>
-      <p><a href="/">Return to the workshop.</a></p>
-    </main>
-  </body>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Not found · Sandrone</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="/assets/avatar.png" type="image/png">
+</head>
+
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="/assets/avatar.png" alt="" width="32" height="32">
+      <span>Sandrone</span>
+    </a>
+    <nav>
+      <a href="/docs">Docs</a>
+      <a href="/invite">Invite</a>
+      <a href="/support">Support</a>
+    </nav>
+  </header>
+
+  <main class="wrap centered">
+    <p class="eyebrow">Error 404</p>
+    <h1>That is not here.</h1>
+    <p class="subtitle">Sandrone checked. You were wrong.</p>
+    <p class="lede">
+      A hosted download expires 24 hours after it was last touched, so a
+      <code>/yt-dlp</code> link that used to work has most likely been swept. Run the command
+      again for a fresh one.
+    </p>
+    <div class="cta">
+      <a class="button primary" href="/">Return to the workshop</a>
+      <a class="button" href="/docs">Read the docs</a>
+    </div>
+  </main>
+</body>
+
 </html>

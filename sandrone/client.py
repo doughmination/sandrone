@@ -59,7 +59,7 @@ class Bot(commands.Bot):
 
         await self.tree.sync()
 
-        await website.startServer()
+        await website.startServer(self)
         self.loop.create_task(downloads.sweepForever())
 
         if config.devMode:

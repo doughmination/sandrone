@@ -6,7 +6,6 @@ from discord.ext import commands
 from sandrone import mood
 from utils import components
 from utils.choices import ChoiceSet
-from utils.markdown import codeBlock
 
 maxInput = 500
 
@@ -26,8 +25,6 @@ styleLabels = {value: name for name, value in caseStyles.items()}
 cases = ChoiceSet(caseStyles)
 CaseStyle = cases.converter
 
-# Runs of capitals stay together unless a lowercase letter follows, so
-# "parseXMLHttpRequest" splits as parse / XML / Http / Request.
 wordPattern = re.compile(r"[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[a-z0-9]+")
 
 detectors = (
@@ -78,8 +75,6 @@ class Case(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    # `to` comes first so the prefix form reads "case snake some text here" and
-    # `text` can swallow the rest of the line.
     @commands.hybrid_command(name="case", description="Convert text between cases")
     @app_commands.describe(
         text="The text to convert",
@@ -105,8 +100,8 @@ class Case(commands.Cog):
 
         return components.panel(
             fields=[
-                (detectCase(text), codeBlock(text)),
-                (styleLabels[style], codeBlock(applyCase(words, style))),
+                (detectCase(text), components.codeBlock(text)),
+                (styleLabels[style], components.codeBlock(applyCase(words, style))),
             ],
             footer="Sandrone",
         )

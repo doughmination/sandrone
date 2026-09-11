@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -39,8 +40,6 @@ downloadsUrl = (
     else f"http://localhost:{downloadsPort}"
 ).rstrip("/")
 
-# Public base URL of the landing page, used for canonical links in the sitemap.
-# Falls back to the download URL, which is normally the same host.
 siteUrlValue = os.getenv("SITE_URL")
 siteUrl = (
     siteUrlValue.strip()
@@ -51,10 +50,6 @@ siteUrl = (
 downloadsRetention = int(os.getenv("DOWNLOADS_RETENTION_HOURS", "24"))
 downloadsMaxSize = int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
 
-# Text-command prefixes, matched case-insensitively by sandrone.prefix.
-# A mention always works too; these are the spoken-name forms.
-# "marionette" is the canonical Harbinger spelling, "marrionette" the common
-# misspelling. Drop "sandrone" here if you'd rather she only answer to the title.
 prefixNames: list[str] = sorted(
     ("marrionette", "marionette", "sandrone"), key=len, reverse=True
 )
@@ -85,3 +80,40 @@ def requireGithubToken() -> str:
             "GITHUB_TOKEN is not set. Add it to your .env file to use /github."
         )
     return githubToken
+
+
+cogStatePath = repoRoot / "cog_state.json"
+
+
+def discoverCogHandles(directory: Path | None = None) -> list[str]:
+    directory = directory if directory is not None else cogsDir
+    handles = []
+    for path in directory.rglob("*.py"):
+        if path.stem == "__init__":
+            continue
+        relative = path.relative_to(directory).with_suffix("")
+        handles.append(".".join(relative.parts))
+    return sorted(handles)
+
+
+def loadDisabled() -> set[str]:
+    if not cogStatePath.exists():
+        return set()
+    try:
+        data = json.loads(cogStatePath.read_text())
+    except (json.JSONDecodeError, OSError):
+        return set()
+    return set(data.get("disabled", []))
+
+
+def saveDisabled(disabled: set[str]) -> None:
+    cogStatePath.write_text(json.dumps({"disabled": sorted(disabled)}, indent=2) + "\n")
+
+
+def setDisabled(name: str, disabled: bool) -> None:
+    current = loadDisabled()
+    if disabled:
+        current.add(name)
+    else:
+        current.discard(name)
+    saveDisabled(current)

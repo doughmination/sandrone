@@ -14,8 +14,6 @@ decoderSystem = {
     "Caesar Cipher": "caesar",
 }
 
-# See encrypt.py — a converter, so the prefix parser can backtrack past a
-# missing method and still accept the menu labels.
 decoders = ChoiceSet(decoderSystem)
 DecoderMethod = decoders.converter
 

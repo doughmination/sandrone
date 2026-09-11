@@ -3,8 +3,39 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
-from utils import usage
-from utils.colors import cf
+from utils import cf, usage
+
+
+def has_permissions(*, guildOnly: bool = False, **perms: bool):
+    invalid = perms.keys() - discord.Permissions.VALID_FLAGS.keys()
+    if invalid:
+        raise TypeError(f"Invalid permission(s): {', '.join(sorted(invalid))}")
+
+    async def predicate(ctx: commands.Context) -> bool:
+        if ctx.guild is None:
+            if guildOnly:
+                raise commands.NoPrivateMessage(
+                    "This command can only be used in a server."
+                )
+            return True
+
+        permissions = ctx.bot_permissions
+        missing = [
+            perm for perm, value in perms.items() if getattr(permissions, perm) != value
+        ]
+        if missing:
+            raise commands.BotMissingPermissions(missing)
+        return True
+
+    return commands.check(predicate)
+
+
+def nsfw_only():
+    def decorator(func):
+        func.__discord_app_commands_is_nsfw__ = True
+        return commands.is_nsfw()(func)
+
+    return decorator
 
 
 def formatPermissions(permissions: list[str]) -> str:
@@ -24,12 +55,6 @@ async def respond(interaction: discord.Interaction, message: str) -> None:
 async def handleAppCommandError(
     interaction: discord.Interaction, error: app_commands.AppCommandError
 ) -> None:
-    """Fallback for app commands that never reach ``on_command_error``.
-
-    Hybrid commands funnel their errors — slash and prefix alike — through
-    :func:`handleCommandError`, so this now only catches the leftovers
-    (signature mismatches, context menus, anything not wrapped as a hybrid).
-    """
     if isinstance(error, app_commands.BotMissingPermissions):
         await respond(
             interaction,
@@ -49,7 +74,7 @@ async def handleAppCommandError(
         return
 
     if isinstance(error, mood.SassyDenial):
-        return  # We don't do anything as the mood.py file handles the output from this error!
+        return
 
     if isinstance(error, app_commands.CheckFailure):
         await respond(interaction, "You do not have permission to execute this command")
@@ -62,17 +87,12 @@ async def handleAppCommandError(
 
 
 async def handleCommandError(ctx: commands.Context, error: commands.CommandError) -> None:
-    """Primary handler — every hybrid invocation lands here, slash or prefix."""
-    # Prefix typos shouldn't produce noise; there is no slash equivalent of
-    # someone mistyping a word after her name.
     if isinstance(error, commands.CommandNotFound):
         return
 
     if isinstance(error, mood.SassyDenial):
-        return  # mood.py already sent the refusal.
+        return
 
-    # HybridCommandError wraps an app-command-side failure; unwrap for a
-    # readable message.
     if isinstance(error, commands.HybridCommandError):
         error = error.original  # type: ignore[assignment]
 
@@ -106,9 +126,6 @@ async def handleCommandError(ctx: commands.Context, error: commands.CommandError
         )
         return
 
-    # Anything the user typed wrong — missing, unparseable, out of range, not a
-    # valid choice — answers with the command's actual shape instead of a
-    # bare complaint.
     if (
         isinstance(error, (commands.UserInputError, app_commands.TransformerError))
         and ctx.command is not None

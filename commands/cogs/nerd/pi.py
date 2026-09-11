@@ -5,7 +5,7 @@ from utils import components
 
 
 class Pi(commands.Cog):
-    def __ini__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @commands.hybrid_command(name="pi", description="Get the first 100 digits of pi")
@@ -16,4 +16,4 @@ class Pi(commands.Cog):
         await ctx.send(view=embed)
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog((Pi(bot)))
+    await bot.add_cog(Pi(bot))

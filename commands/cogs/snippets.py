@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
 
 xSnips = {
@@ -35,7 +35,7 @@ class Snippets(commands.Cog):
     )
     @app_commands.describe(snip="The snippet to repost")
     @app_commands.autocomplete(snip=snippetAuto)
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def snippet(self, ctx: commands.Context, snip: str) -> None:
         await ctx.defer()

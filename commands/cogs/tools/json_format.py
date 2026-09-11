@@ -5,13 +5,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
 from utils.choices import ChoiceSet
-from utils.markdown import caretAt, codeBlock
 
 maxInput = 4000
-# A V2 message caps at 4000 chars of text; leave room for the fence and fields.
 embedLimit = 3500
 
 indentStyles = {
@@ -47,8 +45,6 @@ class JsonFormat(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    # `indent` leads so `data` can be consume-rest on the prefix side; a first
-    # word that isn't an indent style backtracks and becomes part of `data`.
     @commands.hybrid_command(
         name="json", description="Pretty-print compact JSON", aliases=["jsonfmt"]
     )
@@ -57,7 +53,7 @@ class JsonFormat(commands.Cog):
         indent="How far to indent each level (defaults to 2 spaces)",
     )
     @app_commands.choices(indent=indents.options)
-    @doughchecks.has_permissions(attach_files=True)
+    @checks.has_permissions(attach_files=True)
     @mood.sassy
     async def json(
         self,
@@ -89,7 +85,7 @@ class JsonFormat(commands.Cog):
             return (
                 components.panel(
                     title="✅ Formatted JSON",
-                    body=codeBlock(pretty, "json"),
+                    body=components.codeBlock(pretty, "json"),
                     fields=fields,
                     footer="Sandrone",
                 ),
@@ -119,7 +115,7 @@ class JsonFormat(commands.Cog):
             fields=[
                 (
                     f"Line {error.lineno}, column {error.colno}",
-                    codeBlock(caretAt(data, error.pos)),
+                    components.codeBlock(components.caretAt(data, error.pos)),
                 ),
             ],
             footer="Sandrone",

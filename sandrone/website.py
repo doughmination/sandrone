@@ -9,8 +9,7 @@ from xml.sax.saxutils import escape
 from aiohttp import web
 
 from sandrone import config
-from utils import downloads
-from utils.colors import cf
+from utils import cf, downloads
 
 runner: web.AppRunner | None = None
 
@@ -19,7 +18,6 @@ startedAtKey: web.AppKey[float] = web.AppKey("startedAt")
 
 
 def webAsset(name: str) -> Path | None:
-    """Return an existing public web asset, never a path outside ``webDir``."""
     try:
         root = config.webDir.resolve()
         path = (root / name).resolve()
@@ -60,7 +58,6 @@ async def serveDownload(request: web.Request) -> web.FileResponse:
     return web.FileResponse(path)
 
 async def status(request: web.Request) -> web.Response:
-    """Whatever the landing page can say about the bot without knowing who asked."""
     bot = request.app[botKey]
     payload: dict[str, Any] = {
         "version": config.version,
@@ -85,12 +82,10 @@ async def supportServer(request) -> web.HTTPMovedPermanently:
     raise web.HTTPMovedPermanently("https://discord.gg/N8gCjS294R")
 
 
-# Pages that exist in web/ but have no business in a search index.
 sitemapSkip = frozenset({"404.html", "meta-example.html"})
 
 
 def publicPages() -> list[tuple[str, float]]:
-    """Every indexable page in the web directory, as (path, last modified)."""
     pages: list[tuple[str, float]] = []
 
     try:
@@ -105,7 +100,6 @@ def publicPages() -> list[tuple[str, float]]:
             stat = path.stat()
         except OSError:
             continue
-        # A page that has not been written yet is a placeholder, not a page.
         if not path.is_file() or stat.st_size == 0:
             continue
         pages.append(("/" if path.name == "index.html" else f"/{path.name}", stat.st_mtime))
@@ -114,7 +108,6 @@ def publicPages() -> list[tuple[str, float]]:
 
 
 async def sitemap(request: web.Request) -> web.Response:
-    """A sitemap built from whatever is actually in web/ when it is asked for."""
     lines = [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -138,7 +131,6 @@ async def sitemap(request: web.Request) -> web.Response:
 
 
 async def robots(request: web.Request) -> web.Response:
-    """Crawl the landing page, leave the downloads and the API alone."""
     body = "\n".join(
         [
             "User-agent: *",

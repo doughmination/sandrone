@@ -6,9 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
-from utils.markdown import escapeMarkdown
 
 apiBase = "https://public.api.bsky.app/xrpc"
 xskyBase = "https://xsky.app"
@@ -88,7 +87,7 @@ class Bluesky(commands.Cog):
         aliases=["bsky"],
     )
     @app_commands.describe(url="A bsky.app or xsky.app post link")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def bluesky(self, ctx: commands.Context, url: str) -> None:
         await ctx.defer()
@@ -178,10 +177,10 @@ class Bluesky(commands.Cog):
         handle = author.get("handle") or actor
         postUrl = f"{xskyBase}/profile/{handle}/post/{rkey}"
 
-        authorName = escapeMarkdown(author.get("displayName") or handle)
+        authorName = components.escapeMarkdown(author.get("displayName") or handle)
         parts = [f"### [{authorName} (@{handle})](https://bsky.app/profile/{handle})"]
         if record.get("text"):
-            parts.append(escapeMarkdown(record["text"]))
+            parts.append(components.escapeMarkdown(record["text"]))
 
         gallery: list[str] = []
         thumbnail: str | None = None
@@ -207,8 +206,8 @@ class Bluesky(commands.Cog):
             card = "\n".join(
                 line
                 for line in (
-                    escapeMarkdown(external.get("title") or ""),
-                    escapeMarkdown(external.get("description") or ""),
+                    components.escapeMarkdown(external.get("title") or ""),
+                    components.escapeMarkdown(external.get("description") or ""),
                 )
                 if line
             )
@@ -219,8 +218,8 @@ class Bluesky(commands.Cog):
         if quoted:
             qAuthor = quoted.get("author") or {}
             qHandle = qAuthor.get("handle") or "unknown"
-            qName = escapeMarkdown(qAuthor.get("displayName") or qHandle)
-            qText = escapeMarkdown((quoted.get("value") or {}).get("text") or "")
+            qName = components.escapeMarkdown(qAuthor.get("displayName") or qHandle)
+            qText = components.escapeMarkdown((quoted.get("value") or {}).get("text") or "")
             heading = f"📝 Quoting {qName} (@{qHandle})"
             parts.append(f"{heading}:\n{qText}" if qText else heading)
 

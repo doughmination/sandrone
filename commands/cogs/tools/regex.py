@@ -6,12 +6,10 @@ from discord.ext import commands
 
 from sandrone import mood
 from utils import components
-from utils.markdown import caretAt, codeBlock
 
 maxInput = 500
 fieldLimit = 1024
 
-# (a+)+ and friends — a quantified group whose body is itself quantified.
 nestedQuantifier = re.compile(r"\((?:[^()]*[+*][^()]*)\)\s*[+*]")
 emptyBranch = re.compile(r"\|\||\(\||\|\)")
 
@@ -44,7 +42,6 @@ def describeGroups(compiled: re.Pattern[str]) -> str:
 
 
 def findIssues(pattern: str, compiled: re.Pattern[str]) -> tuple[list[str], list[str]]:
-    """Real problems first, then advisory notes that shouldn't raise an alarm."""
     warnings: list[str] = []
     notes: list[str] = []
 
@@ -115,7 +112,7 @@ class Regex(commands.Cog):
             title="❌ Invalid pattern",
             body=f"**{error.msg}**",
             fields=[
-                (f"Column {position + 1}", codeBlock(caretAt(pattern, position))),
+                (f"Column {position + 1}", components.codeBlock(components.caretAt(pattern, position))),
             ],
             footer="Sandrone",
             color=components.RED,
@@ -136,7 +133,7 @@ class Regex(commands.Cog):
 
         return components.panel(
             title="⚠️ Valid, with caveats" if warnings else "✅ Valid pattern",
-            body=codeBlock(pattern),
+            body=components.codeBlock(pattern),
             fields=fields,
             footer="Sandrone",
             color=discord.Color.orange() if warnings else discord.Color.green(),

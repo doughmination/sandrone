@@ -7,10 +7,6 @@ from discord.ext import commands
 from sandrone import config
 from utils import components
 
-"""
-1 in 10 chance to fail lol
-"""
-
 sassy_replies = [
     "Sandrone has determined that this command is beneath her.",
     "Sandrone is tired of your command usage. Ask again nicely and she might do it.",
@@ -23,11 +19,7 @@ sassy_replies = [
 
 
 class SassyDenial(commands.CheckFailure, app_commands.CheckFailure):
-    """Refusal to run a command.
-
-    Subclasses both check-failure types so it is recognised whether it surfaces
-    through ``on_command_error`` (every hybrid invocation) or ``tree.on_error``.
-    """
+    pass
 
 
 async def _sassyCheck(ctx: commands.Context) -> bool:
@@ -47,14 +39,8 @@ async def _sassyCheck(ctx: commands.Context) -> bool:
     raise SassyDenial()
 
 
-# commands.check (not app_commands.check) so it runs for both slash and prefix
-# invocations of a hybrid command.
 sassy = commands.check(_sassyCheck)
 
-
-"""
-Used for the /judge command
-"""
 
 judge_certain_user = {
     1025770042245251122: "Sandrone chooses not to comment on her creator.",
@@ -124,8 +110,6 @@ def judge(user: discord.User | discord.Member) -> str:
     verdict = rng.choice(judge_replies)
     return verdict
 
-
-# Puppet Incidents — spontaneous nonsense Sandrone drops in the active channel
 
 incident_replies = [
     "The puppet has escaped the workshop.",

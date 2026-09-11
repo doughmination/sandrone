@@ -4,10 +4,9 @@ from discord import app_commands
 from discord.ext import commands
 from github import Auth, Github, GithubException
 
-from sandrone import config, doughchecks, mood
+from sandrone import checks, config, mood
 from sandrone.config import githubToken as GITHUB_TOKEN
-from utils import components
-from utils.colors import cf
+from utils import cf, components
 
 ownerGithub = "doughmination"
 
@@ -41,7 +40,7 @@ class GitHub(commands.Cog):
         name="github", description="Look up a GitHub user", aliases=["gh"]
     )
     @app_commands.describe(username="The GitHub username to fetch information on")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def github(
         self, ctx: commands.Context, username: str
@@ -124,7 +123,7 @@ class GitHub(commands.Cog):
         name="repo", description="Look up a GitHub repository", aliases=["repository"]
     )
     @app_commands.describe(repository="The repository to fetch, as username/repo")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def repo(
         self, ctx: commands.Context, repository: str

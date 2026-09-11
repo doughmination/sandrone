@@ -35,7 +35,6 @@ class Translate(commands.Cog):
             if query in name.lower() or query == code
         ][:25]
 
-    # Language codes lead so `text` can be consume-rest on the prefix side.
     @commands.hybrid_command(
         name="translate", description="Translate text between languages", aliases=["tr"]
     )
@@ -56,9 +55,6 @@ class Translate(commands.Cog):
     ) -> None:
         await ctx.defer()
 
-        # On the prefix path `to` is optional but positional, so "translate es
-        # hola que tal" would otherwise read "hola" as the target language.
-        # Anything that isn't a known code belongs to the text.
         if to is not None:
             names = await self.ensureIndex()
             if names and to not in names:

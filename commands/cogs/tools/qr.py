@@ -5,7 +5,7 @@ import qrcode
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 
 
 class Qr(commands.Cog):
@@ -16,7 +16,7 @@ class Qr(commands.Cog):
         name="qr", description="Generate a QR Code", aliases=["qrcode"]
     )
     @app_commands.describe(text="The text or URI to generate")
-    @doughchecks.has_permissions(attach_files=True)
+    @checks.has_permissions(attach_files=True)
     @mood.sassy
     async def qr(self, ctx: commands.Context, *, text: str) -> None:
         await ctx.defer()

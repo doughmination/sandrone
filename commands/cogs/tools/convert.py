@@ -40,9 +40,6 @@ categoryLabels = {
 
 fahrenheitOffset = 273.15 - 160 / 9
 
-# Every unit converts through the first unit of its category:
-#   base = value * scale + offset
-# Only temperature needs the offset; everything else leaves it at zero.
 unitTable: dict[str, tuple[Unit, ...]] = {
     "temperature": (
         Unit("kelvin", "Kelvin", "K", 1, ("k",)),
@@ -203,7 +200,6 @@ def resolveUnit(text: str | None) -> Unit | None:
     if not text:
         return None
     query = text.strip()
-    # Exact symbol first, so "b" stays bits and "B" stays bytes.
     return unitsBySymbol.get(query) or unitLookup.get(query.lower())
 
 
@@ -222,7 +218,6 @@ def formatValue(value: float) -> str:
 
     decimals = min(12, max(0, 6 - math.floor(math.log10(magnitude))))
     text = f"{value:,.{decimals}f}"
-    # Only trim the fractional part — 3600000 must not become "3,6".
     return text.rstrip("0").rstrip(".") if "." in text else text
 
 

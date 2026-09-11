@@ -7,12 +7,40 @@ import discord
 from discord.ext import commands
 from watchfiles import Change, awatch
 
-from sandrone import config, prefix, website
-from sandrone.errors import handleAppCommandError, handleCommandError
-from utils import downloads
-from utils.cog_state import discoverCogHandles, loadDisabled
-from utils.colors import cf
+from sandrone import config, website
+from sandrone.checks import handleAppCommandError, handleCommandError
+from utils import cf, downloads
 from utils.doughmination import dough
+
+SEPARATORS = " \t\n,:;"
+
+
+def matchName(content: str) -> str | None:
+    lowered = content.lower()
+    for name in config.prefixNames:
+        if not lowered.startswith(name):
+            continue
+
+        rest = content[len(name) :]
+        if not rest:
+            return None
+
+        stripped = rest.lstrip(SEPARATORS)
+        if stripped == rest:
+            continue
+        if not stripped:
+            return None
+
+        return content[: len(content) - len(stripped)]
+    return None
+
+
+def resolvePrefix(bot: commands.Bot, message: discord.Message) -> list[str]:
+    prefixes = commands.when_mentioned(bot, message)
+    matched = matchName(message.content)
+    if matched is not None:
+        prefixes.append(matched)
+    return prefixes
 
 
 def discoverExtensions(directory: Path, package: str) -> list[str]:
@@ -39,14 +67,12 @@ class Bot(commands.Bot):
     async def on_command_error(
         self, ctx: commands.Context, error: commands.CommandError
     ) -> None:
-        # Hybrid commands route slash failures here too, so this is the
-        # main error path rather than a prefix-only one.
         await handleCommandError(ctx, error)
 
     async def setup_hook(self) -> None:
-        disabled = loadDisabled()
+        disabled = config.loadDisabled()
         extensions = discoverExtensions(config.commandsDir, "commands") + [
-            f"commands.cogs.{handle}" for handle in discoverCogHandles(config.cogsDir)
+            f"commands.cogs.{handle}" for handle in config.discoverCogHandles()
         ]
         for extension in extensions:
             if (
@@ -76,7 +102,7 @@ class Bot(commands.Bot):
     async def watchCogs(self) -> None:
         async for changes in awatch(config.cogsDir):
             reloaded = False
-            disabled = loadDisabled()
+            disabled = config.loadDisabled()
             for change, path in changes:
                 if change == Change.deleted or not path.endswith(".py"):
                     continue
@@ -136,20 +162,17 @@ class Bot(commands.Bot):
 
 def createBot() -> Bot:
     intents = discord.Intents.default()
-    # Privileged — tick "Message Content Intent" in the Developer Portal, or she
-    # will only hear the @mention form of a prefix command.
     intents.message_content = True
     activity = discord.Activity(
         type=discord.ActivityType.listening,
         name="I love Columbina <3",
     )
     return Bot(
-        command_prefix=prefix.resolvePrefix,
+        command_prefix=resolvePrefix,
         intents=intents,
         activity=activity,
         case_insensitive=True,
         strip_after_prefix=True,
-        # commands/help.py provides its own; the built-in would clash on the name.
         help_command=None,
     )
 
@@ -169,7 +192,6 @@ async def runBot() -> None:
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, requestShutdown)
         except NotImplementedError:
-
             def _handle(signum, frame):
                 loop.call_soon_threadsafe(requestShutdown)
 

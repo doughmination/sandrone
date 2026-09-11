@@ -1,12 +1,3 @@
-"""Turn a badly-formed invocation into a panel showing the right format.
-
-Prefix commands have no dropdowns or client-side validation, so a mistyped
-argument needs an answer that teaches the shape of the command rather than
-just reporting a failure. Everything here is derived from the command itself —
-the signature, the ``@app_commands.describe`` text, and the choice lists — so a
-new command documents itself with no extra work.
-"""
-
 import inspect
 from types import UnionType
 from typing import Any, Literal, Union, get_args, get_origin
@@ -17,15 +8,11 @@ from discord.ext import commands
 from discord.utils import MISSING
 
 from utils import components
-from utils.markdown import codeBlock
 
-# Beyond this, an inline "a|b|c" list crowds the usage line and the argument
-# gets shown by name instead, with the options spelled out underneath.
 inlineChoiceLimit = 32
 
 
 def unwrapOptional(converter: Any) -> Any:
-    """``Literal["a"] | None`` -> ``Literal["a"]``; anything else unchanged."""
     if get_origin(converter) in (Union, UnionType):
         real = [arg for arg in get_args(converter) if arg is not type(None)]
         if len(real) == 1:
@@ -50,7 +37,6 @@ def isConsumeRest(param: commands.Parameter) -> bool:
 
 
 def appParameters(command: commands.Command) -> dict[str, app_commands.Parameter]:
-    """Slash-side metadata for the command, keyed by parameter name."""
     app = getattr(command, "app_command", None)
     if app is None:
         return {}
@@ -60,19 +46,12 @@ def appParameters(command: commands.Command) -> dict[str, app_commands.Parameter
 def optionValues(
     param: commands.Parameter, appParam: app_commands.Parameter | None
 ) -> tuple[str, ...]:
-    """The canonical options for a parameter.
-
-    A ChoiceSet widens its ``Literal`` with label spellings so the prefix parser
-    accepts them; those are for parsing, not for display, so the slash choices
-    win wherever they exist.
-    """
     if appParam is not None and appParam.choices is not MISSING and appParam.choices:
         return tuple(str(choice.value) for choice in appParam.choices)
     return literalValues(param.converter)
 
 
 def token(param: commands.Parameter, appParam: app_commands.Parameter | None) -> str:
-    """One parameter as it should appear in the usage line."""
     options = optionValues(param, appParam)
     inner = param.name
     if options:
@@ -103,7 +82,6 @@ def usageLine(ctx: commands.Context) -> str:
 
 
 def choiceLine(param: commands.Parameter, appParam: app_commands.Parameter | None) -> str:
-    """The options for a parameter, preferring the slash menu's display names."""
     options = optionValues(param, appParam)
     if not options:
         return ""
@@ -145,7 +123,7 @@ def argumentFields(command: commands.Command) -> list[tuple[str, str]]:
         lines = []
         if appParam is not None and appParam.description:
             description = str(appParam.description)
-            if description != "…":  # discord.py's placeholder for undescribed
+            if description != "…":
                 lines.append(description)
         for extra in (choiceLine(param, appParam), limitLine(param)):
             if extra:
@@ -158,7 +136,6 @@ def argumentFields(command: commands.Command) -> list[tuple[str, str]]:
     return fields
 
 
-# What a converter is actually asking for, when the failure is a type mismatch.
 expectedKinds: dict[Any, str] = {
     int: "a whole number",
     float: "a number",
@@ -179,7 +156,6 @@ def expectedKind(converter: Any) -> str:
 
 
 def describeProblem(ctx: commands.Context, error: Exception) -> str:
-    """One sentence naming what went wrong, in terms of a parameter."""
     if isinstance(error, commands.MissingRequiredArgument):
         return f"You didn't give me `{error.param.name}`."
 
@@ -210,8 +186,6 @@ def describeProblem(ctx: commands.Context, error: Exception) -> str:
         return f"`{error.param.name}` isn't in a form I recognise."
 
     if isinstance(error, commands.TooManyArguments):
-        # Whatever is left in the view is the part that didn't convert — often a
-        # choice spelled wrong, which is more useful to name than to count.
         view = getattr(ctx, "view", None)
         leftover = view.buffer[view.index :].strip() if view is not None else ""
         if leftover:
@@ -221,8 +195,6 @@ def describeProblem(ctx: commands.Context, error: Exception) -> str:
     if isinstance(error, commands.ArgumentParsingError):
         return "I couldn't read that — check for an unclosed quote."
 
-    # The slash path converts through transformers, which fail with their own
-    # error type rather than a UserInputError.
     if isinstance(error, app_commands.TransformerError):
         return f"`{error.value}` isn't something I could use there."
 
@@ -245,7 +217,7 @@ def footerFor(ctx: commands.Context) -> str:
 
 
 def usagePanel(ctx: commands.Context, error: Exception) -> components.Panel:
-    body = f":x: {describeProblem(ctx, error)}\n\n{codeBlock(usageLine(ctx))}"
+    body = f":x: {describeProblem(ctx, error)}\n\n{components.codeBlock(usageLine(ctx))}"
     return components.panel(
         title=f"How to use {ctx.command.qualified_name}",
         body=body,

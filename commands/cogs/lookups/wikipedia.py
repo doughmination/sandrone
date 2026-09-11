@@ -2,7 +2,7 @@ import wikipediaapi
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config, doughchecks, mood
+from sandrone import checks, config, mood
 from utils import components
 
 
@@ -20,7 +20,7 @@ class Wikipedia(commands.Cog):
         aliases=["wiki", "wp"],
     )
     @app_commands.describe(query="The query")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def wikipedia(self, ctx: commands.Context, *, query: str) -> None:
         await ctx.defer()

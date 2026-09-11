@@ -7,15 +7,12 @@ from discord.utils import utcnow
 
 from commands.admin import ownerOnly
 from sandrone import mood
-from utils import components
-from utils.colors import cf
+from utils import cf, components
 
 INCIDENT_COLOR = discord.Color.dark_teal()
 
-# Tuning knobs — every CHECK_INTERVAL minutes, a 1-in-INCIDENT_CHANCE roll.
 CHECK_INTERVAL_MINUTES = 20
 INCIDENT_CHANCE = 4
-# Don't post into a channel that's been quiet longer than this.
 STALE_AFTER = timedelta(minutes=12)
 
 type ActiveChannel = discord.TextChannel | discord.Thread

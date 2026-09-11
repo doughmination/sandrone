@@ -4,7 +4,7 @@ import aiohttp
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
 
 
@@ -20,7 +20,7 @@ class Codeberg(commands.Cog):
         name="codeberg", description="Look up a Codeberg user", aliases=["cb"]
     )
     @app_commands.describe(username="The Codeberg username to fetch information on")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def codeberg(
         self, ctx: commands.Context, username: str

@@ -1,15 +1,3 @@
-"""Flag overlay rendering, ported from the LGBTQ+ Profile Picture Overlay
-Generator at https://pride-pfp.xyz (MIT).
-
-The original paints an HTML canvas: it fills oversized flag rectangles, rotates
-the drawing context around the centre, then clips a circle or square out of the
-middle and draws the avatar into it. Pillow has no clipping context and cannot
-rotate mid-draw, so the same result comes from painting the flag flat into a
-layer twice the canvas size, rotating that whole layer, and cropping the middle
-back out. Doubling the layer is what the oversized rects were doing: it keeps
-the corners covered once the flag is turned.
-"""
-
 import io
 import math
 from typing import NamedTuple
@@ -274,8 +262,6 @@ flagLabels: dict[str, str] = {
     "transmasculine": "Transmasculine",
 }
 
-# Extra search terms, so the picker finds a flag by the word people reach for
-# first rather than only by its formal name.
 flagAliases: dict[str, tuple[str, ...]] = {
     "aroace": ("aro ace", "aroaceflux"),
     "aromantic": ("aro",),
@@ -296,11 +282,8 @@ flagAliases: dict[str, tuple[str, ...]] = {
 
 cutouts = ("circle", "square", "overlay")
 
-# Tried in order until the encoded GIF fits the upload budget.
 animationSteps = ((256, 36), (224, 30), (192, 24), (160, 20), (128, 16))
 
-# Seconds for one full turn, held constant so the spin reads the same at
-# every fallback size.
 rotationSeconds = 3.0
 
 stillSize = 512
@@ -333,11 +316,6 @@ def mixColors(
 
 
 def gradientStrip(colors: tuple[str, ...], size: int) -> Image.Image:
-    """A one-pixel-wide gradient down the doubled layer.
-
-    Canvas gradients run top to bottom across the canvas only, and clamp to the
-    end colours beyond it, so the padding above and below stays solid.
-    """
     offset = size // 2
     stops = [parseHex(color) for color in colors]
     last = len(stops) - 1
@@ -358,7 +336,6 @@ def gradientStrip(colors: tuple[str, ...], size: int) -> Image.Image:
 
 
 def paintFlag(size: int, options: PrideOptions) -> Image.Image:
-    """The flag, flat and unrotated, on a layer twice the canvas size."""
     offset = size // 2
     span = size * 2
     layer = Image.new("RGBA", (span, span), (0, 0, 0, 0))
@@ -366,8 +343,6 @@ def paintFlag(size: int, options: PrideOptions) -> Image.Image:
 
     columnCount = len(options.columns)
     for index, colors in enumerate(options.columns):
-        # The outer columns stretch into the padding so a turn never uncovers
-        # a corner; the inner ones only span their own slice.
         left = 0 if index == 0 else offset + size * index // columnCount
         right = (
             span
@@ -393,9 +368,7 @@ def paintFlag(size: int, options: PrideOptions) -> Image.Image:
 
 
 def flagLayer(base: Image.Image, size: int, angle: float, opacity: int) -> Image.Image:
-    """Rotate the doubled layer and crop the canvas back out of the middle."""
     offset = size // 2
-    # Canvas rotates clockwise for a positive angle; Pillow rotates the other way.
     turned = base.rotate(-angle, resample=Image.Resampling.BILINEAR)
     layer = turned.crop((offset, offset, offset + size, offset + size))
 
@@ -423,7 +396,6 @@ def cutoutMask(size: int, options: PrideOptions) -> Image.Image:
 
 
 def placeAvatar(avatar: Image.Image, size: int, options: PrideOptions) -> Image.Image:
-    """The avatar on a canvas-sized transparent layer, scaled as the site does."""
     layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
     if options.resizeInwards and options.cutout != "overlay":
@@ -445,10 +417,8 @@ def composeFrame(
     options: PrideOptions,
 ) -> Image.Image:
     if options.cutout == "overlay":
-        # Avatar underneath, flag painted over the top.
         return Image.alpha_composite(avatarLayer, flag)
 
-    # Flag behind, avatar clipped into the hole in the middle.
     frame = flag.copy()
     combined = avatarLayer.getchannel("A")
     if mask is not None:
@@ -476,7 +446,6 @@ def renderStill(avatar: Image.Image, options: PrideOptions) -> bytes:
 
 
 def toPalette(frame: Image.Image) -> Image.Image:
-    """Quantise to 255 colours, keeping the last slot for transparency."""
     flat = frame.convert("RGB").quantize(colors=transparentIndex)
     clear = frame.getchannel("A").point(lambda value: 255 if value < 128 else 0)
     if clear.getbbox() is not None:
@@ -520,7 +489,6 @@ class Rendered(NamedTuple):
 
 
 def render(avatar: Image.Image, options: PrideOptions, budget: int) -> Rendered:
-    """Animated if it fits the budget, otherwise the still fallback."""
     if not math.isfinite(budget) or budget <= 0:
         budget = 10 * 1024 * 1024
 

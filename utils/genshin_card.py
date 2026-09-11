@@ -1,15 +1,3 @@
-"""Render an Enka.Network-style Genshin character card as a PNG.
-
-The layout follows the well-known ``enka-card`` template (character splash on
-the left, weapon + totalled sheet stats down the middle, five artifacts with
-their substats on the right). It is drawn entirely with Pillow — no bundled
-game-UI sprite sheet — so glyphs (stars, the stat diamond, constellation pips,
-talent badges) are vector-drawn and every icon that *is* an image (splash art,
-weapon, artifacts) is passed in already downloaded.
-
-``renderCard`` is CPU-bound and self-contained; call it from a thread.
-"""
-
 from __future__ import annotations
 
 import io
@@ -36,7 +24,6 @@ GREEN = (150, 255, 169, 255)
 BEIGE = (245, 222, 179, 255)
 GOLD = (255, 206, 100, 255)
 
-# Element -> (splash tint, accent) from the enka-card palette.
 ELEMENT_TINT = {
     "Pyro": (186, 140, 131),
     "Hydro": (132, 161, 198),
@@ -48,7 +35,6 @@ ELEMENT_TINT = {
     "All": (150, 150, 150),
 }
 
-# Short labels for the substat rows (no sprite sheet to lean on).
 STAT_ABBR = {
     "HP": "HP",
     "HP%": "HP%",
@@ -65,7 +51,7 @@ STAT_ABBR = {
 }
 
 SLOT_LETTER = {
-    "flower": "❀",  # florette
+    "flower": "❀",
     "plume": "↑",
     "sands": "⧖",
     "goblet": "∪",
@@ -75,8 +61,6 @@ SLOT_LETTER = {
 
 @lru_cache(maxsize=64)
 def _font(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    # The IBM Plex faces are vendored under assets/fonts/, so this is a plain
-    # file load; a missing face is a packaging error worth surfacing loudly.
     path = FONT_FILES.get(weight, FONT_FILES["regular"])
     return ImageFont.truetype(str(path), size)
 
@@ -105,9 +89,6 @@ def formatStatValue(stat: dict[str, Any]) -> str:
     if stat.get("is_percent"):
         return f"{value:.1f}%"
     return f"{round(value):,}"
-
-
-# --- vector glyphs --------------------------------------------------------------
 
 
 def _star_points(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
@@ -161,9 +142,6 @@ def _rounded(
     base.alpha_composite(layer)
 
 
-# --- sections -----------------------------------------------------------------
-
-
 def _background(element: str) -> Image.Image:
     tint = ELEMENT_TINT.get(element, (150, 150, 150))
     base = Image.new("RGBA", CANVAS, (0, 0, 0, 255))
@@ -194,7 +172,6 @@ def _background(element: str) -> Image.Image:
 def _hgrad_mask(
     size: tuple[int, int], left_val: int, right_val: int, ease: float = 1.0
 ) -> Image.Image:
-    """A 1px-wide horizontal ramp stretched to ``size`` (for edge fades / scrims)."""
     w = size[0]
     row = Image.new("L", (w, 1))
     row.putdata(
@@ -210,14 +187,12 @@ def _character_art(base: Image.Image, art: Image.Image | None) -> None:
     if art is None:
         return
     art = _fit_height(art, int(CANVAS[1] * 1.1))
-    # Gacha splash frames the character in the right ~60%; take a centred slice.
     slice_w = min(art.width, 620)
     left = max(0, int(art.width * 0.30))
     left = min(left, art.width - slice_w)
     top = 6
     art = art.crop((left, top, left + slice_w, min(art.height, top + CANVAS[1])))
 
-    # Fade only the rightmost sliver so it melts into the middle panel.
     fade_from = int(art.width * 0.78)
     mask = Image.new("L", art.size, 255)
     mask.paste(
@@ -231,7 +206,6 @@ def _character_art(base: Image.Image, art: Image.Image | None) -> None:
 
 
 def _left_scrim(base: Image.Image) -> None:
-    """Darken the left edge so the name / level / UID stay readable on the art."""
     scrim = Image.new("RGBA", (380, CANVAS[1]), (8, 9, 14, 255))
     scrim.putalpha(_hgrad_mask((380, CANVAS[1]), 205, 0, ease=1.6))
     base.alpha_composite(scrim, (0, 0))
@@ -259,7 +233,6 @@ def _left_column(
         _draw_heart(draw, 44, 114, 8, (255, 120, 140, 255))
         draw.text((62, 104), str(friendship), font=_font("medium", 20), fill=WHITE)
 
-    # Constellation pips.
     total_c = 6
     unlocked = int(detail.get("constellation") or 0)
     accent = (*ELEMENT_TINT.get(detail.get("element", ""), (200, 200, 200)), 255)
@@ -512,23 +485,14 @@ def _artifacts(
             )
 
 
-# --- entrypoint -------------------------------------------------------------
-
-
 def renderCard(
     detail: dict[str, Any], images: dict[str, bytes], *, uid: str, ar: int | None = None
 ) -> bytes:
-    """Render ``detail`` (a doughmination Genshin character payload) to PNG bytes.
-
-    ``images`` maps every icon/art URL referenced by ``detail`` to its raw
-    bytes; any missing entry degrades to a drawn placeholder.
-    """
     element = detail.get("element", "All")
     base = _background(element)
     _character_art(base, _open(images, detail.get("art_url")))
     _left_scrim(base)
 
-    # Middle readability panel behind the weapon + stat sheet.
     _rounded(base, (548, 12, 1000, 596), 12, (10, 12, 20, 140))
 
     draw = ImageDraw.Draw(base)
@@ -545,7 +509,6 @@ def renderCard(
 
 
 def iconUrls(detail: dict[str, Any]) -> list[str]:
-    """Every remote image URL the card needs, for the caller to pre-fetch."""
     urls: list[str] = []
     for key in ("art_url",):
         if detail.get(key):

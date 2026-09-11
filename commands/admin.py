@@ -5,16 +5,14 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import config
-from utils import components
-from utils.cog_state import discoverCogHandles, loadDisabled, setDisabled
-from utils.colors import cf
+from utils import cf, components
 
 cogsPackage = "commands.cogs"
 cogsDir = Path(__file__).parent / "cogs"
 
 
 def discoverCogNames() -> list[str]:
-    return discoverCogHandles(cogsDir)
+    return config.discoverCogHandles(cogsDir)
 
 
 def ownerOnly():
@@ -82,7 +80,7 @@ class CogManager(commands.Cog):
             await ctx.send(f"Failed to load `{name}`: {e}")
             return
 
-        setDisabled(name, False)
+        config.setDisabled(name, False)
         print(cf.yellow(f"[cog] loaded {extension} (requested by {ctx.author})"))
         await self.bot.tree.sync()
         await ctx.send(
@@ -108,7 +106,7 @@ class CogManager(commands.Cog):
             await ctx.send(f"Failed to unload `{name}`: {e}")
             return
 
-        setDisabled(name, True)
+        config.setDisabled(name, True)
         print(
             cf.yellow(f"[cog] unloaded {extension} (requested by {ctx.author})")
         )
@@ -123,7 +121,7 @@ class CogManager(commands.Cog):
     )
     @ownerOnly()
     async def listCogs(self, ctx: commands.Context) -> None:
-        disabled = loadDisabled()
+        disabled = config.loadDisabled()
         lines = []
         for name in discoverCogNames():
             loaded = f"{cogsPackage}.{name}" in self.bot.extensions

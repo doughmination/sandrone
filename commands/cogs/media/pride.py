@@ -6,7 +6,7 @@ from discord import app_commands
 from discord.ext import commands
 from PIL import Image, UnidentifiedImageError
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
 from utils.choices import ChoiceSet
 from utils.pride import (
@@ -21,7 +21,6 @@ from utils.pride import (
 
 avatarSize = 512
 defaultUploadLimit = 10 * 1024 * 1024
-# Headroom for the embed and multipart framing around the file itself.
 uploadOverhead = 64 * 1024
 
 styles = {
@@ -30,8 +29,6 @@ styles = {
     "Overlay": "overlay",
 }
 
-# A converter, not app_commands.Choice, so the prefix parser can convert it
-# and backtrack when the word isn't a style. Display names come from @choices.
 prideStyles = ChoiceSet(styles)
 PrideStyle = prideStyles.converter
 
@@ -83,7 +80,7 @@ class Pride(commands.Cog):
     )
     @app_commands.autocomplete(flag=flagAutocomplete, flag2=flagAutocomplete)
     @app_commands.choices(style=prideStyles.options)
-    @doughchecks.has_permissions(attach_files=True)
+    @checks.has_permissions(attach_files=True)
     @mood.sassy
     async def pride(
         self,

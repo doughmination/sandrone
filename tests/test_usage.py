@@ -66,7 +66,6 @@ def test_consume_rest_parameters_are_marked_with_an_ellipsis() -> None:
 
 
 def test_a_long_choice_list_falls_back_to_the_parameter_name() -> None:
-    # Inlining seven styles would crowd the usage line.
     assert usage.signatureFor(wide) == "<style>"
 
 

@@ -5,9 +5,8 @@ import aiohttp
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
-from utils.markdown import escapeMarkdown
 
 apiBase = "https://api.girlcockx.com"
 
@@ -28,11 +27,11 @@ def linkifyMentions(text: str) -> str:
     parts: list[str] = []
     lastEnd = 0
     for match in mentionPattern.finditer(text):
-        parts.append(escapeMarkdown(text[lastEnd : match.start()]))
+        parts.append(components.escapeMarkdown(text[lastEnd : match.start()]))
         handle = match.group(1)
         parts.append(f"[@{handle}](https://twitter.com/{handle})")
         lastEnd = match.end()
-    parts.append(escapeMarkdown(text[lastEnd:]))
+    parts.append(components.escapeMarkdown(text[lastEnd:]))
     return "".join(parts)
 
 
@@ -81,7 +80,7 @@ class Twitter(commands.Cog):
         aliases=["twitter", "x"],
     )
     @app_commands.describe(url="A twitter.com or x.com post link")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def tweet(self, ctx: commands.Context, url: str) -> None:
         await ctx.defer()
@@ -167,7 +166,7 @@ class Twitter(commands.Cog):
             videoUrl = bestVideoUrl(video)
 
         panel = components.panel(
-            title=f"{escapeMarkdown(author['name'])} (@{author['screen_name']})",
+            title=f"{components.escapeMarkdown(author['name'])} (@{author['screen_name']})",
             url=tweetUrl,
             body=body,
             images=images or None,

@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from sandrone import config
-from utils.colors import cf
+from utils import cf
 
 sweepInterval = 3600
 

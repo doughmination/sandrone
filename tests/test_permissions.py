@@ -5,7 +5,7 @@ import discord
 import pytest
 from discord.ext import commands
 
-from sandrone.doughchecks import has_permissions
+from sandrone.checks import has_permissions
 
 
 def permissionPredicate(**permissions: bool):

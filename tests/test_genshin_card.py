@@ -1,10 +1,3 @@
-"""Render tests for the Genshin character card.
-
-These never touch the network — ``renderCard`` is handed an empty image map, so
-every remote icon degrades to a drawn placeholder and we only assert that a
-well-formed PNG of the fixed canvas size comes out for a range of payloads.
-"""
-
 import io
 from typing import Any
 
@@ -88,7 +81,6 @@ def test_full_card_renders_png_at_canvas_size():
 
 
 def test_bare_last_known_character_still_renders():
-    """A character not in the live showcase: no stats, weapon, artifacts, sets."""
     bare = {
         "name": "Kaeya",
         "element": "Cryo",

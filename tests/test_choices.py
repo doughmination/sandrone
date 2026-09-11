@@ -41,8 +41,6 @@ def test_a_two_word_label_converts_by_any_of_its_spellings() -> None:
 
 
 def test_an_unknown_spelling_raises_so_optional_parameters_can_backtrack() -> None:
-    # BadLiteralArgument is a CommandError, which is what makes discord.py undo
-    # the view and fall back to the default rather than consuming the word.
     with pytest.raises(commands.CommandError):
         convert(containers, "nonsense")
 

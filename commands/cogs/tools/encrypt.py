@@ -14,10 +14,6 @@ encoderSystem = {
     "Caesar Cipher": "caesar",
 }
 
-# A converter (rather than app_commands.Choice) so the prefix parser can try
-# the first word against it and fall back to the default when it doesn't match.
-# It takes the menu labels as well as the values, and @app_commands.choices
-# below keeps the slash menu itself label-and-value only.
 encoders = ChoiceSet(encoderSystem)
 EncoderMethod = encoders.converter
 

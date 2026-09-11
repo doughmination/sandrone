@@ -38,7 +38,6 @@ ELEMENT_COLOR = {
     "Dendro": 0x4D8E52,
 }
 
-# --- small in-process caches -------------------------------------------------
 
 _rosterCache: dict[str, tuple[float, dict]] = {}
 _cardCache: dict[tuple[str, str, Any], bytes] = {}
@@ -157,8 +156,6 @@ class State(NamedTuple):
 
 
 def applyAction(action: str, uid: str, index: int, menu: int) -> State:
-    """Next paginator state from a button press. Over-shoots are clamped once
-    the roster is loaded in :func:`buildView`."""
     if action == "prev":
         target = max(0, index - 1)
         return State(uid, target, target // jumpPageSize)

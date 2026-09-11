@@ -21,8 +21,6 @@ class TreeClient:
 
 
 class Section(NamedTuple):
-    """How one commands/cogs folder is presented in the help menu."""
-
     label: str
     emoji: str
     blurb: str
@@ -45,14 +43,12 @@ UNKNOWN_RANK = 500
 
 
 def sectionOf(key: str) -> Section:
-    """Presentation for a section key, inventing one for unmapped folders."""
     if key in SECTIONS:
         return SECTIONS[key]
     return Section(key.replace("_", " ").title(), "📁", "", UNKNOWN_RANK)
 
 
 def sectionKey(command: app_commands.Command) -> str:
-    """Which folder under ``commands/`` a command was loaded from."""
     module = command.module or ""
     if module.startswith("commands.cogs."):
         parts = module.removeprefix("commands.cogs.").split(".")
@@ -65,7 +61,6 @@ def sectionKey(command: app_commands.Command) -> str:
 def listedCommands(
     commandItems: Iterable[object],
 ) -> list[app_commands.Command]:
-    """Return every runnable slash command from the currently loaded tree."""
     result: list[app_commands.Command] = []
     for command in commandItems:
         if isinstance(command, app_commands.Group):
@@ -78,7 +73,6 @@ def listedCommands(
 def groupedCommands(
     commandItems: Iterable[object],
 ) -> dict[str, list[app_commands.Command]]:
-    """Commands bucketed by section key, sections in display order."""
     buckets: dict[str, list[app_commands.Command]] = {}
     for command in listedCommands(commandItems):
         buckets.setdefault(sectionKey(command), []).append(command)
@@ -194,8 +188,6 @@ def helpPanel(
 
 
 class HelpMenu(discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE):
-    """The section dropdown — rebuilt from the live tree on every pick."""
-
     def __init__(self, customId: str) -> None:
         super().__init__(
             discord.ui.Select(
@@ -234,7 +226,7 @@ async def helpCommand(ctx: commands.Context) -> None:
 
 async def setup(bot: commands.Bot) -> None:
     bot.add_dynamic_items(HelpMenu)
-    bot.add_command(helpCommand)  # registers the app command alongside it
+    bot.add_command(helpCommand)
 
 
 async def teardown(bot: commands.Bot) -> None:

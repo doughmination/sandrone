@@ -5,7 +5,7 @@ import aiohttp
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import doughchecks, mood
+from sandrone import checks, mood
 from utils import components
 
 
@@ -34,7 +34,7 @@ class UrbanDictionary(commands.Cog):
         aliases=["urban", "ud", "urbandictionary"],
     )
     @app_commands.describe(query="The query")
-    @doughchecks.has_permissions(embed_links=True)
+    @checks.has_permissions(embed_links=True)
     @mood.sassy
     async def urbanDictionary(self, ctx: commands.Context, *, query: str) -> None:
         await ctx.defer()

@@ -6,6 +6,9 @@ dist/
 wheels/
 *.egg-info
 
+data/*.jp
+!data/*.example.jp
+
 # Virtual environments
 .venv
 

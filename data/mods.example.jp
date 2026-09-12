@@ -1,0 +1,14 @@
+# Who may change my settings, per guild.
+# Manage Server, Administrator and the bot owners always pass regardless,
+# so this file only ever holds the *extra* grants made with `mod add`.
+# The bot rewrites this file, so comments survive only in this example copy.
+
+version: 1
+
+[1234567890]
+roles: [111222333444555666]
+users: [777888999000111222]
+
+[9876543210]
+roles: [222333444555666777]
+users:

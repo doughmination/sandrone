@@ -6,6 +6,7 @@ from discord.ext import commands, tasks
 from discord.utils import utcnow
 
 from commands.admin import ownerOnly
+from commands.settings.incidents import isIgnored
 from sandrone import mood
 from utils import cf, components
 
@@ -41,6 +42,11 @@ class Incidents(commands.Cog):
         if me is None or not message.channel.permissions_for(me).send_messages:
             return
 
+        channel = message.channel
+        parentId = channel.parent_id if isinstance(channel, discord.Thread) else None
+        if isIgnored(message.guild.id, channel.id, parentId):
+            return
+
         self.lastChannel = message.channel
         self.lastActivity = utcnow()
 
@@ -66,6 +72,12 @@ class Incidents(commands.Cog):
 
         me = channel.guild.me
         if me is None or not channel.permissions_for(me).send_messages:
+            return False
+
+        parentId = channel.parent_id if isinstance(channel, discord.Thread) else None
+        if isIgnored(channel.guild.id, channel.id, parentId):
+            self.lastChannel = None
+            self.lastActivity = None
             return False
 
         try:

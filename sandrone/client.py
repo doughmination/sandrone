@@ -9,7 +9,7 @@ from watchfiles import Change, awatch
 
 from sandrone import config, website
 from sandrone.checks import handleAppCommandError, handleCommandError
-from utils import cf, downloads
+from utils import cf, downloads, jp_storage
 from utils.doughmination import dough
 
 SEPARATORS = " \t\n,:;"
@@ -71,9 +71,11 @@ class Bot(commands.Bot):
 
     async def setup_hook(self) -> None:
         disabled = config.loadDisabled()
-        extensions = discoverExtensions(config.commandsDir, "commands") + [
-            f"commands.cogs.{handle}" for handle in config.discoverCogHandles()
-        ]
+        extensions = (
+            discoverExtensions(config.commandsDir, "commands")
+            + discoverExtensions(config.settingsDir, "commands.settings")
+            + [f"commands.cogs.{handle}" for handle in config.discoverCogHandles()]
+        )
         for extension in extensions:
             if (
                 extension.startswith("commands.cogs.")
@@ -94,6 +96,7 @@ class Bot(commands.Bot):
 
         await website.startServer(self)
         self.loop.create_task(downloads.sweepForever())
+        self.loop.create_task(jp_storage.flushForever())
 
         if config.devMode:
             self.loop.create_task(self.watchCogs())
@@ -218,4 +221,6 @@ async def runBot() -> None:
 
         await website.stopServer()
         await dough.close()
+        for name in jp_storage.saveAll():
+            print(cf.grey(f"[shutdown] saved data/{name}.jp"))
         print(cf.grey("[shutdown] bot closed"))

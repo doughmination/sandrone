@@ -14,32 +14,30 @@ class Pluralkit(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="pksystem",
         description="Get a pluralkit system",
-        aliases=["pk", "system"],
-        ignore_extra=False,
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
     async def pksystem(
-        self, ctx: commands.Context, user: discord.Member | None = None
+        self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
         ephemeral = user is not None
-        target = user or ctx.author
+        target = user or interaction.user
 
-        await ctx.defer(ephemeral=ephemeral)
+        await interaction.response.defer(ephemeral=ephemeral)
 
         try:
             system = await pk.get_system(target.id)
         except NotFound:
-            await ctx.send(
+            await interaction.followup.send(
                 f"❌ {target.mention} doesn't have a registered PluralKit system.",
                 ephemeral=ephemeral,
             )
             return
         except PluralKitException as error:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.panel(
                     title="❌ Could not fetch system",
                     body=str(error),
@@ -49,43 +47,41 @@ class Pluralkit(commands.Cog):
             )
             return
 
-        await ctx.send(
+        await interaction.followup.send(
             view=self.buildSystemPanel(system, target),
             ephemeral=ephemeral,
         )
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="pkfront",
         description="Get a pluralkit system's current front",
-        aliases=["front", "fronters"],
-        ignore_extra=False,
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
     async def pkfront(
-        self, ctx: commands.Context, user: discord.Member | None = None
+        self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
         ephemeral = user is not None
-        target = user or ctx.author
+        target = user or interaction.user
 
-        await ctx.defer(ephemeral=ephemeral)
+        await interaction.response.defer(ephemeral=ephemeral)
 
         try:
             fronters = [member async for member in pk.get_fronters(target.id)]
         except NotFound:
-            await ctx.send(
+            await interaction.followup.send(
                 f"❌ {target.mention} doesn't have a registered PluralKit system.",
                 ephemeral=ephemeral,
             )
             return
         except Unauthorized:
-            await ctx.send(
+            await interaction.followup.send(
                 f"❌ {target.mention}'s current front is private.",
                 ephemeral=ephemeral,
             )
             return
         except PluralKitException as error:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.panel(
                     title="❌ Could not fetch front",
                     body=str(error),
@@ -95,7 +91,7 @@ class Pluralkit(commands.Cog):
             )
             return
 
-        await ctx.send(
+        await interaction.followup.send(
             view=self.buildFrontPanel(fronters, target),
             ephemeral=ephemeral,
         )

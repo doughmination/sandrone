@@ -2,6 +2,7 @@ import re
 from urllib.parse import urlsplit
 
 import aiohttp
+import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -74,20 +75,19 @@ class Twitter(commands.Cog):
     async def cog_unload(self) -> None:
         await self.session.close()
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="tweet",
         description="Embed an X/Twitter post via girlcockx.com",
-        aliases=["twitter", "x"],
     )
     @app_commands.describe(url="A twitter.com or x.com post link")
-    @checks.has_permissions(embed_links=True)
+    @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def tweet(self, ctx: commands.Context, url: str) -> None:
-        await ctx.defer()
+    async def tweet(self, interaction: discord.Interaction, url: str) -> None:
+        await interaction.response.defer()
 
         statusId = extractStatusId(url)
         if statusId is None:
-            await ctx.send(
+            await interaction.followup.send(
                 view=errorPanel(
                     "❌ Invalid link",
                     "That doesn't look like a `twitter.com` or `x.com` post link.",
@@ -96,9 +96,9 @@ class Twitter(commands.Cog):
             return
 
         panel, videoUrl = await self.fetchTweetPanel(statusId)
-        await ctx.send(view=panel)
+        await interaction.followup.send(view=panel)
         if videoUrl:
-            await ctx.send(content=videoUrl)
+            await interaction.followup.send(content=videoUrl)
 
     async def fetchTweetPanel(
         self, statusId: str

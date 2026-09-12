@@ -21,7 +21,6 @@ indentStyles = {
 indentValues: dict[str, int | str] = {"2": 2, "4": 4, "tab": "\t"}
 
 indents = ChoiceSet(indentStyles)
-IndentStyle = indents.converter
 
 typeNames = {
     str: "String",
@@ -45,27 +44,24 @@ class JsonFormat(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
-        name="json", description="Pretty-print compact JSON", aliases=["jsonfmt"]
-    )
+    @app_commands.command(name="json", description="Pretty-print compact JSON")
     @app_commands.describe(
         data="The JSON to format",
         indent="How far to indent each level (defaults to 2 spaces)",
     )
     @app_commands.choices(indent=indents.options)
-    @checks.has_permissions(attach_files=True)
+    @checks.hasPermissions(attach_files=True)
     @mood.sassy
     async def json(
         self,
-        ctx: commands.Context,
-        indent: IndentStyle | None = None,
-        *,
-        data: commands.Range[str, 1, maxInput],
+        interaction: discord.Interaction,
+        data: app_commands.Range[str, 1, maxInput],
+        indent: str | None = None,
     ) -> None:
-        await ctx.defer()
+        await interaction.response.defer()
 
         view, file = self.getJsonReply(data, indents.resolve(indent, "2"))
-        await ctx.send(view=view, file=file or discord.utils.MISSING)
+        await interaction.followup.send(view=view, file=file or discord.utils.MISSING)
 
     def getJsonReply(
         self, data: str, indent: str

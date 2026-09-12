@@ -30,10 +30,25 @@ def prettyPermission(name: str) -> str:
     return name.replace("_", " ").replace("guild", "server").title()
 
 
+def loadedCommands(bot: commands.Bot) -> list[app_commands.Command]:
+    """Every app command the tree holds, groups flattened out."""
+    found: list[app_commands.Command] = []
+
+    def walk(items) -> None:
+        for item in items:
+            if isinstance(item, app_commands.Group):
+                walk(item.commands)
+            elif isinstance(item, app_commands.Command):
+                found.append(item)
+
+    walk(bot.tree.get_commands())
+    return found
+
+
 def commandRequirements(bot: commands.Bot) -> dict[str, list[str]]:
     """Which loaded commands asked for which bot permission."""
     needed: dict[str, list[str]] = {}
-    for command in bot.walk_commands():
+    for command in loadedCommands(bot):
         for perm, value in checks.requiredPermissions(command).items():
             if value:
                 needed.setdefault(perm, []).append(command.qualified_name)
@@ -74,19 +89,15 @@ class Debug(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_group(
+    debug = app_commands.Group(
         name="debug",
         description="(owner) Look inside the bot",
-        invoke_without_command=True,
+        default_permissions=discord.Permissions(administrator=True),
     )
-    @app_commands.default_permissions(administrator=True)
-    @ownerOnly()
-    async def debug(self, ctx: commands.Context) -> None:
-        await self.info(ctx)
 
     @debug.command(name="info", description="(owner) Runtime, cogs and storage state")
     @ownerOnly()
-    async def info(self, ctx: commands.Context) -> None:
+    async def info(self, interaction: discord.Interaction) -> None:
         bot = self.bot
         started = getattr(bot, "startedAt", None)
 
@@ -106,8 +117,8 @@ class Debug(commands.Cog):
         cogs = [
             f"{len(bot.extensions)} extensions · {len(bot.cogs)} cogs",
             (
-                f"{len(list(bot.walk_commands()))} prefix commands · "
-                f"{len(bot.tree.get_commands())} app command groups"
+                f"{len(loadedCommands(bot))} slash commands · "
+                f"{len(bot.tree.get_commands())} at top level"
             ),
         ]
         disabled = sorted(config.loadDisabled())
@@ -122,7 +133,7 @@ class Debug(commands.Cog):
                 f"`{db.name}.jp` — {len(db.sections())} sections · {size}B · {state}"
             )
 
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title="Debug · info",
                 fields=[
@@ -145,22 +156,22 @@ class Debug(commands.Cog):
         description="(owner) Compare the permissions I need against the ones I have",
     )
     @app_commands.describe(channel="Channel to check. Defaults to this one.")
-    @commands.guild_only()
+    @app_commands.guild_only()
     @ownerOnly()
     async def perms(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         channel: discord.TextChannel | discord.Thread | None = None,
     ) -> None:
-        guild = ctx.guild
+        guild = interaction.guild
         me = guild.me if guild is not None else None
         if guild is None or me is None:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.error("I'm not in this server."), ephemeral=True
             )
             return
 
-        target = channel or ctx.channel
+        target = channel or interaction.channel
         serverPerms = me.guild_permissions
         channelPerms = (
             target.permissions_for(me)
@@ -216,7 +227,7 @@ class Debug(commands.Cog):
             )
             buttons.append(components.linkButton("Re-invite with these", invite))
 
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title="Debug · permissions",
                 body=(
@@ -247,13 +258,13 @@ class Debug(commands.Cog):
     @ownerOnly()
     async def listErrors(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         code: str | None = None,
-        limit: commands.Range[int, 1, 25] = listLimit,
+        limit: app_commands.Range[int, 1, 25] = listLimit,
     ) -> None:
         found = errors.byCode(code)[:limit] if code else errors.recent(limit)
         if not found:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.panel(
                     title="Debug · faults",
                     body=(
@@ -268,7 +279,7 @@ class Debug(commands.Cog):
             return
 
         body = "\n\n".join(summarise(entry) for entry in found)
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title="Debug · faults",
                 body=body,
@@ -286,7 +297,7 @@ class Debug(commands.Cog):
         name="codes", description="(owner) What each fault code means, and how many"
     )
     @ownerOnly()
-    async def listCodes(self, ctx: commands.Context) -> None:
+    async def listCodes(self, interaction: discord.Interaction) -> None:
         tally: dict[str, int] = {}
         for entry in errors.entries():
             name = str(entry.get("code") or errors.fallbackCode)
@@ -298,7 +309,7 @@ class Debug(commands.Cog):
             for name, meaning in errors.codeMeanings.items()
         ]
 
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title="Debug · fault codes",
                 body="\n".join(lines),
@@ -339,10 +350,10 @@ class Debug(commands.Cog):
     )
     @app_commands.autocomplete(reference=referenceAutocomplete)
     @ownerOnly()
-    async def trace(self, ctx: commands.Context, reference: str) -> None:
+    async def trace(self, interaction: discord.Interaction, reference: str) -> None:
         entry = errors.find(reference)
         if entry is None:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.error(
                     f"Nothing logged under `{errors.tidyRef(reference)}`. It may have "
                     f"aged out of the last {errors.keepLimit}, or been cleared."
@@ -389,7 +400,7 @@ class Debug(commands.Cog):
                 ("Traceback", components.codeBlock(trace[-traceDisplayLimit:], "py"))
             )
 
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title=f"Debug · {entry.get('ref', '?')} · {entry.get('kind', '?')}",
                 body=(
@@ -410,10 +421,12 @@ class Debug(commands.Cog):
 
     @debug.command(name="clear", description="(owner) Wipe the error log")
     @ownerOnly()
-    async def clearErrors(self, ctx: commands.Context) -> None:
+    async def clearErrors(self, interaction: discord.Interaction) -> None:
         cleared = errors.clear()
         body = f"Cleared {cleared} errors." if cleared else "Nothing to clear."
-        await ctx.send(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(
+            view=components.panel(body=body), ephemeral=True
+        )
 
 
 async def setup(bot: commands.Bot) -> None:

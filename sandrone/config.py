@@ -53,10 +53,6 @@ siteUrl = (
 downloadsRetention = int(os.getenv("DOWNLOADS_RETENTION_HOURS", "24"))
 downloadsMaxSize = int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
 
-prefixNames: list[str] = sorted(
-    ("marrionette", "marionette", "sandrone"), key=len, reverse=True
-)
-
 owners: list[int] = [
     1464890289922641993,
     1025770042245251122,

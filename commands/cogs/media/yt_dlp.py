@@ -22,7 +22,6 @@ opts = {
 }
 
 containers = ChoiceSet(opts)
-ContainerType = containers.converter
 
 containerSuffixes = {
     "mp3": {".mp3"},
@@ -58,11 +57,9 @@ class YtDlp(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="yt-dlp",
         description="Get a YouTube video as a file or audio",
-        aliases=["ytdlp", "yt", "dl"],
-        ignore_extra=False,
     )
     @app_commands.describe(
         url="YouTube URL", type="Audio or Video? (defaults to Video)"
@@ -71,15 +68,19 @@ class YtDlp(commands.Cog):
     @mood.sassy
     async def ytDlp(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         url: str,
-        type: ContainerType | None = None,
+        type: str | None = None,
     ) -> None:
-        await ctx.defer()
+        await interaction.response.defer()
         container = containers.resolve(type, "mp4")
-        uploadLimit = ctx.guild.filesize_limit if ctx.guild else defaultUploadLimit
+        uploadLimit = (
+            interaction.guild.filesize_limit
+            if interaction.guild
+            else defaultUploadLimit
+        )
         content, file = await self.getVideoOrAudio(url, container, uploadLimit)
-        await ctx.send(content, file=file or discord.utils.MISSING)
+        await interaction.followup.send(content, file=file or discord.utils.MISSING)
 
     async def getVideoOrAudio(
         self, url: str, container: str, uploadLimit: int

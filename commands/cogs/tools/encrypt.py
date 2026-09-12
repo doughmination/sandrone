@@ -1,6 +1,7 @@
 import base64
 import codecs
 
+import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -15,17 +16,15 @@ encoderSystem = {
 }
 
 encoders = ChoiceSet(encoderSystem)
-EncoderMethod = encoders.converter
 
 
 class Encrypt(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="encrypt",
         description="Encode some text using a chosen method",
-        aliases=["encode", "enc"],
     )
     @app_commands.describe(input="What do you want to encrypt?")
     @app_commands.describe(method="The encoding/encryption algorithm")
@@ -33,15 +32,14 @@ class Encrypt(commands.Cog):
     @mood.sassy
     async def encrypt(
         self,
-        ctx: commands.Context,
-        method: EncoderMethod | None = None,
-        *,
+        interaction: discord.Interaction,
         input: str,
+        method: str | None = None,
     ) -> None:
-        await ctx.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
 
         reply = await self.encodeMessage(input, encoders.resolve(method, "b64"))
-        await ctx.send(reply, ephemeral=True)
+        await interaction.followup.send(reply, ephemeral=True)
 
     async def encodeMessage(self, input: str, method: str) -> str:
         if method == "b64":

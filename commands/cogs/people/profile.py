@@ -29,24 +29,22 @@ class Profile(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="profile",
         description="Get a user's Discord profile",
-        aliases=["whoisuser", "userinfo"],
-        ignore_extra=False,
     )
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
     async def profile(
-        self, ctx: commands.Context, user: discord.Member | None = None
+        self, interaction: discord.Interaction, user: discord.Member | None = None
     ) -> None:
-        await ctx.defer()
-        target = user or ctx.author
+        await interaction.response.defer()
+        target = user or interaction.user
 
         try:
             profile = await dough.getProfile(target.id)
         except ProfileNotFoundError:
-            await ctx.send(
+            await interaction.followup.send(
                 f"❌ No Discord profile found for {target.mention}."
             )
             return
@@ -56,7 +54,7 @@ class Profile(commands.Cog):
             aiohttp.ClientError,
             TimeoutError,
         ) as error:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.panel(
                     title="❌ Could not fetch profile",
                     body=str(error),
@@ -66,7 +64,7 @@ class Profile(commands.Cog):
             )
             return
 
-        await ctx.send(view=self.buildProfilePanel(profile))
+        await interaction.followup.send(view=self.buildProfilePanel(profile))
 
     def buildProfilePanel(self, profile: dict) -> components.Panel:
         user = profile["user"]

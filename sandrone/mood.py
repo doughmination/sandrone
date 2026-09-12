@@ -2,7 +2,6 @@ import random
 
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 from sandrone import config
 from utils import components
@@ -18,15 +17,15 @@ sassy_replies = [
 ]
 
 
-class SassyDenial(commands.CheckFailure, app_commands.CheckFailure):
+class SassyDenial(app_commands.CheckFailure):
     pass
 
 
-async def _sassyCheck(ctx: commands.Context) -> bool:
+async def _sassyCheck(interaction: discord.Interaction) -> bool:
     if random.randint(1, 10) != 1:
         return True
 
-    await ctx.send(
+    await interaction.response.send_message(
         view=components.panel(
             body=(
                 "<:sandrone_refuses:1546669792595939468> "
@@ -39,7 +38,7 @@ async def _sassyCheck(ctx: commands.Context) -> bool:
     raise SassyDenial()
 
 
-sassy = commands.check(_sassyCheck)
+sassy = app_commands.check(_sassyCheck)
 
 
 judge_certain_user = {

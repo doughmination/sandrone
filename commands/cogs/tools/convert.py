@@ -271,9 +271,7 @@ class Convert(commands.Cog):
     ) -> list[app_commands.Choice[str]]:
         return suggestUnits(current, getattr(interaction.namespace, "source", None))
 
-    @commands.hybrid_command(
-        name="convert", description="Convert a value between units", aliases=["conv"]
-    )
+    @app_commands.command(name="convert", description="Convert a value between units")
     @app_commands.describe(
         value="The number to convert",
         source="The unit the value is in",
@@ -282,9 +280,11 @@ class Convert(commands.Cog):
     @app_commands.autocomplete(source=sourceAutocomplete, to=targetAutocomplete)
     @mood.sassy
     async def convert(
-        self, ctx: commands.Context, value: float, source: str, to: str
+        self, interaction: discord.Interaction, value: float, source: str, to: str
     ) -> None:
-        await ctx.send(view=self.getConversionPanel(value, source, to))
+        await interaction.response.send_message(
+            view=self.getConversionPanel(value, source, to)
+        )
 
     def getConversionPanel(
         self, value: float, source: str, to: str

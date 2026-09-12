@@ -4,7 +4,7 @@ from typing import Any, cast
 import aiohttp
 import discord
 import pytest
-from discord.ext import commands
+from discord import app_commands
 
 from utils import errors
 
@@ -36,7 +36,7 @@ def codeFor(error: Exception) -> str:
 def test_a_recorded_error_keeps_what_debug_needs_to_show() -> None:
     errors.record(
         boom(),
-        source="prefix command",
+        source="slash command",
         command="qr",
         guild=None,
         channel=None,
@@ -66,7 +66,7 @@ def test_the_log_stops_growing_at_the_keep_limit() -> None:
 
 def test_missing_permissions_are_pulled_out_of_the_error() -> None:
     errors.record(
-        commands.BotMissingPermissions(["attach_files", "embed_links"]),
+        app_commands.BotMissingPermissions(["attach_files", "embed_links"]),
         source="slash command",
         command="pride",
     )
@@ -171,7 +171,7 @@ def test_the_note_carries_the_reference_to_whoever_hit_the_error() -> None:
 
 def test_a_missing_permission_is_a_workshop_fault() -> None:
     entry = logged(
-        commands.BotMissingPermissions(["attach_files"]),
+        app_commands.BotMissingPermissions(["attach_files"]),
         source="slash command",
         command="qr",
     )
@@ -195,7 +195,8 @@ def test_the_outside_world_and_the_disk_get_their_own_codes() -> None:
     assert codeFor(TimeoutError("too slow")) == "BLIZZARD"
     assert codeFor(OSError("disk is on fire")) == "FOUNDRY"
     assert codeFor(KeyError("content")) == "BLUEPRINT"
-    assert codeFor(commands.MemberNotFound("nobody")) == "VANISHED"
+    response = cast(Any, SimpleNamespace(status=404, reason="Not Found"))
+    assert codeFor(discord.NotFound(response, "gone")) == "VANISHED"
 
 
 def test_an_unknown_fault_depends_on_whether_a_command_was_running() -> None:
@@ -213,7 +214,9 @@ def test_every_code_that_can_be_issued_has_a_meaning() -> None:
 
 def test_faults_can_be_pulled_out_by_their_code() -> None:
     logged(
-        commands.BotMissingPermissions(["embed_links"]), source="command", command="a"
+        app_commands.BotMissingPermissions(["embed_links"]),
+        source="command",
+        command="a",
     )
     logged(boom(), source="slash command", command="b")
 

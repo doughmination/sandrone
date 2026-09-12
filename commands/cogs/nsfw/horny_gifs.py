@@ -2,7 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import checks, mood
+from sandrone import mood
 from utils import components
 
 nsfwGifUrls = {
@@ -34,14 +34,13 @@ class NsfwGifs(commands.Cog):
             if current.lower() in name.lower()
         ][:25]
 
-    @commands.hybrid_command(name="nsfwgif", description="Moans!")
+    @app_commands.command(name="nsfwgif", description="Moans!", nsfw=True)
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=nsfwGifAuto)
-    @checks.nsfw_only()
     @mood.sassy
-    async def nsfwGif(self, ctx: commands.Context, gif: str) -> None:
-        await ctx.defer()
-        await ctx.send(view=await self.getNsfwGifUrl(gif))
+    async def nsfwGif(self, interaction: discord.Interaction, gif: str) -> None:
+        await interaction.response.defer()
+        await interaction.followup.send(view=await self.getNsfwGifUrl(gif))
 
     async def getNsfwGifUrl(self, gif: str) -> components.Panel:
         slug = nsfwGifUrls.get(gif)

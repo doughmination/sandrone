@@ -1,5 +1,6 @@
 import random
 
+import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -31,15 +32,14 @@ class EightBall(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="8ball",
         description="Ask Sandrone a question. Don't expect her to be nice about it.",
-        aliases=["eightball", "8b"],
     )
     @app_commands.describe(question="The question you want answered")
     @mood.sassy
     async def eightball(
-        self, ctx: commands.Context, *, question: str
+        self, interaction: discord.Interaction, question: str
     ) -> None:
         view = components.panel(
             fields=[
@@ -48,7 +48,7 @@ class EightBall(commands.Cog):
             ],
             footer="Sandrone",
         )
-        await ctx.send(view=view)
+        await interaction.response.send_message(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:

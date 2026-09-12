@@ -30,7 +30,6 @@ styles = {
 }
 
 prideStyles = ChoiceSet(styles)
-PrideStyle = prideStyles.converter
 
 
 def resolveFlag(name: str | None) -> str | None:
@@ -61,11 +60,9 @@ class Pride(commands.Cog):
             or any(query in alias for alias in flagAliases.get(slug, ()))
         ][:25]
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="pride",
         description="Put a pride flag around someone's profile picture",
-        aliases=["flag", "pridepfp"],
-        ignore_extra=False,
     )
     @app_commands.describe(
         user="Whose profile picture to use (defaults to you)",
@@ -80,28 +77,28 @@ class Pride(commands.Cog):
     )
     @app_commands.autocomplete(flag=flagAutocomplete, flag2=flagAutocomplete)
     @app_commands.choices(style=prideStyles.options)
-    @checks.has_permissions(attach_files=True)
+    @checks.hasPermissions(attach_files=True)
     @mood.sassy
     async def pride(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         user: discord.Member | discord.User | None = None,
         flag: str | None = None,
         flag2: str | None = None,
-        style: PrideStyle | None = None,
-        size: commands.Range[int, 10, 100] = 90,
-        opacity: commands.Range[int, 0, 100] = 100,
-        rotation: commands.Range[int, 0, 360] = 0,
+        style: str | None = None,
+        size: app_commands.Range[int, 10, 100] = 90,
+        opacity: app_commands.Range[int, 0, 100] = 100,
+        rotation: app_commands.Range[int, 0, 360] = 0,
         gradient: bool = False,
         animated: bool = False,
     ) -> None:
-        await ctx.defer()
+        await interaction.response.defer()
 
         requested = [name for name in (flag or "pride", flag2) if name]
         chosen = [resolveFlag(name) for name in requested]
         unknown = [name for name, slug in zip(requested, chosen) if slug is None]
         if unknown:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.error(
                     f"I have no flag called `{'`, `'.join(unknown)}` — "
                     "pick one from the suggestions."
@@ -109,7 +106,7 @@ class Pride(commands.Cog):
             )
             return
 
-        target = user or ctx.author
+        target = user or interaction.user
         options = PrideOptions(
             columns=tuple(flagColours[slug] for slug in chosen if slug is not None),
             cutout=prideStyles.resolve(style, "circle"),
@@ -126,18 +123,18 @@ class Pride(commands.Cog):
                 .read()
             )
         except discord.HTTPException:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.error("Couldn't download that profile picture.")
             )
             return
 
-        budget = self.uploadBudget(ctx)
+        budget = self.uploadBudget(interaction)
         try:
             result = await asyncio.to_thread(
                 self.draw, source, options, animated, budget
             )
         except (UnidentifiedImageError, OSError, ValueError) as error:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.error(f"Couldn't render that one: `{error}`")
             )
             return
@@ -156,7 +153,7 @@ class Pride(commands.Cog):
             images=[f"attachment://{filename}"],
             footer=self.footerText(result),
         )
-        await ctx.send(
+        await interaction.followup.send(
             view=view,
             file=discord.File(io.BytesIO(result.data), filename=filename),
         )
@@ -170,8 +167,12 @@ class Pride(commands.Cog):
             return render(avatar, options, budget)
         return renderPng(avatar, options)
 
-    def uploadBudget(self, ctx: commands.Context) -> int:
-        limit = ctx.guild.filesize_limit if ctx.guild else defaultUploadLimit
+    def uploadBudget(self, interaction: discord.Interaction) -> int:
+        limit = (
+            interaction.guild.filesize_limit
+            if interaction.guild
+            else defaultUploadLimit
+        )
         return max(limit - uploadOverhead, uploadOverhead)
 
     def footerText(self, result: Rendered) -> str:

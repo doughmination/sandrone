@@ -9,39 +9,9 @@ from discord.ext import commands
 from watchfiles import Change, awatch
 
 from sandrone import config, website
-from sandrone.checks import handleAppCommandError, handleCommandError
+from sandrone.checks import handleAppCommandError
 from utils import cf, downloads, errors, jp_storage
 from utils.doughmination import dough
-
-SEPARATORS = " \t\n,:;"
-
-
-def matchName(content: str) -> str | None:
-    lowered = content.lower()
-    for name in config.prefixNames:
-        if not lowered.startswith(name):
-            continue
-
-        rest = content[len(name) :]
-        if not rest:
-            return None
-
-        stripped = rest.lstrip(SEPARATORS)
-        if stripped == rest:
-            continue
-        if not stripped:
-            return None
-
-        return content[: len(content) - len(stripped)]
-    return None
-
-
-def resolvePrefix(bot: commands.Bot, message: discord.Message) -> list[str]:
-    prefixes = commands.when_mentioned(bot, message)
-    matched = matchName(message.content)
-    if matched is not None:
-        prefixes.append(matched)
-    return prefixes
 
 
 def discoverExtensions(directory: Path, package: str) -> list[str]:
@@ -72,10 +42,13 @@ class Bot(commands.Bot):
             errors.record(error, source=f"event {event_method}")
         await super().on_error(event_method, *args, **kwargs)
 
-    async def on_command_error(
-        self, ctx: commands.Context, error: commands.CommandError
-    ) -> None:
-        await handleCommandError(ctx, error)
+    async def on_message(self, message: discord.Message) -> None:
+        """Sandrone is slash-only: nothing is ever invoked from message text.
+
+        Cog listeners still see every message; only the ext.commands prefix
+        machinery is cut out.
+        """
+        return
 
     async def setup_hook(self) -> None:
         disabled = config.loadDisabled()
@@ -172,18 +145,19 @@ class Bot(commands.Bot):
 
 
 def createBot() -> Bot:
+    # No message content is read any more: the only listener watches which
+    # channel was active, not what was said.
     intents = discord.Intents.default()
-    intents.message_content = True
     activity = discord.Activity(
         type=discord.ActivityType.listening,
         name="I love Columbina <3",
     )
     return Bot(
-        command_prefix=resolvePrefix,
+        # Required by commands.Bot, but nothing reads it: on_message never
+        # reaches the prefix machinery and no prefix command is registered.
+        command_prefix=commands.when_mentioned,
         intents=intents,
         activity=activity,
-        case_insensitive=True,
-        strip_after_prefix=True,
         help_command=None,
     )
 

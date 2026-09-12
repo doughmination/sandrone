@@ -1,5 +1,6 @@
 import re
 
+import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -23,7 +24,6 @@ caseStyles = {
 styleLabels = {value: name for name, value in caseStyles.items()}
 
 cases = ChoiceSet(caseStyles)
-CaseStyle = cases.converter
 
 wordPattern = re.compile(r"[A-Z]+(?![a-z])|[A-Z][a-z0-9]*|[a-z0-9]+")
 
@@ -75,7 +75,7 @@ class Case(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(name="case", description="Convert text between cases")
+    @app_commands.command(name="case", description="Convert text between cases")
     @app_commands.describe(
         text="The text to convert",
         to="The case to convert into",
@@ -84,12 +84,13 @@ class Case(commands.Cog):
     @mood.sassy
     async def case(
         self,
-        ctx: commands.Context,
-        to: CaseStyle,
-        *,
-        text: commands.Range[str, 1, maxInput],
+        interaction: discord.Interaction,
+        to: str,
+        text: app_commands.Range[str, 1, maxInput],
     ) -> None:
-        await ctx.send(view=self.getCasePanel(text, cases.resolve(to, "lower")))
+        await interaction.response.send_message(
+            view=self.getCasePanel(text, cases.resolve(to, "lower"))
+        )
 
     def getCasePanel(self, text: str, style: str) -> components.Panel:
         words = splitWords(text)

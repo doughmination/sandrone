@@ -7,7 +7,6 @@ from typing import Any
 import aiohttp
 import discord
 from discord import app_commands
-from discord.ext import commands
 from discord.utils import utcnow
 from jpml import JPError
 
@@ -35,31 +34,20 @@ codes: tuple[tuple[str, str, tuple[type[BaseException], ...]], ...] = (
         "WORKSHOP",
         "She is not allowed to do that here — a permission is missing.",
         (
-            commands.BotMissingPermissions,
-            commands.MissingPermissions,
             app_commands.BotMissingPermissions,
             app_commands.MissingPermissions,
-            commands.NSFWChannelRequired,
             discord.Forbidden,
         ),
     ),
     (
         "VANISHED",
         "What was asked for is not there — a user, channel, role or page.",
-        (
-            commands.MemberNotFound,
-            commands.UserNotFound,
-            commands.ChannelNotFound,
-            commands.RoleNotFound,
-            commands.GuildNotFound,
-            commands.ThreadNotFound,
-            discord.NotFound,
-        ),
+        (app_commands.TransformerError, discord.NotFound),
     ),
     (
         "OVERLOAD",
         "Too much, too fast — a cooldown or a rate limit.",
-        (commands.CommandOnCooldown, commands.MaxConcurrencyReached),
+        (app_commands.CommandOnCooldown,),
     ),
     (
         "STRINGS",
@@ -274,17 +262,6 @@ def record(
     except (JPError, OSError, TypeError, ValueError) as e:
         print(cf.red(f"[errors] could not record {type(error).__name__}: {e}"))
         return None
-
-
-def fromContext(ctx: commands.Context, error: BaseException) -> Entry | None:
-    return record(
-        error,
-        source="prefix command" if ctx.interaction is None else "slash command",
-        command=ctx.command.qualified_name if ctx.command else None,
-        guild=ctx.guild,
-        channel=ctx.channel,
-        user=ctx.author,
-    )
 
 
 def fromInteraction(

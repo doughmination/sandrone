@@ -1,3 +1,5 @@
+import discord
+from discord import app_commands
 from discord.ext import commands
 
 from sandrone import config, mood
@@ -8,15 +10,14 @@ class Invite(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="links",
         description="All related links",
-        aliases=["invite", "support"],
     )
     @mood.sassy
-    async def links(self, ctx: commands.Context) -> None:
-        await ctx.defer()
-        await ctx.send(view=await self.buildInvitePanel())
+    async def links(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        await interaction.followup.send(view=await self.buildInvitePanel())
 
     async def buildInvitePanel(self) -> components.Panel:
         return components.panel(

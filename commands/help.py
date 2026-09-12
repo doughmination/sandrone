@@ -6,7 +6,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config, mood
+from sandrone import mood
 from utils import components
 
 MENU_TEMPLATE = r"help:(?P<section>[a-z0-9_]+)"
@@ -157,8 +157,7 @@ def helpContainer(
         body = (
             "These are the functions currently installed and operational. "
             "Try not to break anything.\n\n"
-            f"Every command works as a slash command or by name — "
-            f"`{config.prefixNames[0]} help`, or just @mention her.\n\n"
+            "Everything is a slash command — type `/` and pick one.\n\n"
         )
         body += overviewBody(buckets) or "Nothing is loaded. How embarrassing."
         footer = (
@@ -213,21 +212,20 @@ class HelpMenu(discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE
         )
 
 
-@commands.hybrid_command(
+@app_commands.command(
     name="help",
     description="Show Sandrone's available commands",
-    aliases=["commands", "h"],
 )
 @mood.sassy
-async def helpCommand(ctx: commands.Context) -> None:
-    client = cast(TreeClient, ctx.bot)
-    await ctx.send(view=helpPanel(client.tree.get_commands()))
+async def helpCommand(interaction: discord.Interaction) -> None:
+    client = cast(TreeClient, interaction.client)
+    await interaction.response.send_message(view=helpPanel(client.tree.get_commands()))
 
 
 async def setup(bot: commands.Bot) -> None:
     bot.add_dynamic_items(HelpMenu)
-    bot.add_command(helpCommand)
+    bot.tree.add_command(helpCommand)
 
 
 async def teardown(bot: commands.Bot) -> None:
-    bot.remove_command(helpCommand.name)
+    bot.tree.remove_command(helpCommand.name)

@@ -28,18 +28,17 @@ class Snippets(commands.Cog):
             if current.lower() in name.lower()
         ][:25]
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="snippet",
         description="repost a commonly used snippet",
-        aliases=["snip"],
     )
     @app_commands.describe(snip="The snippet to repost")
     @app_commands.autocomplete(snip=snippetAuto)
-    @checks.has_permissions(embed_links=True)
+    @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def snippet(self, ctx: commands.Context, snip: str) -> None:
-        await ctx.defer()
-        await ctx.send(view=await self.getSnippetPanel(snip))
+    async def snippet(self, interaction: discord.Interaction, snip: str) -> None:
+        await interaction.response.defer()
+        await interaction.followup.send(view=await self.getSnippetPanel(snip))
 
     async def getSnippetPanel(self, snip: str) -> components.Panel:
         reply = xSnips.get(snip)

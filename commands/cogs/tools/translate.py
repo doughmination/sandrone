@@ -35,8 +35,8 @@ class Translate(commands.Cog):
             if query in name.lower() or query == code
         ][:25]
 
-    @commands.hybrid_command(
-        name="translate", description="Translate text between languages", aliases=["tr"]
+    @app_commands.command(
+        name="translate", description="Translate text between languages"
     )
     @app_commands.describe(
         text="The text to translate",
@@ -47,13 +47,12 @@ class Translate(commands.Cog):
     @mood.sassy
     async def translate(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
+        text: app_commands.Range[str, 1, maxInput],
         source: str,
         to: str | None = None,
-        *,
-        text: commands.Range[str, 1, maxInput],
     ) -> None:
-        await ctx.defer()
+        await interaction.response.defer()
 
         if to is not None:
             names = await self.ensureIndex()
@@ -62,7 +61,7 @@ class Translate(commands.Cog):
                 to = None
 
         view = await self.getTranslationPanel(text, source, to or defaultTarget)
-        await ctx.send(view=view)
+        await interaction.followup.send(view=view)
 
     async def getTranslationPanel(
         self, text: str, source: str, to: str

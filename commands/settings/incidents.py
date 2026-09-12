@@ -34,12 +34,12 @@ def setIgnored(guildId: int, channelId: int, ignored: bool) -> bool:
 
 
 def resolveChannel(
-    ctx: commands.Context, channel: IncidentChannel | None
+    interaction: discord.Interaction, channel: IncidentChannel | None
 ) -> IncidentChannel | None:
     if channel is not None:
         return channel
-    if isinstance(ctx.channel, (discord.TextChannel, discord.Thread)):
-        return ctx.channel
+    if isinstance(interaction.channel, (discord.TextChannel, discord.Thread)):
+        return interaction.channel
     return None
 
 
@@ -47,77 +47,73 @@ class IncidentSettings(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_group(
+    incidents = app_commands.Group(
         name="incidents",
         description="Choose where puppet incidents are allowed to happen",
-        invoke_without_command=True,
+        guild_only=True,
+        default_permissions=discord.Permissions(manage_guild=True),
     )
-    @commands.guild_only()
-    @app_commands.default_permissions(manage_guild=True)
-    @isManager()
-    async def incidents(self, ctx: commands.Context) -> None:
-        await self.listIgnored(ctx)
 
     @incidents.command(
         name="ignore",
         description="Stop incidents from happening in a channel",
     )
     @app_commands.describe(channel="Channel to ignore. Defaults to this one.")
-    @commands.guild_only()
+    @app_commands.guild_only()
     @isManager()
     async def ignore(
-        self, ctx: commands.Context, channel: IncidentChannel | None = None
+        self, interaction: discord.Interaction, channel: IncidentChannel | None = None
     ) -> None:
-        target = resolveChannel(ctx, channel)
+        target = resolveChannel(interaction, channel)
         if target is None:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.error("Pick a text channel or thread."), ephemeral=True
             )
             return
 
-        changed = setIgnored(ctx.guild.id, target.id, True)
+        changed = setIgnored(interaction.guild.id, target.id, True)
         body = (
             f"Incidents will skip {target.mention}."
             if changed
             else f"{target.mention} was already ignored."
         )
-        await ctx.send(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(view=components.panel(body=body), ephemeral=True)
 
     @incidents.command(
         name="unignore",
         description="Allow incidents in a channel again",
     )
     @app_commands.describe(channel="Channel to allow. Defaults to this one.")
-    @commands.guild_only()
+    @app_commands.guild_only()
     @isManager()
     async def unignore(
-        self, ctx: commands.Context, channel: IncidentChannel | None = None
+        self, interaction: discord.Interaction, channel: IncidentChannel | None = None
     ) -> None:
-        target = resolveChannel(ctx, channel)
+        target = resolveChannel(interaction, channel)
         if target is None:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.error("Pick a text channel or thread."), ephemeral=True
             )
             return
 
-        changed = setIgnored(ctx.guild.id, target.id, False)
+        changed = setIgnored(interaction.guild.id, target.id, False)
         body = (
             f"Incidents can happen in {target.mention} again."
             if changed
             else f"{target.mention} was not ignored."
         )
-        await ctx.send(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(view=components.panel(body=body), ephemeral=True)
 
     @incidents.command(
         name="list",
         description="Show which channels incidents will skip",
     )
-    @commands.guild_only()
+    @app_commands.guild_only()
     @isManager()
-    async def listIgnored(self, ctx: commands.Context) -> None:
-        channelIds = ignoredChannels(ctx.guild.id)
+    async def listIgnored(self, interaction: discord.Interaction) -> None:
+        channelIds = ignoredChannels(interaction.guild.id)
         if not channelIds:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.panel(
                     title="Incident settings",
                     body="Nothing is ignored — incidents can happen anywhere I can speak.",
@@ -129,10 +125,10 @@ class IncidentSettings(commands.Cog):
 
         lines = []
         for channelId in channelIds:
-            channel = ctx.guild.get_channel_or_thread(channelId)
+            channel = interaction.guild.get_channel_or_thread(channelId)
             lines.append(channel.mention if channel else f"`{channelId}` (gone)")
 
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title="Incident settings",
                 body="Incidents will skip:\n" + "\n".join(f"- {line}" for line in lines),
@@ -145,17 +141,17 @@ class IncidentSettings(commands.Cog):
         name="reset",
         description="Clear the ignore list for this server",
     )
-    @commands.guild_only()
+    @app_commands.guild_only()
     @isManager()
-    async def reset(self, ctx: commands.Context) -> None:
-        if not ignoredChannels(ctx.guild.id):
-            await ctx.send(
+    async def reset(self, interaction: discord.Interaction) -> None:
+        if not ignoredChannels(interaction.guild.id):
+            await interaction.response.send_message(
                 view=components.panel(body="Nothing to clear."), ephemeral=True
             )
             return
 
-        db.guild(ctx.guild.id).key(ignoredKey).delete().save()
-        await ctx.send(
+        db.guild(interaction.guild.id).key(ignoredKey).delete().save()
+        await interaction.response.send_message(
             view=components.panel(body="Ignore list cleared."), ephemeral=True
         )
 

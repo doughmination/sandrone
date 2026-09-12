@@ -10,22 +10,20 @@ class Pfp(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="pfp",
         description="Get a user's Profile Image",
-        aliases=["avatar", "av"],
-        ignore_extra=False,
     )
     @app_commands.describe(user="The user you want to check (defaults to you)")
     @mood.sassy
     async def pfp(
         self,
-        ctx: commands.Context,
+        interaction: discord.Interaction,
         user: discord.Member | discord.User | None = None,
     ) -> None:
-        await ctx.defer()
-        target = user or ctx.author
-        await ctx.send(view=self.getPfpPanel(target))
+        await interaction.response.defer()
+        target = user or interaction.user
+        await interaction.followup.send(view=self.getPfpPanel(target))
 
     def getPfpPanel(self, user: discord.Member | discord.User) -> components.Panel:
         globalAvatar = user.avatar or user.default_avatar

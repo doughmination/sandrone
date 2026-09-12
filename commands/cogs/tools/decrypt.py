@@ -1,6 +1,7 @@
 import base64
 import codecs
 
+import discord
 from discord import app_commands
 from discord.ext import commands
 
@@ -15,17 +16,15 @@ decoderSystem = {
 }
 
 decoders = ChoiceSet(decoderSystem)
-DecoderMethod = decoders.converter
 
 
 class Decrypt(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="decrypt",
         description="Decode or decrypt some text using a chosen method",
-        aliases=["decode", "dec"],
     )
     @app_commands.describe(input="What do you want to decrypt?")
     @app_commands.describe(method="The decoding/decryption algorithm")
@@ -33,14 +32,13 @@ class Decrypt(commands.Cog):
     @mood.sassy
     async def decrypt(
         self,
-        ctx: commands.Context,
-        method: DecoderMethod | None = None,
-        *,
+        interaction: discord.Interaction,
         input: str,
+        method: str | None = None,
     ) -> None:
-        await ctx.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=True)
         reply = await self.decodeMessage(input, decoders.resolve(method, "b64"))
-        await ctx.send(reply, ephemeral=True)
+        await interaction.followup.send(reply, ephemeral=True)
 
     async def decodeMessage(self, input: str, method: str) -> str:
         try:

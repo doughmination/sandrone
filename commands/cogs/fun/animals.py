@@ -1,5 +1,7 @@
 import uuid
 
+import discord
+from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
@@ -10,13 +12,11 @@ class Animals(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
-        name="kitty", description="KITTY!", aliases=["cat", "cats"]
-    )
+    @app_commands.command(name="kitty", description="KITTY!")
     @mood.sassy
-    async def kitty(self, ctx: commands.Context) -> None:
-        await ctx.defer()
-        await ctx.send(view=await self.getCatPanel())
+    async def kitty(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        await interaction.followup.send(view=await self.getCatPanel())
 
     async def getCatPanel(self) -> components.Panel:
         catUrl = f"https://cataas.com/cat?v={uuid.uuid4()}"

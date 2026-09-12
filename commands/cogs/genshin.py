@@ -346,19 +346,18 @@ class Genshin(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="genshin",
         description="Look up a Genshin Impact account by UID",
-        aliases=["gi", "uidlookup"],
     )
     @app_commands.describe(uid="The 9–10 digit Genshin UID to look up")
     @mood.sassy
-    async def genshin(self, ctx: commands.Context, uid: str) -> None:
-        await ctx.defer()
+    async def genshin(self, interaction: discord.Interaction, uid: str) -> None:
+        await interaction.response.defer()
 
         clean = validUid(uid)
         if clean is None:
-            await ctx.send(
+            await interaction.followup.send(
                 view=components.error(
                     "That doesn't look like a Genshin UID — it should be 9–10 digits."
                 )
@@ -369,13 +368,13 @@ class Genshin(commands.Cog):
         try:
             view, file = await buildView(state)
         except apiErrors as error:
-            await ctx.send(view=buildErrorPanel(error, clean))
+            await interaction.followup.send(view=buildErrorPanel(error, clean))
             return
 
         if file is not None:
-            await ctx.send(view=view, file=file)
+            await interaction.followup.send(view=view, file=file)
         else:
-            await ctx.send(view=view)
+            await interaction.followup.send(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:

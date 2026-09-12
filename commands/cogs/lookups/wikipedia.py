@@ -1,3 +1,4 @@
+import discord
 import wikipediaapi
 from discord import app_commands
 from discord.ext import commands
@@ -14,17 +15,16 @@ class Wikipedia(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="wikipedia",
         description="Look a term on Wikipedia",
-        aliases=["wiki", "wp"],
     )
     @app_commands.describe(query="The query")
-    @checks.has_permissions(embed_links=True)
+    @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def wikipedia(self, ctx: commands.Context, *, query: str) -> None:
-        await ctx.defer()
-        await ctx.send(view=await self.wikiDefPanel(query))
+    async def wikipedia(self, interaction: discord.Interaction, query: str) -> None:
+        await interaction.response.defer()
+        await interaction.followup.send(view=await self.wikiDefPanel(query))
 
     async def wikiDefPanel(self, query: str) -> components.Panel:
         wiki = wikipediaapi.AsyncWikipedia(

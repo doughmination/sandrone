@@ -1,6 +1,8 @@
 import datetime
 
 import aiohttp
+import discord
+from discord import app_commands
 from discord.ext import commands
 
 from sandrone import config, mood
@@ -39,15 +41,14 @@ class Stats(commands.Cog):
         self.region = ", ".join(part for part in parts if part) or "Unknown"
         return self.region
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="stats",
         description="Show the bot's ping and uptime",
-        aliases=["ping", "uptime"],
     )
     @mood.sassy
-    async def stats(self, ctx: commands.Context) -> None:
+    async def stats(self, interaction: discord.Interaction) -> None:
         user = self.bot.user
-        await ctx.defer()
+        await interaction.response.defer()
 
         delta_uptime = datetime.datetime.now(datetime.UTC) - self.launch_time
         hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
@@ -66,7 +67,7 @@ class Stats(commands.Cog):
             ],
             footer="Sandrone",
         )
-        await ctx.send(view=view)
+        await interaction.followup.send(view=view)
 
 
 async def setup(bot: commands.Bot) -> None:

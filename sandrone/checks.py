@@ -1,35 +1,39 @@
 import discord
 from discord import app_commands
-from discord.ext import commands
 
 from sandrone import mood
-from utils import cf, errors, usage
+from utils import cf, errors
 
 permsAttr = "__sandrone_bot_perms__"
 
 
-def has_permissions(*, guildOnly: bool = False, **perms: bool):
+def hasPermissions(*, guildOnly: bool = False, **perms: bool):
+    """Require the bot to hold *perms* where the command was run.
+
+    The permissions are also stashed on the callback so `debug perms` can list
+    what the loaded commands actually need.
+    """
     invalid = perms.keys() - discord.Permissions.VALID_FLAGS.keys()
     if invalid:
         raise TypeError(f"Invalid permission(s): {', '.join(sorted(invalid))}")
 
-    async def predicate(ctx: commands.Context) -> bool:
-        if ctx.guild is None:
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if interaction.guild is None:
             if guildOnly:
-                raise commands.NoPrivateMessage(
+                raise app_commands.NoPrivateMessage(
                     "This command can only be used in a server."
                 )
             return True
 
-        permissions = ctx.bot_permissions
+        permissions = interaction.app_permissions
         missing = [
             perm for perm, value in perms.items() if getattr(permissions, perm) != value
         ]
         if missing:
-            raise commands.BotMissingPermissions(missing)
+            raise app_commands.BotMissingPermissions(missing)
         return True
 
-    check = commands.check(predicate)
+    check = app_commands.check(predicate)
 
     def decorator(func):
         target = getattr(func, "callback", func)
@@ -39,17 +43,9 @@ def has_permissions(*, guildOnly: bool = False, **perms: bool):
     return decorator
 
 
-def requiredPermissions(command: commands.Command) -> dict[str, bool]:
+def requiredPermissions(command: app_commands.Command) -> dict[str, bool]:
     """The bot permissions *command* was decorated with, for `debug perms`."""
     return dict(getattr(command.callback, permsAttr, {}))
-
-
-def nsfw_only():
-    def decorator(func):
-        func.__discord_app_commands_is_nsfw__ = True
-        return commands.is_nsfw()(func)
-
-    return decorator
 
 
 def formatPermissions(permissions: list[str]) -> str:
@@ -89,6 +85,12 @@ async def handleAppCommandError(
         await respond(interaction, "This command can only be used in a server.")
         return
 
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await respond(
+            interaction, f"Slow down. Try again in {error.retry_after:.0f}s."
+        )
+        return
+
     if isinstance(error, mood.SassyDenial):
         return
 
@@ -96,75 +98,13 @@ async def handleAppCommandError(
         await respond(interaction, "You do not have permission to execute this command")
         return
 
+    if isinstance(error, app_commands.CommandInvokeError):
+        error = error.original  # type: ignore[assignment]
+
     logged = errors.fromInteraction(interaction, error)
-    print(cf.red(f"[error] unhandled error in {interaction.command}: {error}"))
+    print(cf.red(f"[error] unhandled error in {interaction.command}: {error!r}"))
     await respond(
         interaction,
         f"Something went wrong running `{interaction.command}`:"
         f" {error}{errors.note(logged)}",
-    )
-
-
-async def handleCommandError(ctx: commands.Context, error: commands.CommandError) -> None:
-    if isinstance(error, commands.CommandNotFound):
-        return
-
-    if isinstance(error, mood.SassyDenial):
-        return
-
-    if isinstance(error, commands.HybridCommandError):
-        error = error.original  # type: ignore[assignment]
-
-    if isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(
-            f"Slow down. Try again in {error.retry_after:.0f}s.", ephemeral=True
-        )
-        return
-
-    if isinstance(error, commands.BotMissingPermissions):
-        logged = errors.fromContext(ctx, error)
-        await ctx.send(
-            f"I am missing {formatPermissions(error.missing_permissions)} to run"
-            f" this command.{errors.note(logged)}",
-            ephemeral=True,
-        )
-        return
-
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            f"You are missing {formatPermissions(error.missing_permissions)} to run this command.",
-            ephemeral=True,
-        )
-        return
-
-    if isinstance(error, commands.NoPrivateMessage):
-        await ctx.send("This command can only be used in a server.", ephemeral=True)
-        return
-
-    if isinstance(error, commands.NSFWChannelRequired):
-        await ctx.send(
-            "That one only works in an age-restricted channel.", ephemeral=True
-        )
-        return
-
-    if (
-        isinstance(error, (commands.UserInputError, app_commands.TransformerError))
-        and ctx.command is not None
-    ):
-        await ctx.send(view=usage.usagePanel(ctx, error), ephemeral=True)
-        return
-
-    if isinstance(error, commands.CheckFailure):
-        await ctx.send(
-            "You do not have permission to execute this command", ephemeral=True
-        )
-        return
-
-    if isinstance(error, commands.CommandInvokeError):
-        error = error.original  # type: ignore[assignment]
-
-    logged = errors.fromContext(ctx, error)
-    print(cf.red(f"[error] unhandled error in {ctx.command}: {error!r}"))
-    await ctx.send(
-        f"Something went wrong running `{ctx.command}`: {error}{errors.note(logged)}"
     )

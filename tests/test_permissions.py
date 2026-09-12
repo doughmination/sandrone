@@ -1,55 +1,74 @@
 import asyncio
 from types import SimpleNamespace
+from typing import Any, cast
 
 import discord
 import pytest
-from discord.ext import commands
+from discord import app_commands
 
-from sandrone.checks import has_permissions
+from sandrone import checks
 
 
 def permissionPredicate(**permissions: bool):
-    checked = has_permissions(**permissions)(lambda: None)
-    return checked.__commands_checks__[0]
+    async def callback(interaction: discord.Interaction) -> None:
+        pass
+
+    checked = checks.hasPermissions(**permissions)(callback)
+    return checked.__discord_app_commands_checks__[0]
 
 
-def fakeContext(**kwargs) -> SimpleNamespace:
-    return SimpleNamespace(**kwargs)
+def fakeInteraction(**kwargs) -> discord.Interaction:
+    return cast(Any, SimpleNamespace(**kwargs))
 
 
 def test_checks_application_permissions() -> None:
     predicate = permissionPredicate(embed_links=True)
-    ctx = fakeContext(
+    interaction = fakeInteraction(
         guild=object(),
-        permissions=discord.Permissions(embed_links=True),
-        bot_permissions=discord.Permissions(embed_links=False),
+        app_permissions=discord.Permissions(embed_links=False),
     )
 
-    with pytest.raises(commands.BotMissingPermissions):
-        asyncio.run(predicate(ctx))
+    with pytest.raises(app_commands.BotMissingPermissions):
+        asyncio.run(predicate(interaction))
 
 
-def test_user_permissions_do_not_block_bot_capabilities() -> None:
+def test_the_bot_holding_the_permission_passes() -> None:
     predicate = permissionPredicate(attach_files=True)
-    ctx = fakeContext(
+    interaction = fakeInteraction(
         guild=object(),
-        permissions=discord.Permissions(attach_files=False),
-        bot_permissions=discord.Permissions(attach_files=True),
+        app_permissions=discord.Permissions(attach_files=True),
     )
 
-    assert asyncio.run(predicate(ctx)) is True
+    assert asyncio.run(predicate(interaction)) is True
 
 
 def test_guild_only_check_still_rejects_dms() -> None:
     predicate = permissionPredicate(guildOnly=True, embed_links=True)
-    ctx = fakeContext(guild=None)
+    interaction = fakeInteraction(guild=None)
 
-    with pytest.raises(commands.NoPrivateMessage):
-        asyncio.run(predicate(ctx))
+    with pytest.raises(app_commands.NoPrivateMessage):
+        asyncio.run(predicate(interaction))
 
 
 def test_dms_are_allowed_when_not_guild_only() -> None:
     predicate = permissionPredicate(embed_links=True)
-    ctx = fakeContext(guild=None)
+    interaction = fakeInteraction(guild=None)
 
-    assert asyncio.run(predicate(ctx)) is True
+    assert asyncio.run(predicate(interaction)) is True
+
+
+def test_an_unknown_permission_is_refused_at_import_time() -> None:
+    with pytest.raises(TypeError):
+        checks.hasPermissions(bend_spoons=True)
+
+
+def test_what_a_command_needs_is_readable_back_off_it() -> None:
+    async def callback(interaction: discord.Interaction) -> None:
+        pass
+
+    decorated = checks.hasPermissions(embed_links=True)(callback)
+    command = app_commands.Command(
+        name="sample", description="sample", callback=decorated
+    )
+
+    assert checks.requiredPermissions(command) == {"embed_links": True}

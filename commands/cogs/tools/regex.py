@@ -84,20 +84,18 @@ class Regex(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="regex",
         description="Check a regular expression and flag its problems",
-        aliases=["re"],
     )
     @app_commands.describe(pattern="The regular expression to check")
     @mood.sassy
     async def regex(
         self,
-        ctx: commands.Context,
-        *,
-        pattern: commands.Range[str, 1, maxInput],
+        interaction: discord.Interaction,
+        pattern: app_commands.Range[str, 1, maxInput],
     ) -> None:
-        await ctx.send(view=self.getRegexPanel(pattern))
+        await interaction.response.send_message(view=self.getRegexPanel(pattern))
 
     def getRegexPanel(self, pattern: str) -> components.Panel:
         try:

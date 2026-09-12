@@ -1,3 +1,5 @@
+import discord
+from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
@@ -8,15 +10,14 @@ class TheGame(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_command(
+    @app_commands.command(
         name="explain-the-game",
         description="You just lost the game haha!",
-        aliases=["thegame", "the-game"],
     )
     @mood.sassy
-    async def explainTheGame(self, ctx: commands.Context) -> None:
-        await ctx.defer()
-        await ctx.send(view=await self.buildTheGameRules())
+    async def explainTheGame(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        await interaction.followup.send(view=await self.buildTheGameRules())
 
     async def buildTheGameRules(self) -> components.Panel:
         parts: list[str] = []

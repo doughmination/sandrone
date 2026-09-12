@@ -62,74 +62,73 @@ def isMod(member: discord.Member) -> bool:
 def isManager():
     """Check for settings commands: a mod, or someone with Manage Server."""
 
-    async def predicate(ctx: commands.Context) -> bool:
-        if ctx.guild is None:
-            raise commands.NoPrivateMessage("This command can only be used in a server.")
-        if not isinstance(ctx.author, discord.Member) or not isMod(ctx.author):
-            raise commands.MissingPermissions(["manage_guild"])
+    async def predicate(interaction: discord.Interaction) -> bool:
+        if interaction.guild is None:
+            raise app_commands.NoPrivateMessage(
+                "This command can only be used in a server."
+            )
+        user = interaction.user
+        if not isinstance(user, discord.Member) or not isMod(user):
+            raise app_commands.MissingPermissions(["manage_guild"])
         return True
 
-    return commands.check(predicate)
+    return app_commands.check(predicate)
 
 
 class Mods(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.hybrid_group(
+    mod = app_commands.Group(
         name="mod",
         description="Choose who may change my settings here",
-        invoke_without_command=True,
+        guild_only=True,
+        default_permissions=discord.Permissions(manage_guild=True),
     )
-    @commands.guild_only()
-    @app_commands.default_permissions(manage_guild=True)
-    @commands.has_guild_permissions(manage_guild=True)
-    async def mod(self, ctx: commands.Context) -> None:
-        await self.listMods(ctx)
 
     @mod.command(name="add", description="Let a user or role change my settings")
     @app_commands.describe(target="The user or role to allow.")
-    @commands.guild_only()
-    @commands.has_guild_permissions(manage_guild=True)
-    async def add(self, ctx: commands.Context, target: ModTarget) -> None:
+    @app_commands.guild_only()
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def add(self, interaction: discord.Interaction, target: ModTarget) -> None:
         if isinstance(target, discord.Member) and target.bot:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.error("Bots cannot be moderators."), ephemeral=True
             )
             return
 
-        changed = setMod(ctx.guild.id, target, True)
+        changed = setMod(interaction.guild.id, target, True)
         body = (
             f"{target.mention} can now change my settings."
             if changed
             else f"{target.mention} already could."
         )
-        await ctx.send(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(view=components.panel(body=body), ephemeral=True)
 
     @mod.command(name="remove", description="Revoke a user or role")
     @app_commands.describe(target="The user or role to revoke.")
-    @commands.guild_only()
-    @commands.has_guild_permissions(manage_guild=True)
-    async def remove(self, ctx: commands.Context, target: ModTarget) -> None:
-        changed = setMod(ctx.guild.id, target, False)
+    @app_commands.guild_only()
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def remove(self, interaction: discord.Interaction, target: ModTarget) -> None:
+        changed = setMod(interaction.guild.id, target, False)
         if changed:
             body = f"{target.mention} can no longer change my settings."
         elif isinstance(target, discord.Member) and hasServerPermissions(target):
             body = f"{target.mention} was not on the list — they have Manage Server."
         else:
             body = f"{target.mention} was not on the list."
-        await ctx.send(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(view=components.panel(body=body), ephemeral=True)
 
     @mod.command(name="list", description="Show who may change my settings")
-    @commands.guild_only()
-    @commands.has_guild_permissions(manage_guild=True)
-    async def listMods(self, ctx: commands.Context) -> None:
-        guild = ctx.guild
+    @app_commands.guild_only()
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def listMods(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
         users = modUsers(guild.id)
         roles = modRoles(guild.id)
 
         if not users and not roles:
-            await ctx.send(
+            await interaction.response.send_message(
                 view=components.panel(
                     title="Moderators",
                     body="Nobody extra — only Manage Server and Administrator.",
@@ -145,7 +144,7 @@ class Mods(commands.Cog):
         if users:
             fields.append(("Users", "\n".join(mentions(guild.get_member, users))))
 
-        await ctx.send(
+        await interaction.response.send_message(
             view=components.panel(
                 title="Moderators",
                 body="These can change my settings, alongside Manage Server:",
@@ -156,17 +155,17 @@ class Mods(commands.Cog):
         )
 
     @mod.command(name="reset", description="Revoke every stored user and role")
-    @commands.guild_only()
-    @commands.has_guild_permissions(manage_guild=True)
-    async def reset(self, ctx: commands.Context) -> None:
-        if not modUsers(ctx.guild.id) and not modRoles(ctx.guild.id):
-            await ctx.send(
+    @app_commands.guild_only()
+    @app_commands.checks.has_permissions(manage_guild=True)
+    async def reset(self, interaction: discord.Interaction) -> None:
+        if not modUsers(interaction.guild.id) and not modRoles(interaction.guild.id):
+            await interaction.response.send_message(
                 view=components.panel(body="Nothing to clear."), ephemeral=True
             )
             return
 
-        db.guild(ctx.guild.id).clear().save()
-        await ctx.send(
+        db.guild(interaction.guild.id).clear().save()
+        await interaction.response.send_message(
             view=components.panel(body="Moderator list cleared."), ephemeral=True
         )
 

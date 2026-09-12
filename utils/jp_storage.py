@@ -239,6 +239,10 @@ def database(name: str, *, version: int | None = None) -> DataBase:
     return existing
 
 
+def databases() -> list[DataBase]:
+    return list(_databases.values())
+
+
 def saveAll() -> list[str]:
     saved = []
     for db in _databases.values():

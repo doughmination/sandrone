@@ -8,7 +8,7 @@ from discord.utils import utcnow
 from commands.admin import ownerOnly
 from commands.settings.incidents import isIgnored
 from sandrone import mood
-from utils import cf, components
+from utils import cf, components, errors
 
 INCIDENT_COLOR = discord.Color.dark_teal()
 
@@ -61,6 +61,7 @@ class Incidents(commands.Cog):
 
     @incidentLoop.error
     async def incidentLoopError(self, error: BaseException) -> None:
+        errors.record(error, source="incident loop")
         print(cf.red(f"[incident] loop stopped on error: {error!r}"))
 
     async def fireIncident(self) -> bool:

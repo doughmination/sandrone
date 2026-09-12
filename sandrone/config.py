@@ -23,7 +23,8 @@ if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
         version = data["project"]["version"]
 
 TOKEN = os.getenv("BOT_TOKEN")
-clientId = int(os.getenv("CLIENT_ID"))
+clientIdValue = os.getenv("CLIENT_ID")
+clientId = int(clientIdValue) if clientIdValue and clientIdValue.strip() else None
 devMode = os.getenv("DEV_MODE", "false").lower() == "true"
 githubToken = os.getenv("GITHUB_TOKEN")
 

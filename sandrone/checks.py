@@ -3,7 +3,9 @@ from discord import app_commands
 from discord.ext import commands
 
 from sandrone import mood
-from utils import cf, usage
+from utils import cf, errors, usage
+
+permsAttr = "__sandrone_bot_perms__"
 
 
 def has_permissions(*, guildOnly: bool = False, **perms: bool):
@@ -27,7 +29,19 @@ def has_permissions(*, guildOnly: bool = False, **perms: bool):
             raise commands.BotMissingPermissions(missing)
         return True
 
-    return commands.check(predicate)
+    check = commands.check(predicate)
+
+    def decorator(func):
+        target = getattr(func, "callback", func)
+        setattr(target, permsAttr, {**getattr(target, permsAttr, {}), **perms})
+        return check(func)
+
+    return decorator
+
+
+def requiredPermissions(command: commands.Command) -> dict[str, bool]:
+    """The bot permissions *command* was decorated with, for `debug perms`."""
+    return dict(getattr(command.callback, permsAttr, {}))
 
 
 def nsfw_only():
@@ -56,9 +70,11 @@ async def handleAppCommandError(
     interaction: discord.Interaction, error: app_commands.AppCommandError
 ) -> None:
     if isinstance(error, app_commands.BotMissingPermissions):
+        logged = errors.fromInteraction(interaction, error)
         await respond(
             interaction,
-            f"I am missing {formatPermissions(error.missing_permissions)} to run this command.",
+            f"I am missing {formatPermissions(error.missing_permissions)} to run"
+            f" this command.{errors.note(logged)}",
         )
         return
 
@@ -80,9 +96,12 @@ async def handleAppCommandError(
         await respond(interaction, "You do not have permission to execute this command")
         return
 
+    logged = errors.fromInteraction(interaction, error)
     print(cf.red(f"[error] unhandled error in {interaction.command}: {error}"))
     await respond(
-        interaction, f"Something went wrong running `{interaction.command}`: {error}"
+        interaction,
+        f"Something went wrong running `{interaction.command}`:"
+        f" {error}{errors.note(logged)}",
     )
 
 
@@ -103,8 +122,10 @@ async def handleCommandError(ctx: commands.Context, error: commands.CommandError
         return
 
     if isinstance(error, commands.BotMissingPermissions):
+        logged = errors.fromContext(ctx, error)
         await ctx.send(
-            f"I am missing {formatPermissions(error.missing_permissions)} to run this command.",
+            f"I am missing {formatPermissions(error.missing_permissions)} to run"
+            f" this command.{errors.note(logged)}",
             ephemeral=True,
         )
         return
@@ -142,5 +163,8 @@ async def handleCommandError(ctx: commands.Context, error: commands.CommandError
     if isinstance(error, commands.CommandInvokeError):
         error = error.original  # type: ignore[assignment]
 
+    logged = errors.fromContext(ctx, error)
     print(cf.red(f"[error] unhandled error in {ctx.command}: {error!r}"))
-    await ctx.send(f"Something went wrong running `{ctx.command}`: {error}")
+    await ctx.send(
+        f"Something went wrong running `{ctx.command}`: {error}{errors.note(logged)}"
+    )

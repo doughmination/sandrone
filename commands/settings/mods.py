@@ -2,7 +2,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from sandrone import config
 from utils import components, jp_storage
 
 db = jp_storage.database("mods", version=1)
@@ -45,10 +44,11 @@ def hasServerPermissions(member: discord.Member) -> bool:
 def isMod(member: discord.Member) -> bool:
     """Whether *member* may change this bot's settings in their guild.
 
-    Manage Server, Administrator and the bot owners always pass, whatever the
-    stored list says.
+    Manage Server and Administrator always pass, whatever the stored list says.
+    Bot owners get nothing here: owner powers live in `ownerOnly()` and stop at
+    the bot's own plumbing, so they cannot quietly override a server's choices.
     """
-    if member.id in config.owners or hasServerPermissions(member):
+    if hasServerPermissions(member):
         return True
 
     guildId = member.guild.id

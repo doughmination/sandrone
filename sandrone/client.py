@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import signal
+import sys
 from pathlib import Path
 
 import discord
@@ -9,7 +10,7 @@ from watchfiles import Change, awatch
 
 from sandrone import config, website
 from sandrone.checks import handleAppCommandError, handleCommandError
-from utils import cf, downloads, jp_storage
+from utils import cf, downloads, errors, jp_storage
 from utils.doughmination import dough
 
 SEPARATORS = " \t\n,:;"
@@ -55,6 +56,7 @@ class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._profileSet = False
+        self.startedAt = discord.utils.utcnow()
 
         self.tree.allowed_contexts.guild = True
         self.tree.allowed_contexts.dm_channel = True
@@ -63,6 +65,12 @@ class Bot(commands.Bot):
         self.tree.allowed_installs.user = True
 
         self.tree.error(handleAppCommandError)
+
+    async def on_error(self, event_method: str, /, *args, **kwargs) -> None:
+        error = sys.exc_info()[1]
+        if error is not None:
+            errors.record(error, source=f"event {event_method}")
+        await super().on_error(event_method, *args, **kwargs)
 
     async def on_command_error(
         self, ctx: commands.Context, error: commands.CommandError

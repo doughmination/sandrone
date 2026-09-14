@@ -1,23 +1,19 @@
 #!/bin/sh
 # runit service for Sandrone.
 # Adjust these to match where the bot lives on the server.
-SANDRONE_DIR=/opt/sandrone
-SANDRONE_USER=sandrone
+SANDRONE_DIR=/srv/clove/sandrone
+SANDRONE_USER=clove
 
 exec 2>&1
 
 cd "$SANDRONE_DIR" || exit 1
 
-# Wait for the dependencies to be installed (uv sync --frozen --no-dev)
-# instead of respawning into an error every second.
-if [ ! -x .venv/bin/python ]; then
-    echo "sandrone: $SANDRONE_DIR/.venv is missing, run 'uv sync --frozen --no-dev' first"
-    sleep 30
-    exit 1
-fi
-
-# chpst doesn't set HOME, and yt-dlp/argostranslate keep their caches there.
+# runit starts services with a minimal environment: chpst doesn't set HOME,
+# and uv, yt-dlp and argostranslate all keep their caches there.
 export HOME="$(getent passwd "$SANDRONE_USER" | cut -d: -f6)"
+export PATH=/usr/local/bin:/usr/bin:/bin
 export PYTHONUNBUFFERED=1
 
-exec chpst -u "$SANDRONE_USER" .venv/bin/python -m sandrone
+# uv syncs the venv from uv.lock before starting, so a git pull plus
+# 'sv restart sandrone' is enough to pick up dependency changes.
+exec chpst -u "$SANDRONE_USER" uv run --frozen --no-dev python -m sandrone

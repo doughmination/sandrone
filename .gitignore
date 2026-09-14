@@ -6,6 +6,8 @@ dist/
 wheels/
 *.egg-info
 
+supervise/
+
 data/*.jp
 !data/*.example.jp
 

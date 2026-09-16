@@ -1,12 +1,10 @@
-import re
-import urllib.parse
-
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import checks, mood
+import urllib.parse
 from utils import components
 
 
@@ -40,7 +38,9 @@ class UrbanDictionary(commands.Cog):
         self, interaction: discord.Interaction, query: str
     ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.getUrbDefPanel(query))
+        await interaction.followup.send(
+            view=await self.getUrbDefPanel(query)
+        )
 
     async def getUrbDefPanel(self, query: str) -> components.Panel:
         params = {"term": query}
@@ -49,7 +49,7 @@ class UrbanDictionary(commands.Cog):
                 "https://api.urbandictionary.com/v0/define", params=params
             ) as resp:
                 data = await resp.json(content_type=None)
-        except (aiohttp.ClientError, TimeoutError, ValueError):
+        except aiohttp.ClientError, TimeoutError, ValueError:
             return components.error(
                 "Couldn't reach Urban Dictionary — try again in a moment."
             )
@@ -57,17 +57,24 @@ class UrbanDictionary(commands.Cog):
         definitions = data.get("list") if isinstance(data, dict) else None
         if not definitions:
             return components.error(
-                "Could not find that definition in Urban Dictionary, try /wiki instead"
+                "Could not find that definition in Urban Dictionary, try "
+                "/wiki instead"
             )
 
         reply = definitions[0]
 
         parts: list[str] = []
-        parts.append(f"**Definition:**\n{formatText(reply.get('definition') or '')}")
-        if reply.get("example"):
-            parts.append(f"\n\n**Example:**\n{formatText(reply.get('example'))}")
         parts.append(
-            f"\n\n-# <:likes:1540415874794528768>: {reply.get('thumbs_up')} | <:dislikes:1540415873678844035>: {reply.get('thumbs_down')}"
+            f"**Definition:**\n{formatText(reply.get('definition') or '')}"
+        )
+        if reply.get("example"):
+            parts.append(
+                f"\n\n**Example:**\n{formatText(reply.get('example'))}"
+            )
+        parts.append(
+            "\n\n-# <:likes:1540415874794528768>: "
+            f"{reply.get('thumbs_up')} | <:dislikes:1540415873678844035>: "
+            f"{reply.get('thumbs_down')}"
         )
 
         return components.panel(

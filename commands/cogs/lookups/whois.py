@@ -1,12 +1,10 @@
 import asyncio
 import datetime as dt
-import ipaddress
-import re
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import ipaddress
+import re
 from sandrone import mood
 from utils import components
 
@@ -37,7 +35,11 @@ notFoundMarkers = (
 )
 
 domainFields = (
-    ("Registrar", ("registrar", "sponsoring registrar", "registrar name"), False),
+    (
+        "Registrar",
+        ("registrar", "sponsoring registrar", "registrar name"),
+        False,
+    ),
     (
         "Registered",
         (
@@ -51,7 +53,13 @@ domainFields = (
     ),
     (
         "Updated",
-        ("updated date", "last updated", "last-update", "modified", "changed"),
+        (
+            "updated date",
+            "last updated",
+            "last-update",
+            "modified",
+            "changed",
+        ),
         True,
     ),
     (
@@ -69,7 +77,13 @@ domainFields = (
     ),
     (
         "Registrant",
-        ("registrant organization", "registrant name", "registrant", "holder", "org"),
+        (
+            "registrant organization",
+            "registrant name",
+            "registrant",
+            "holder",
+            "org",
+        ),
         False,
     ),
     ("Country", ("registrant country", "country"), False),
@@ -82,7 +96,14 @@ networkFields = (
     ("Network", ("netname",), False),
     (
         "Organisation",
-        ("orgname", "org-name", "organization", "organisation", "owner", "descr"),
+        (
+            "orgname",
+            "org-name",
+            "organization",
+            "organisation",
+            "owner",
+            "descr",
+        ),
         False,
     ),
     ("Country", ("country",), False),
@@ -170,12 +191,21 @@ def parseRecord(text: str) -> dict[str, list[str]]:
 
 def isPlaceholder(value: str) -> bool:
     value = value.strip()
-    if value.lower() in ("n/a", "na", "none", "null", "-", "not applicable"):
+    if value.lower() in (
+        "n/a",
+        "na",
+        "none",
+        "null",
+        "-",
+        "not applicable",
+    ):
         return True
     return value.startswith(("0000-00-00", "0001-01-01"))
 
 
-def firstValue(fields: dict[str, list[str]], keys: tuple[str, ...]) -> str | None:
+def firstValue(
+    fields: dict[str, list[str]], keys: tuple[str, ...]
+) -> str | None:
     for key in keys:
         values = fields.get(key)
         if values:
@@ -191,7 +221,9 @@ def formatDate(value: str) -> str:
     except ValueError:
         for pattern in dateFormats:
             try:
-                stamp = dt.datetime.strptime(raw, pattern).replace(tzinfo=dt.UTC)
+                stamp = dt.datetime.strptime(raw, pattern).replace(
+                    tzinfo=dt.UTC
+                )
                 break
             except ValueError:
                 continue
@@ -204,7 +236,9 @@ def formatDate(value: str) -> str:
 
 def formatStatuses(fields: dict[str, list[str]]) -> str | None:
     statuses = (
-        fields.get("domain status") or fields.get("status") or fields.get("state")
+        fields.get("domain status")
+        or fields.get("status")
+        or fields.get("state")
     )
     if not statuses:
         return None
@@ -218,7 +252,13 @@ def formatStatuses(fields: dict[str, list[str]]) -> str | None:
 
 def formatNameServers(fields: dict[str, list[str]]) -> str | None:
     servers: list[str] = []
-    for key in ("name server", "name servers", "nserver", "nameserver", "ns"):
+    for key in (
+        "name server",
+        "name servers",
+        "nserver",
+        "nameserver",
+        "ns",
+    ):
         for value in fields.get(key, []):
             host = value.split()[0].lower().rstrip(".")
             if host and host not in servers:
@@ -236,11 +276,17 @@ class Whois(commands.Cog):
         name="whois",
         description="Look up the WHOIS record for a domain or IP",
     )
-    @app_commands.describe(query="The domain name or IP address to look up")
+    @app_commands.describe(
+        query="The domain name or IP address to look up"
+    )
     @mood.sassy
-    async def whois(self, interaction: discord.Interaction, query: str) -> None:
+    async def whois(
+        self, interaction: discord.Interaction, query: str
+    ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.getWhoisPanel(query))
+        await interaction.followup.send(
+            view=await self.getWhoisPanel(query)
+        )
 
     async def askServer(self, server: str, query: str) -> str:
         request = queryFormats.get(server, "{query}").format(query=query)
@@ -254,7 +300,9 @@ class Whois(commands.Cog):
             await writer.wait_closed()
         return data.decode("utf-8", errors="replace")
 
-    async def lookup(self, query: str, isIp: bool) -> list[tuple[str, str]]:
+    async def lookup(
+        self, query: str, isIp: bool
+    ) -> list[tuple[str, str]]:
         server = ianaServer
         target = query if isIp else query.rsplit(".", 1)[-1]
         records: list[tuple[str, str]] = []
@@ -268,32 +316,40 @@ class Whois(commands.Cog):
                 text = await asyncio.wait_for(
                     self.askServer(server, target), timeout=lookupTimeout
                 )
-            except (OSError, TimeoutError):
+            except OSError, TimeoutError:
                 if hop == 0:
                     raise
                 break
             records.append((server, text))
             referral = firstValue(parseRecord(text), referralKeys)
-            server = referral.split()[0].lower().rstrip(".") if referral else ""
+            server = (
+                referral.split()[0].lower().rstrip(".") if referral else ""
+            )
             if not server and hop == 0 and not isIp:
                 server = f"whois.nic.{target}"
             target = query
 
         return records
 
-    def mergeRecords(self, records: list[tuple[str, str]]) -> dict[str, list[str]]:
+    def mergeRecords(
+        self, records: list[tuple[str, str]]
+    ) -> dict[str, list[str]]:
         usable = records[1:] if len(records) > 1 else records
         merged: dict[str, list[str]] = {}
         for _, text in usable:
             for key, values in parseRecord(text).items():
-                if key in merged and all(isPlaceholder(value) for value in values):
+                if key in merged and all(
+                    isPlaceholder(value) for value in values
+                ):
                     continue
                 merged[key] = values
         return merged
 
     def errorPanel(self, message: str) -> components.Panel:
         return components.panel(
-            body=f":x: {message}", thumbnail=thumbnail, color=components.RED
+            body=f":x: {message}",
+            thumbnail=thumbnail,
+            color=components.RED,
         )
 
     async def getWhoisPanel(self, query: str) -> components.Panel:
@@ -302,12 +358,13 @@ class Whois(commands.Cog):
         isIp = isNetwork(target)
         if not target or (not isIp and "." not in target):
             return self.errorPanel(
-                "That doesn't look like a domain or IP address. Try `example.com`."
+                "That doesn't look like a domain or IP address. Try "
+                "`example.com`."
             )
 
         try:
             records = await self.lookup(target, isIp)
-        except (OSError, TimeoutError):
+        except OSError, TimeoutError:
             return self.errorPanel(
                 "Couldn't reach the WHOIS servers — try again in a moment."
             )
@@ -326,8 +383,12 @@ class Whois(commands.Cog):
             if (value := firstValue(fields, keys))
         ]
 
-        if not values and any(marker in body for marker in notFoundMarkers):
-            return self.errorPanel(f"No WHOIS record found for `{target}`.")
+        if not values and any(
+            marker in body for marker in notFoundMarkers
+        ):
+            return self.errorPanel(
+                f"No WHOIS record found for `{target}`."
+            )
 
         statuses = formatStatuses(fields)
         if statuses:

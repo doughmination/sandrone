@@ -1,10 +1,8 @@
-import io
-
 import discord
-import qrcode
 from discord import app_commands
 from discord.ext import commands
-
+import io
+import qrcode
 from sandrone import checks, mood
 
 
@@ -16,7 +14,9 @@ class Qr(commands.Cog):
     @app_commands.describe(text="The text or URI to generate")
     @checks.hasPermissions(attach_files=True)
     @mood.sassy
-    async def qr(self, interaction: discord.Interaction, text: str) -> None:
+    async def qr(
+        self, interaction: discord.Interaction, text: str
+    ) -> None:
         await interaction.response.defer()
         reply = await self.getQr(text)
         await interaction.followup.send(file=reply)

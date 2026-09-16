@@ -1,12 +1,10 @@
-import re
-from urllib.parse import urlsplit
-
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import checks, mood
+from urllib.parse import urlsplit
 from utils import components
 
 apiBase = "https://public.api.bsky.app/xrpc"
@@ -41,7 +39,9 @@ def extractPostRef(url: str) -> tuple[str, str] | None:
 
 
 def errorPanel(title: str, description: str) -> components.Panel:
-    return components.panel(title=title, body=description, color=components.RED)
+    return components.panel(
+        title=title, body=description, color=components.RED
+    )
 
 
 def mediaEmbed(embed: dict) -> dict:
@@ -59,12 +59,19 @@ def quotedRecord(embed: dict) -> dict | None:
     else:
         return None
 
-    return record if record.get("$type") == "app.bsky.embed.record#viewRecord" else None
+    return (
+        record
+        if record.get("$type") == "app.bsky.embed.record#viewRecord"
+        else None
+    )
 
 
 def firstMediaThumb(embed: dict) -> tuple[str | None, bool]:
     etype = embed.get("$type")
-    if etype in ("app.bsky.embed.images#view", "app.bsky.embed.gallery#view"):
+    if etype in (
+        "app.bsky.embed.images#view",
+        "app.bsky.embed.gallery#view",
+    ):
         items = embed.get("images") or embed.get("items") or []
         if items:
             return items[0]["fullsize"], False
@@ -88,7 +95,9 @@ class Bluesky(commands.Cog):
     @app_commands.describe(url="A bsky.app or xsky.app post link")
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def bluesky(self, interaction: discord.Interaction, url: str) -> None:
+    async def bluesky(
+        self, interaction: discord.Interaction, url: str
+    ) -> None:
         await interaction.response.defer()
 
         ref = extractPostRef(url)
@@ -96,7 +105,10 @@ class Bluesky(commands.Cog):
             await interaction.followup.send(
                 view=errorPanel(
                     "❌ Invalid link",
-                    "That doesn't look like a `bsky.app` or `xsky.app` post link.",
+                    (
+                        "That doesn't look like a `bsky.app` or "
+                        "`xsky.app` post link."
+                    ),
                 )
             )
             return
@@ -118,10 +130,11 @@ class Bluesky(commands.Cog):
             ) as resp:
                 status = resp.status
                 body = await resp.json(content_type=None)
-        except (aiohttp.ClientError, TimeoutError, ValueError):
+        except aiohttp.ClientError, TimeoutError, ValueError:
             return (
                 errorPanel(
-                    "❌ Error", "Couldn't reach Bluesky — try again in a moment."
+                    "❌ Error",
+                    "Couldn't reach Bluesky — try again in a moment.",
                 ),
                 None,
             )
@@ -137,12 +150,18 @@ class Bluesky(commands.Cog):
                 return (
                     errorPanel(
                         "❓ Post not found",
-                        "That post doesn't exist, was deleted, or the handle is wrong.",
+                        (
+                            "That post doesn't exist, was deleted, or the "
+                            "handle is wrong."
+                        ),
                     ),
                     None,
                 )
             return (
-                errorPanel("❌ Error", f"Bluesky returned an error: {error or status}"),
+                errorPanel(
+                    "❌ Error",
+                    f"Bluesky returned an error: {error or status}",
+                ),
                 None,
             )
 
@@ -151,7 +170,8 @@ class Bluesky(commands.Cog):
         if threadType == "app.bsky.feed.defs#notFoundPost":
             return (
                 errorPanel(
-                    "❓ Post not found", "That post doesn't exist or was deleted."
+                    "❓ Post not found",
+                    "That post doesn't exist or was deleted.",
                 ),
                 None,
             )
@@ -159,12 +179,17 @@ class Bluesky(commands.Cog):
             return (
                 errorPanel(
                     "🚫 Blocked",
-                    "That post is from an account that's blocked or blocking.",
+                    (
+                        "That post is from an account that's blocked or "
+                        "blocking."
+                    ),
                 ),
                 None,
             )
         if not thread.get("post"):
-            return errorPanel("❓ Post not found", "Couldn't read that post."), None
+            return errorPanel(
+                "❓ Post not found", "Couldn't read that post."
+            ), None
 
         return self.buildPostPanel(thread["post"], actor, rkey)
 
@@ -176,8 +201,12 @@ class Bluesky(commands.Cog):
         handle = author.get("handle") or actor
         postUrl = f"{xskyBase}/profile/{handle}/post/{rkey}"
 
-        authorName = components.escapeMarkdown(author.get("displayName") or handle)
-        parts = [f"### [{authorName} (@{handle})](https://bsky.app/profile/{handle})"]
+        authorName = components.escapeMarkdown(
+            author.get("displayName") or handle
+        )
+        parts = [
+            f"### [{authorName} (@{handle})](https://bsky.app/profile/{handle})"
+        ]
         if record.get("text"):
             parts.append(components.escapeMarkdown(record["text"]))
 
@@ -190,7 +219,10 @@ class Bluesky(commands.Cog):
         extra = 0
         isVideo = False
 
-        if mediaType in ("app.bsky.embed.images#view", "app.bsky.embed.gallery#view"):
+        if mediaType in (
+            "app.bsky.embed.images#view",
+            "app.bsky.embed.gallery#view",
+        ):
             images = media.get("images") or media.get("items") or []
             gallery = [img["fullsize"] for img in images[:10]]
             extra = len(images) - len(gallery)
@@ -206,7 +238,9 @@ class Bluesky(commands.Cog):
                 line
                 for line in (
                     components.escapeMarkdown(external.get("title") or ""),
-                    components.escapeMarkdown(external.get("description") or ""),
+                    components.escapeMarkdown(
+                        external.get("description") or ""
+                    ),
                 )
                 if line
             )
@@ -217,8 +251,12 @@ class Bluesky(commands.Cog):
         if quoted:
             qAuthor = quoted.get("author") or {}
             qHandle = qAuthor.get("handle") or "unknown"
-            qName = components.escapeMarkdown(qAuthor.get("displayName") or qHandle)
-            qText = components.escapeMarkdown((quoted.get("value") or {}).get("text") or "")
+            qName = components.escapeMarkdown(
+                qAuthor.get("displayName") or qHandle
+            )
+            qText = components.escapeMarkdown(
+                (quoted.get("value") or {}).get("text") or ""
+            )
             heading = f"📝 Quoting {qName} (@{qHandle})"
             parts.append(f"{heading}:\n{qText}" if qText else heading)
 

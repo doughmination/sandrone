@@ -1,12 +1,10 @@
-import re
-from urllib.parse import urlsplit
-
 import aiohttp
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import checks, mood
+from urllib.parse import urlsplit
 from utils import components
 
 apiBase = "https://api.girlcockx.com"
@@ -28,7 +26,9 @@ def linkifyMentions(text: str) -> str:
     parts: list[str] = []
     lastEnd = 0
     for match in mentionPattern.finditer(text):
-        parts.append(components.escapeMarkdown(text[lastEnd : match.start()]))
+        parts.append(
+            components.escapeMarkdown(text[lastEnd : match.start()])
+        )
         handle = match.group(1)
         parts.append(f"[@{handle}](https://twitter.com/{handle})")
         lastEnd = match.end()
@@ -49,7 +49,9 @@ def extractStatusId(url: str) -> str | None:
 
 
 def errorPanel(title: str, description: str) -> components.Panel:
-    return components.panel(title=title, body=description, color=components.RED)
+    return components.panel(
+        title=title, body=description, color=components.RED
+    )
 
 
 def formatDuration(seconds: float) -> str:
@@ -60,7 +62,9 @@ def formatDuration(seconds: float) -> str:
 
 def bestVideoUrl(video: dict) -> str | None:
     mp4Variants = [
-        v for v in (video.get("variants") or []) if v.get("content_type") == "video/mp4"
+        v
+        for v in (video.get("variants") or [])
+        if v.get("content_type") == "video/mp4"
     ]
     if not mp4Variants:
         return video.get("url")
@@ -82,7 +86,9 @@ class Twitter(commands.Cog):
     @app_commands.describe(url="A twitter.com or x.com post link")
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def tweet(self, interaction: discord.Interaction, url: str) -> None:
+    async def tweet(
+        self, interaction: discord.Interaction, url: str
+    ) -> None:
         await interaction.response.defer()
 
         statusId = extractStatusId(url)
@@ -90,7 +96,10 @@ class Twitter(commands.Cog):
             await interaction.followup.send(
                 view=errorPanel(
                     "❌ Invalid link",
-                    "That doesn't look like a `twitter.com` or `x.com` post link.",
+                    (
+                        "That doesn't look like a `twitter.com` or "
+                        "`x.com` post link."
+                    ),
                 )
             )
             return
@@ -104,12 +113,18 @@ class Twitter(commands.Cog):
         self, statusId: str
     ) -> tuple[components.Panel, str | None]:
         try:
-            async with self.session.get(f"{apiBase}/status/{statusId}") as resp:
+            async with self.session.get(
+                f"{apiBase}/status/{statusId}"
+            ) as resp:
                 body = await resp.json(content_type=None)
-        except (aiohttp.ClientError, TimeoutError):
+        except aiohttp.ClientError, TimeoutError:
             return (
                 errorPanel(
-                    "❌ Error", "Couldn't reach girlcockx.com — try again in a moment."
+                    "❌ Error",
+                    (
+                        "Couldn't reach girlcockx.com — try again in a "
+                        "moment."
+                    ),
                 ),
                 None,
             )
@@ -126,7 +141,9 @@ class Twitter(commands.Cog):
 
         return self.buildTweetPanel(tweet)
 
-    def buildTweetPanel(self, tweet: dict) -> tuple[components.Panel, str | None]:
+    def buildTweetPanel(
+        self, tweet: dict
+    ) -> tuple[components.Panel, str | None]:
         author = tweet["author"]
         tweetUrl = tweet.get("url")
 
@@ -166,7 +183,10 @@ class Twitter(commands.Cog):
             videoUrl = bestVideoUrl(video)
 
         panel = components.panel(
-            title=f"{components.escapeMarkdown(author['name'])} (@{author['screen_name']})",
+            title=(
+                f"{components.escapeMarkdown(author['name'])} "
+                f"(@{author['screen_name']})"
+            ),
             url=tweetUrl,
             body=body,
             images=images or None,

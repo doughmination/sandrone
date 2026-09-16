@@ -1,13 +1,11 @@
-import random
+from commands.admin import ownerOnly
+from commands.settings.incidents import isIgnored
 from datetime import datetime, timedelta
-
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import utcnow
-
-from commands.admin import ownerOnly
-from commands.settings.incidents import isIgnored
+import random
 from sandrone import mood
 from utils import cf, components, errors
 
@@ -36,15 +34,24 @@ class Incidents(commands.Cog):
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot or message.guild is None:
             return
-        if not isinstance(message.channel, (discord.TextChannel, discord.Thread)):
+        if not isinstance(
+            message.channel, (discord.TextChannel, discord.Thread)
+        ):
             return
 
         me = message.guild.me
-        if me is None or not message.channel.permissions_for(me).send_messages:
+        if (
+            me is None
+            or not message.channel.permissions_for(me).send_messages
+        ):
             return
 
         channel = message.channel
-        parentId = channel.parent_id if isinstance(channel, discord.Thread) else None
+        parentId = (
+            channel.parent_id
+            if isinstance(channel, discord.Thread)
+            else None
+        )
         if isIgnored(message.guild.id, channel.id, parentId):
             return
 
@@ -76,7 +83,11 @@ class Incidents(commands.Cog):
         if me is None or not channel.permissions_for(me).send_messages:
             return False
 
-        parentId = channel.parent_id if isinstance(channel, discord.Thread) else None
+        parentId = (
+            channel.parent_id
+            if isinstance(channel, discord.Thread)
+            else None
+        )
         if isIgnored(channel.guild.id, channel.id, parentId):
             self.lastChannel = None
             self.lastActivity = None
@@ -90,23 +101,33 @@ class Incidents(commands.Cog):
                 )
             )
         except discord.HTTPException as e:
-            print(cf.red(f"[incident] failed to send in {channel.id}: {e}"))
+            print(
+                cf.red(f"[incident] failed to send in {channel.id}: {e}")
+            )
             return False
 
-        print(cf.magenta(f"[incident] posted in #{channel} ({channel.guild})"))
+        print(
+            cf.magenta(
+                f"[incident] posted in #{channel} ({channel.guild})"
+            )
+        )
         self.lastChannel = None
         self.lastActivity = None
         return True
 
     @app_commands.command(
         name="incident",
-        description="(owner) Force a puppet incident in the last active channel",
+        description=(
+            "(owner) Force a puppet incident in the last active channel"
+        ),
     )
     @ownerOnly()
     async def incident(self, interaction: discord.Interaction) -> None:
         fired = await self.fireIncident()
         message = (
-            "Incident dispatched." if fired else "No suitable active channel right now."
+            "Incident dispatched."
+            if fired
+            else "No suitable active channel right now."
         )
         await interaction.response.send_message(message, ephemeral=True)
 

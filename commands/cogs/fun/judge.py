@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import mood
 from utils import components
 
@@ -17,7 +16,9 @@ class Judge(commands.Cog):
     @app_commands.describe(user="The user to judge")
     @mood.sassy
     async def judge(
-        self, interaction: discord.Interaction, user: discord.User | None = None
+        self,
+        interaction: discord.Interaction,
+        user: discord.User | None = None,
     ) -> None:
         target = user or interaction.user
         verdict = mood.judge(target)

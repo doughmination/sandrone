@@ -1,12 +1,10 @@
-import re
 from collections.abc import Iterable
-from typing import Any, NamedTuple, cast
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import mood
+from typing import Any, NamedTuple, cast
 from utils import components
 
 MENU_TEMPLATE = r"help:(?P<section>[a-z0-9_]+)"
@@ -29,7 +27,9 @@ class Section(NamedTuple):
 
 SECTIONS: dict[str, Section] = {
     "fun": Section("Fun", "🎲", "Nonsense, on demand.", 10),
-    "lookups": Section("Lookups", "🔍", "Fetch things from elsewhere.", 20),
+    "lookups": Section(
+        "Lookups", "🔍", "Fetch things from elsewhere.", 20
+    ),
     "media": Section("Media", "🎬", "Links, downloads, and embeds.", 30),
     "people": Section("People", "👤", "Users, profiles, and systems.", 40),
     "tools": Section("Tools", "🛠️", "Small utilities that do one job.", 50),
@@ -79,7 +79,10 @@ def groupedCommands(
     return dict(
         sorted(
             buckets.items(),
-            key=lambda item: (sectionOf(item[0]).rank, sectionOf(item[0]).label),
+            key=lambda item: (
+                sectionOf(item[0]).rank,
+                sectionOf(item[0]).label,
+            ),
         )
     )
 
@@ -103,7 +106,8 @@ def overviewBody(buckets: dict[str, list[app_commands.Command]]) -> str:
     for key, found in buckets.items():
         section = sectionOf(key)
         lines.append(
-            f"{section.emoji} **{section.label}** — {plural(len(found), 'command')}"
+            f"{section.emoji} **{section.label}** — "
+            f"{plural(len(found), 'command')}"
         )
     return "\n".join(lines)
 
@@ -129,7 +133,10 @@ def menuRow(
                 emoji=section.emoji,
                 description=" · ".join(
                     part
-                    for part in (plural(len(found), "command"), section.blurb)
+                    for part in (
+                        plural(len(found), "command"),
+                        section.blurb,
+                    )
                     if part
                 )[:100],
                 default=key == current,
@@ -159,9 +166,12 @@ def helpContainer(
             "Try not to break anything.\n\n"
             "Everything is a slash command — type `/` and pick one.\n\n"
         )
-        body += overviewBody(buckets) or "Nothing is loaded. How embarrassing."
+        body += (
+            overviewBody(buckets) or "Nothing is loaded. How embarrassing."
+        )
         footer = (
-            f"{plural(sum(len(f) for f in buckets.values()), 'command')} across "
+            f"{plural(sum(len(f) for f in buckets.values()), 'command')} "
+            "across "
             f"{plural(len(buckets), 'section')}. Pick one from the menu."
         )
     else:
@@ -169,10 +179,15 @@ def helpContainer(
         title = f"{section.emoji} {section.label}"
         body = f"{section.blurb}\n\n" if section.blurb else ""
         body += commandList(buckets[current])
-        footer = "Commands update themselves when modules are loaded or unloaded."
+        footer = (
+            "Commands update themselves when modules are loaded or "
+            "unloaded."
+        )
 
     box = discord.ui.Container(accent_colour=components.FUCHSIA)
-    box.add_item(discord.ui.TextDisplay(f"{components.heading(title)}\n\n{body}"))
+    box.add_item(
+        discord.ui.TextDisplay(f"{components.heading(title)}\n\n{body}")
+    )
     if buckets:
         box.add_item(menuRow(buckets, current))
     box.add_item(discord.ui.Separator(visible=False))
@@ -186,7 +201,9 @@ def helpPanel(
     return components.Panel(helpContainer(commandItems, current))
 
 
-class HelpMenu(discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE):
+class HelpMenu(
+    discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE
+):
     def __init__(self, customId: str) -> None:
         super().__init__(
             discord.ui.Select(
@@ -202,7 +219,7 @@ class HelpMenu(discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE
         item: discord.ui.Item[Any],
         match: re.Match[str],
         /,
-    ) -> "HelpMenu":
+    ) -> HelpMenu:
         return cls(match.string)
 
     async def callback(self, interaction: discord.Interaction) -> None:
@@ -219,7 +236,9 @@ class HelpMenu(discord.ui.DynamicItem[discord.ui.Select], template=MENU_TEMPLATE
 @mood.sassy
 async def helpCommand(interaction: discord.Interaction) -> None:
     client = cast(TreeClient, interaction.client)
-    await interaction.response.send_message(view=helpPanel(client.tree.get_commands()))
+    await interaction.response.send_message(
+        view=helpPanel(client.tree.get_commands())
+    )
 
 
 async def setup(bot: commands.Bot) -> None:

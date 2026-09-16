@@ -1,6 +1,5 @@
 import discord
 from discord import ui
-
 from utils import components
 
 
@@ -32,7 +31,9 @@ def test_container_lays_out_every_piece() -> None:
 
     section = next(c for c in box.children if isinstance(c, ui.Section))
     text = "".join(
-        child.content for child in section.children if isinstance(child, ui.TextDisplay)
+        child.content
+        for child in section.children
+        if isinstance(child, ui.TextDisplay)
     )
     assert "## [Title](https://example.com)" in text
 
@@ -44,7 +45,9 @@ def test_error_uses_red_accent() -> None:
     assert isinstance(box, ui.Container)
     assert box.accent_colour == components.RED
     body = "".join(
-        child.content for child in box.children if isinstance(child, ui.TextDisplay)
+        child.content
+        for child in box.children
+        if isinstance(child, ui.TextDisplay)
     )
     assert ":x: nope" in body
 
@@ -54,7 +57,9 @@ def test_buttons_render_as_a_row_inside_the_container() -> None:
         body="pick one",
         buttons=[
             components.linkButton("A", "https://example.com/a"),
-            components.linkButton("B", "https://example.com/b", emoji="🔗"),
+            components.linkButton(
+                "B", "https://example.com/b", emoji="🔗"
+            ),
         ],
         footer="f",
     )

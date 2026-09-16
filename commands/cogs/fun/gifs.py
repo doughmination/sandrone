@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import mood
 from utils import components
 
@@ -31,7 +30,9 @@ class Gifs(commands.Cog):
     @app_commands.describe(gif="The gif to grab")
     @app_commands.autocomplete(gif=gifAuto)
     @mood.sassy
-    async def fungif(self, interaction: discord.Interaction, gif: str) -> None:
+    async def fungif(
+        self, interaction: discord.Interaction, gif: str
+    ) -> None:
         await interaction.response.defer()
         await interaction.followup.send(view=await self.getGifUrl(gif))
 
@@ -41,7 +42,8 @@ class Gifs(commands.Cog):
             return components.error(f"There's no gif called `{gif}`.")
 
         return components.panel(
-            images=[f"https://m.doughmination.gay/gif/{slug}.gif"], footer="Sandrone"
+            images=[f"https://m.doughmination.gay/gif/{slug}.gif"],
+            footer="Sandrone",
         )
 
 

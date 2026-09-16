@@ -1,8 +1,7 @@
 import io
 import math
-from typing import NamedTuple
-
 from PIL import Image, ImageDraw
+from typing import NamedTuple
 
 flagColours: dict[str, tuple[str, ...]] = {
     "abrosexual": (
@@ -331,7 +330,9 @@ def gradientStrip(colors: tuple[str, ...], size: int) -> Image.Image:
             continue
         position = min(1.0, max(0.0, (y - offset) / size)) * last
         index = min(int(position), last - 1)
-        pixels[0, y] = mixColors(stops[index], stops[index + 1], position - index)
+        pixels[0, y] = mixColors(
+            stops[index], stops[index + 1], position - index
+        )
     return strip
 
 
@@ -351,29 +352,39 @@ def paintFlag(size: int, options: PrideOptions) -> Image.Image:
         )
 
         if options.isGradient:
-            strip = gradientStrip(colors, size).resize((right - left, span))
+            strip = gradientStrip(colors, size).resize(
+                (right - left, span)
+            )
             layer.paste(strip, (left, 0))
             continue
 
         for stripe, color in enumerate(colors):
-            top = 0 if stripe == 0 else offset + size * stripe // len(colors)
+            top = (
+                0 if stripe == 0 else offset + size * stripe // len(colors)
+            )
             bottom = (
                 span
                 if stripe == len(colors) - 1
                 else offset + size * (stripe + 1) // len(colors)
             )
-            draw.rectangle((left, top, right - 1, bottom - 1), fill=parseHex(color))
+            draw.rectangle(
+                (left, top, right - 1, bottom - 1), fill=parseHex(color)
+            )
 
     return layer
 
 
-def flagLayer(base: Image.Image, size: int, angle: float, opacity: int) -> Image.Image:
+def flagLayer(
+    base: Image.Image, size: int, angle: float, opacity: int
+) -> Image.Image:
     offset = size // 2
     turned = base.rotate(-angle, resample=Image.Resampling.BILINEAR)
     layer = turned.crop((offset, offset, offset + size, offset + size))
 
     if opacity < 100:
-        alpha = layer.getchannel("A").point(lambda value: value * opacity // 100)
+        alpha = layer.getchannel("A").point(
+            lambda value: value * opacity // 100
+        )
         layer.putalpha(alpha)
     return layer
 
@@ -384,28 +395,40 @@ def cutoutMask(size: int, options: PrideOptions) -> Image.Image:
     inset = size * (100 - options.cutoutSize) / 200
 
     if options.cutout == "square":
-        draw.rectangle((inset, inset, size - inset - 1, size - inset - 1), fill=255)
+        draw.rectangle(
+            (inset, inset, size - inset - 1, size - inset - 1), fill=255
+        )
     else:
         radius = (size / 2) * options.cutoutSize / 100
         centre = size / 2
         draw.ellipse(
-            (centre - radius, centre - radius, centre + radius, centre + radius),
+            (
+                centre - radius,
+                centre - radius,
+                centre + radius,
+                centre + radius,
+            ),
             fill=255,
         )
     return mask
 
 
-def placeAvatar(avatar: Image.Image, size: int, options: PrideOptions) -> Image.Image:
+def placeAvatar(
+    avatar: Image.Image, size: int, options: PrideOptions
+) -> Image.Image:
     layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
 
     if options.resizeInwards and options.cutout != "overlay":
         inner = max(1, round(size * options.cutoutSize / 100))
         offset = (size - inner) // 2
         layer.paste(
-            avatar.resize((inner, inner), Image.Resampling.LANCZOS), (offset, offset)
+            avatar.resize((inner, inner), Image.Resampling.LANCZOS),
+            (offset, offset),
         )
     else:
-        layer.paste(avatar.resize((size, size), Image.Resampling.LANCZOS), (0, 0))
+        layer.paste(
+            avatar.resize((size, size), Image.Resampling.LANCZOS), (0, 0)
+        )
     return layer
 
 
@@ -434,7 +457,9 @@ def renderFrame(
     flat = paintFlag(size, options)
     flag = flagLayer(flat, size, angle, options.opacity)
     avatarLayer = placeAvatar(avatar, size, options)
-    mask = None if options.cutout == "overlay" else cutoutMask(size, options)
+    mask = (
+        None if options.cutout == "overlay" else cutoutMask(size, options)
+    )
     return composeFrame(avatarLayer, mask, flag, size, options)
 
 
@@ -447,7 +472,9 @@ def renderStill(avatar: Image.Image, options: PrideOptions) -> bytes:
 
 def toPalette(frame: Image.Image) -> Image.Image:
     flat = frame.convert("RGB").quantize(colors=transparentIndex)
-    clear = frame.getchannel("A").point(lambda value: 255 if value < 128 else 0)
+    clear = frame.getchannel("A").point(
+        lambda value: 255 if value < 128 else 0
+    )
     if clear.getbbox() is not None:
         flat.paste(transparentIndex, clear)
     return flat
@@ -458,13 +485,17 @@ def encodeGif(
 ) -> bytes:
     flat = paintFlag(size, options)
     avatarLayer = placeAvatar(avatar, size, options)
-    mask = None if options.cutout == "overlay" else cutoutMask(size, options)
+    mask = (
+        None if options.cutout == "overlay" else cutoutMask(size, options)
+    )
 
     frames = []
     for step in range(count):
         angle = options.rotation + step * 360 / count
         flag = flagLayer(flat, size, angle, options.opacity)
-        frames.append(toPalette(composeFrame(avatarLayer, mask, flag, size, options)))
+        frames.append(
+            toPalette(composeFrame(avatarLayer, mask, flag, size, options))
+        )
 
     buffer = io.BytesIO()
     frames[0].save(
@@ -488,7 +519,9 @@ class Rendered(NamedTuple):
     frames: int
 
 
-def render(avatar: Image.Image, options: PrideOptions, budget: int) -> Rendered:
+def render(
+    avatar: Image.Image, options: PrideOptions, budget: int
+) -> Rendered:
     if not math.isfinite(budget) or budget <= 0:
         budget = 10 * 1024 * 1024
 

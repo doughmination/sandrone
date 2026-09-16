@@ -1,9 +1,8 @@
-import re
 from collections.abc import Sequence
-
 import discord
 from discord import ui
 from discord.utils import escape_markdown
+import re
 
 FUCHSIA = discord.Color.fuchsia()
 RED = discord.Color.red()
@@ -32,8 +31,12 @@ def renderFields(fields: list[Field]) -> str:
     return "\n\n".join(f"**{name}**\n{value}" for name, value in fields)
 
 
-def linkButton(label: str, url: str, emoji: str | None = None) -> ui.Button:
-    return ui.Button(label=label, url=url, emoji=emoji, style=discord.ButtonStyle.link)
+def linkButton(
+    label: str, url: str, emoji: str | None = None
+) -> ui.Button:
+    return ui.Button(
+        label=label, url=url, emoji=emoji, style=discord.ButtonStyle.link
+    )
 
 
 def container(
@@ -49,7 +52,11 @@ def container(
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
 ) -> ui.Container:
-    lead = [part for part in (heading(title, url) if title else None, body) if part]
+    lead = [
+        part
+        for part in (heading(title, url) if title else None, body)
+        if part
+    ]
     leadText = "\n\n".join(lead)
 
     blocks: list[ui.Item] = []
@@ -71,7 +78,9 @@ def container(
         blocks.append(
             ui.MediaGallery(
                 *(
-                    item if isinstance(item, discord.MediaGalleryItem) else image(item)
+                    item
+                    if isinstance(item, discord.MediaGalleryItem)
+                    else image(item)
                     for item in images[:10]
                 )
             )

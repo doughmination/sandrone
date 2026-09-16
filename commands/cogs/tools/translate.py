@@ -1,11 +1,9 @@
-import asyncio
-import re
-
-import discord
 from argostranslate import package, translate
+import asyncio
+import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import mood
 from utils import components
 
@@ -31,7 +29,9 @@ class Translate(commands.Cog):
         query = current.lower()
         return [
             app_commands.Choice(name=f"{name} ({code})", value=code)
-            for code, name in sorted(names.items(), key=lambda item: item[1])
+            for code, name in sorted(
+                names.items(), key=lambda item: item[1]
+            )
             if query in name.lower() or query == code
         ][:25]
 
@@ -43,7 +43,9 @@ class Translate(commands.Cog):
         source="The language the text is written in",
         to="The language to translate into (defaults to English)",
     )
-    @app_commands.autocomplete(source=languageAutocomplete, to=languageAutocomplete)
+    @app_commands.autocomplete(
+        source=languageAutocomplete, to=languageAutocomplete
+    )
     @mood.sassy
     async def translate(
         self,
@@ -60,7 +62,9 @@ class Translate(commands.Cog):
                 text = f"{to} {text}"
                 to = None
 
-        view = await self.getTranslationPanel(text, source, to or defaultTarget)
+        view = await self.getTranslationPanel(
+            text, source, to or defaultTarget
+        )
         await interaction.followup.send(view=view)
 
     async def getTranslationPanel(
@@ -69,7 +73,8 @@ class Translate(commands.Cog):
         names = await self.ensureIndex()
         if not names:
             return components.error(
-                "Couldn't reach the Argos package index — try again in a moment."
+                "Couldn't reach the Argos package index — try again in a "
+                "moment."
             )
 
         unknown = [code for code in (source, to) if code not in names]
@@ -84,13 +89,16 @@ class Translate(commands.Cog):
 
         if not await self.ensureInstalled(source, to):
             return components.error(
-                f"Argos has no model that can go {names[source]} → {names[to]}."
+                f"Argos has no model that can go {names[source]} → "
+                f"{names[to]}."
             )
 
         protected, titles = self.protectTitles(text)
 
         try:
-            result = await asyncio.to_thread(translate.translate, protected, source, to)
+            result = await asyncio.to_thread(
+                translate.translate, protected, source, to
+            )
         except (OSError, RuntimeError, ValueError) as error:
             return components.error(f"Translation failed: `{error}`")
 
@@ -141,10 +149,16 @@ class Translate(commands.Cog):
             return True
 
         if (source, to) in self.pairs:
-            installed = package.install_package_for_language_pair(source, to)
+            installed = package.install_package_for_language_pair(
+                source, to
+            )
         elif (source, "en") in self.pairs and ("en", to) in self.pairs:
-            installed = package.install_package_for_language_pair(source, "en")
-            installed &= package.install_package_for_language_pair("en", to)
+            installed = package.install_package_for_language_pair(
+                source, "en"
+            )
+            installed &= package.install_package_for_language_pair(
+                "en", to
+            )
         else:
             return False
 
@@ -170,7 +184,11 @@ class Translate(commands.Cog):
     def restoreTitles(self, text: str, titles: list[str]) -> str:
         def swap(match: re.Match[str]) -> str:
             index = int(match.group(1)) - 1
-            return titles[index] if 0 <= index < len(titles) else match.group(0)
+            return (
+                titles[index]
+                if 0 <= index < len(titles)
+                else match.group(0)
+            )
 
         restored = placeholderPattern.sub(swap, text)
         missing = [title for title in titles if title not in restored]

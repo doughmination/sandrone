@@ -1,9 +1,8 @@
 import os
+from pathlib import Path
+import pytest
 import subprocess
 import sys
-from pathlib import Path
-
-import pytest
 
 repoRoot = Path(__file__).resolve().parent.parent
 

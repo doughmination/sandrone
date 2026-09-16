@@ -1,13 +1,15 @@
-import datetime as dt
-
 import aiohttp
+import datetime as dt
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import mood
 from utils import components
-from utils.doughmination import DoughminationError, ProfileNotFoundError, dough
+from utils.doughmination import (
+    DoughminationError,
+    ProfileNotFoundError,
+    dough,
+)
 
 statusEmoji = {
     "online": "🟢",
@@ -36,7 +38,9 @@ class Profile(commands.Cog):
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
     async def profile(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member | None = None,
     ) -> None:
         await interaction.response.defer()
         target = user or interaction.user
@@ -64,7 +68,9 @@ class Profile(commands.Cog):
             )
             return
 
-        await interaction.followup.send(view=self.buildProfilePanel(profile))
+        await interaction.followup.send(
+            view=self.buildProfilePanel(profile)
+        )
 
     def buildProfilePanel(self, profile: dict) -> components.Panel:
         user = profile["user"]
@@ -74,9 +80,13 @@ class Profile(commands.Cog):
         timezone = profile.get("timezone")
 
         displayName = (
-            user.get("display_name") or user.get("global_name") or user["username"]
+            user.get("display_name")
+            or user.get("global_name")
+            or user["username"]
         )
-        emoji = statusEmoji.get(presence["status"], "⚪") if presence else "⚪"
+        emoji = (
+            statusEmoji.get(presence["status"], "⚪") if presence else "⚪"
+        )
 
         color = (
             discord.Color(user["accent_color"])
@@ -86,7 +96,10 @@ class Profile(commands.Cog):
 
         fields: list[components.Field] = [
             ("User ID", str(user["id"])),
-            ("Status", f"{emoji} {presence['status'] if presence else 'unknown'}"),
+            (
+                "Status",
+                f"{emoji} {presence['status'] if presence else 'unknown'}",
+            ),
         ]
         if user.get("pronouns"):
             fields.append(("Pronouns", user["pronouns"]))
@@ -112,10 +125,15 @@ class Profile(commands.Cog):
 
         return components.panel(
             title=f"{displayName} (@{user['username']})",
-            body=f"-# updated {parseTimestamp(profile.get('updated_at')):%Y-%m-%d}",
+            body=(
+                "-# updated "
+                f"{parseTimestamp(profile.get('updated_at')):%Y-%m-%d}"
+            ),
             fields=fields,
             thumbnail=user.get("avatar_url"),
-            images=[user["banner_url"]] if user.get("banner_url") else None,
+            images=[user["banner_url"]]
+            if user.get("banner_url")
+            else None,
             footer="Sandrone",
             color=color,
         )

@@ -1,16 +1,37 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import checks, mood
 from utils import components
 
 xSnips = {
-    "adb": "Starting December 5, 2025, the active developer badge has been **removed**, and is **no longer** obtainable. There are also *no* plans for a new badge replacing this.",
-    "refresh": "To refresh your client to fix bugs or reload commands, use:\nControl + R on Windows and Linux\nCommand(⌘) + R on Mac\nSwipe clear and reopen on Mobile",
-    "pluralkit": "<@466378653216014359> is a bot used by plural systems to proxy their messages as their system members!\nYou can find more on the bot [online](<https://pluralkit.me>)",
-    "plural": "<@1291501048493768784> is a bot used by plural systems to proxy their messages as their system members!\nYou can find more on the bot [online](<https://plural.gg>)",
-    "plurality": "Plurality (or multiplicity) is the existence of multiple self-aware entities inside one physical brain.\nYou can find some simple information [here](<https://morethanone.info>)\nand some more advanced info [here](<https://pluralpedia.org/w/Main_Page>)",
+    "adb": (
+        "Starting December 5, 2025, the active developer badge has been "
+        "**removed**, and is **no longer** obtainable. There are also "
+        "*no* plans for a new badge replacing this."
+    ),
+    "refresh": (
+        "To refresh your client to fix bugs or reload commands, "
+        "use:\nControl + R on Windows and Linux\nCommand(⌘) + R on "
+        "Mac\nSwipe clear and reopen on Mobile"
+    ),
+    "pluralkit": (
+        "<@466378653216014359> is a bot used by plural systems to proxy "
+        "their messages as their system members!\nYou can find more on "
+        "the bot [online](<https://pluralkit.me>)"
+    ),
+    "plural": (
+        "<@1291501048493768784> is a bot used by plural systems to proxy "
+        "their messages as their system members!\nYou can find more on "
+        "the bot [online](<https://plural.gg>)"
+    ),
+    "plurality": (
+        "Plurality (or multiplicity) is the existence of multiple "
+        "self-aware entities inside one physical brain.\nYou can find "
+        "some simple information [here](<https://morethanone.info>)\nand "
+        "some more advanced info "
+        "[here](<https://pluralpedia.org/w/Main_Page>)"
+    ),
     "userproxies": "You can setup a Userproxy using this guide <https://youtu.be/spRkTssPCqg>!",
 }
 
@@ -36,9 +57,13 @@ class Snippets(commands.Cog):
     @app_commands.autocomplete(snip=snippetAuto)
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def snippet(self, interaction: discord.Interaction, snip: str) -> None:
+    async def snippet(
+        self, interaction: discord.Interaction, snip: str
+    ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.getSnippetPanel(snip))
+        await interaction.followup.send(
+            view=await self.getSnippetPanel(snip)
+        )
 
     async def getSnippetPanel(self, snip: str) -> components.Panel:
         reply = xSnips.get(snip)

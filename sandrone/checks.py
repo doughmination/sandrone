@@ -1,6 +1,5 @@
 import discord
 from discord import app_commands
-
 from sandrone import mood
 from utils import cf, errors
 
@@ -10,12 +9,14 @@ permsAttr = "__sandrone_bot_perms__"
 def hasPermissions(*, guildOnly: bool = False, **perms: bool):
     """Require the bot to hold *perms* where the command was run.
 
-    The permissions are also stashed on the callback so `debug perms` can list
-    what the loaded commands actually need.
+    The permissions are also stashed on the callback so `debug perms` can
+    list what the loaded commands actually need.
     """
     invalid = perms.keys() - discord.Permissions.VALID_FLAGS.keys()
     if invalid:
-        raise TypeError(f"Invalid permission(s): {', '.join(sorted(invalid))}")
+        raise TypeError(
+            f"Invalid permission(s): {', '.join(sorted(invalid))}"
+        )
 
     async def predicate(interaction: discord.Interaction) -> bool:
         if interaction.guild is None:
@@ -27,7 +28,9 @@ def hasPermissions(*, guildOnly: bool = False, **perms: bool):
 
         permissions = interaction.app_permissions
         missing = [
-            perm for perm, value in perms.items() if getattr(permissions, perm) != value
+            perm
+            for perm, value in perms.items()
+            if getattr(permissions, perm) != value
         ]
         if missing:
             raise app_commands.BotMissingPermissions(missing)
@@ -37,14 +40,19 @@ def hasPermissions(*, guildOnly: bool = False, **perms: bool):
 
     def decorator(func):
         target = getattr(func, "callback", func)
-        setattr(target, permsAttr, {**getattr(target, permsAttr, {}), **perms})
+        setattr(
+            target, permsAttr, {**getattr(target, permsAttr, {}), **perms}
+        )
         return check(func)
 
     return decorator
 
 
 def requiredPermissions(command: app_commands.Command) -> dict[str, bool]:
-    """The bot permissions *command* was decorated with, for `debug perms`."""
+    """The bot permissions *command* was decorated with.
+
+    Used by `debug perms`.
+    """
     return dict(getattr(command.callback, permsAttr, {}))
 
 
@@ -69,7 +77,8 @@ async def handleAppCommandError(
         logged = errors.fromInteraction(interaction, error)
         await respond(
             interaction,
-            f"I am missing {formatPermissions(error.missing_permissions)} to run"
+            f"I am missing {formatPermissions(error.missing_permissions)} "
+            "to run"
             f" this command.{errors.note(logged)}",
         )
         return
@@ -77,17 +86,24 @@ async def handleAppCommandError(
     if isinstance(error, app_commands.MissingPermissions):
         await respond(
             interaction,
-            f"You are missing {formatPermissions(error.missing_permissions)} to run this command.",
+            (
+                "You are missing "
+                f"{formatPermissions(error.missing_permissions)} to run "
+                "this command."
+            ),
         )
         return
 
     if isinstance(error, app_commands.NoPrivateMessage):
-        await respond(interaction, "This command can only be used in a server.")
+        await respond(
+            interaction, "This command can only be used in a server."
+        )
         return
 
     if isinstance(error, app_commands.CommandOnCooldown):
         await respond(
-            interaction, f"Slow down. Try again in {error.retry_after:.0f}s."
+            interaction,
+            f"Slow down. Try again in {error.retry_after:.0f}s.",
         )
         return
 
@@ -95,16 +111,24 @@ async def handleAppCommandError(
         return
 
     if isinstance(error, app_commands.CheckFailure):
-        await respond(interaction, "You do not have permission to execute this command")
+        await respond(
+            interaction,
+            "You do not have permission to execute this command",
+        )
         return
 
+    cause: Exception = error
     if isinstance(error, app_commands.CommandInvokeError):
-        error = error.original  # type: ignore[assignment]
+        cause = error.original
 
-    logged = errors.fromInteraction(interaction, error)
-    print(cf.red(f"[error] unhandled error in {interaction.command}: {error!r}"))
+    logged = errors.fromInteraction(interaction, cause)
+    print(
+        cf.red(
+            f"[error] unhandled error in {interaction.command}: {cause!r}"
+        )
+    )
     await respond(
         interaction,
         f"Something went wrong running `{interaction.command}`:"
-        f" {error}{errors.note(logged)}",
+        f" {cause}{errors.note(logged)}",
     )

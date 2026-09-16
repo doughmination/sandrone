@@ -1,17 +1,15 @@
 import asyncio
 import contextlib
-import signal
-import sys
-from pathlib import Path
-
 import discord
 from discord.ext import commands
-from watchfiles import Change, awatch
-
+from pathlib import Path
 from sandrone import config, website
 from sandrone.checks import handleAppCommandError
+import signal
+import sys
 from utils import cf, downloads, errors, jp_storage
 from utils.doughmination import dough
+from watchfiles import Change, awatch
 
 
 def discoverExtensions(directory: Path, package: str) -> list[str]:
@@ -36,14 +34,16 @@ class Bot(commands.Bot):
 
         self.tree.error(handleAppCommandError)
 
-    async def on_error(self, event_method: str, /, *args, **kwargs) -> None:
+    async def on_error(
+        self, event_method: str, /, *args, **kwargs
+    ) -> None:
         error = sys.exc_info()[1]
         if error is not None:
             errors.record(error, source=f"event {event_method}")
         await super().on_error(event_method, *args, **kwargs)
 
     async def on_message(self, message: discord.Message) -> None:
-        """Sandrone is slash-only: nothing is ever invoked from message text.
+        """Sandrone is slash-only: nothing is invoked from message text.
 
         Cog listeners still see every message; only the ext.commands prefix
         machinery is cut out.
@@ -55,7 +55,10 @@ class Bot(commands.Bot):
         extensions = (
             discoverExtensions(config.commandsDir, "commands")
             + discoverExtensions(config.settingsDir, "commands.settings")
-            + [f"commands.cogs.{handle}" for handle in config.discoverCogHandles()]
+            + [
+                f"commands.cogs.{handle}"
+                for handle in config.discoverCogHandles()
+            ]
         )
         for extension in extensions:
             if (
@@ -63,7 +66,10 @@ class Bot(commands.Bot):
                 and extension.removeprefix("commands.cogs.") in disabled
             ):
                 print(
-                    cf.grey(f"[startup] skipped {extension} (disabled via /cog unload)")
+                    cf.grey(
+                        f"[startup] skipped {extension} (disabled via "
+                        "/cog unload)"
+                    )
                 )
                 continue
 
@@ -81,7 +87,11 @@ class Bot(commands.Bot):
 
         if config.devMode:
             self.loop.create_task(self.watchCogs())
-            print(cf.magenta("[dev-reload] watching commands/cogs for changes"))
+            print(
+                cf.magenta(
+                    "[dev-reload] watching commands/cogs for changes"
+                )
+            )
 
     async def watchCogs(self) -> None:
         async for changes in awatch(config.cogsDir):
@@ -107,7 +117,8 @@ class Bot(commands.Bot):
                 if handle in disabled:
                     print(
                         cf.grey(
-                            f"[dev-reload] skipped commands.cogs.{handle} (disabled via /cog unload)"
+                            f"[dev-reload] skipped commands.cogs.{handle} "
+                            "(disabled via /cog unload)"
                         )
                     )
                     continue
@@ -121,7 +132,12 @@ class Bot(commands.Bot):
                     reloaded = True
                     print(cf.grey(f"[dev-reload] reloaded {extension}"))
                 except commands.ExtensionError as e:
-                    print(cf.red(f"[dev-reload] failed to reload {extension}: {e}"))
+                    print(
+                        cf.red(
+                            f"[dev-reload] failed to reload {extension}: "
+                            f"{e}"
+                        )
+                    )
 
             if reloaded:
                 await self.tree.sync()
@@ -137,7 +153,9 @@ class Bot(commands.Bot):
                     (config.assetsDir / "banner.png").read_bytes
                 )
                 if self.user is not None:
-                    await self.user.edit(avatar=avatar_bytes, banner=banner_bytes)
+                    await self.user.edit(
+                        avatar=avatar_bytes, banner=banner_bytes
+                    )
                 print(cf.yellow("Avatar and Banner loaded!"))
             except (discord.HTTPException, OSError) as e:
                 print(cf.red(f"Failed to set avatar/banner: {e}"))
@@ -177,13 +195,19 @@ async def runBot() -> None:
             for sig in (signal.SIGINT, signal.SIGTERM):
                 loop.add_signal_handler(sig, requestShutdown)
         except NotImplementedError:
+
             def _handle(signum, frame):
                 loop.call_soon_threadsafe(requestShutdown)
 
             signal.signal(signal.SIGINT, _handle)
             if hasattr(signal, "SIGBREAK"):
                 signal.signal(signal.SIGBREAK, _handle)
-            print(cf.blue("Windows machine detected, shutdown may not be graceful"))
+            print(
+                cf.blue(
+                    "Windows machine detected, shutdown may not be "
+                    "graceful"
+                )
+            )
 
         start_task = asyncio.create_task(bot.start(config.requireToken()))
         stop_task = asyncio.create_task(stop_event.wait())

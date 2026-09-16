@@ -1,10 +1,8 @@
+from aiohttp.test_utils import make_mocked_request
 import asyncio
 import json
 from pathlib import Path
-
 import pytest
-from aiohttp.test_utils import make_mocked_request
-
 from sandrone import config, website
 
 
@@ -14,7 +12,9 @@ def webRoot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return tmp_path
 
 
-def test_web_asset_serves_only_files_inside_the_web_directory(webRoot: Path) -> None:
+def test_web_asset_serves_only_files_inside_the_web_directory(
+    webRoot: Path,
+) -> None:
     index = webRoot / "index.html"
     index.write_text("Sandrone", encoding="utf-8")
     secret = webRoot.parent / "secret.txt"

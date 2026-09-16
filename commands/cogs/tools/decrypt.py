@@ -1,10 +1,8 @@
 import base64
 import codecs
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import mood
 from utils.choices import ChoiceSet
 
@@ -37,7 +35,9 @@ class Decrypt(commands.Cog):
         method: str | None = None,
     ) -> None:
         await interaction.response.defer(ephemeral=True)
-        reply = await self.decodeMessage(input, decoders.resolve(method, "b64"))
+        reply = await self.decodeMessage(
+            input, decoders.resolve(method, "b64")
+        )
         await interaction.followup.send(reply, ephemeral=True)
 
     async def decodeMessage(self, input: str, method: str) -> str:
@@ -59,7 +59,9 @@ class Decrypt(commands.Cog):
                 shifted = []
                 for char in input:
                     if char.isalpha():
-                        stay_in_alphabet = ord("a") if char.islower() else ord("A")
+                        stay_in_alphabet = (
+                            ord("a") if char.islower() else ord("A")
+                        )
                         shifted.append(
                             chr(
                                 (ord(char) - stay_in_alphabet - 3) % 26
@@ -74,7 +76,11 @@ class Decrypt(commands.Cog):
                 return "❌ Unknown decryption method requested."
 
         except ValueError:
-            return "❌ **Error:** Could not decode that text. Make sure you selected the right method for that specific scrambled text!"
+            return (
+                "❌ **Error:** Could not decode that text. Make sure you "
+                "selected the right method for that specific scrambled "
+                "text!"
+            )
 
 
 async def setup(bot: commands.Bot) -> None:

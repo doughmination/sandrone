@@ -1,17 +1,16 @@
-import os
-import platform
+from commands.admin import ownerOnly
 from datetime import datetime
-
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt, utcnow
-
-from commands.admin import ownerOnly
+import os
+import platform
 from sandrone import checks, config
 from utils import components, errors, jp_storage
 
-# What the bot wants everywhere, on top of whatever individual commands ask for.
+# What the bot wants everywhere, on top of whatever individual commands
+# ask for.
 basePermissions: dict[str, bool] = {
     "view_channel": True,
     "send_messages": True,
@@ -75,7 +74,11 @@ def summarise(entry: dict) -> str:
     when = entry.get("when")
     stamp = f"<t:{when}:R>" if isinstance(when, int) else "some time ago"
     missing = entry.get("missing") or []
-    tail = f" · missing {', '.join(f'`{perm}`' for perm in missing)}" if missing else ""
+    tail = (
+        f" · missing {', '.join(f'`{perm}`' for perm in missing)}"
+        if missing
+        else ""
+    )
     return (
         f"`{entry.get('ref', '?')}` — `{entry.get('kind', '?')}` in "
         f"`{entry.get('command', '—')}` — {stamp}{times(entry)}{tail}\n"
@@ -95,7 +98,9 @@ class Debug(commands.Cog):
         default_permissions=discord.Permissions(administrator=True),
     )
 
-    @debug.command(name="info", description="(owner) Runtime, cogs and storage state")
+    @debug.command(
+        name="info", description="(owner) Runtime, cogs and storage state"
+    )
     @ownerOnly()
     async def info(self, interaction: discord.Interaction) -> None:
         bot = self.bot
@@ -103,8 +108,14 @@ class Debug(commands.Cog):
 
         runtime = [
             f"Version `{config.version}` · dev mode `{config.devMode}`",
-            f"Python `{platform.python_version()}` · discord.py `{discord.__version__}`",
-            f"{platform.system()} `{platform.release()}` · PID `{os.getpid()}`",
+            (
+                f"Python `{platform.python_version()}` · discord.py "
+                f"`{discord.__version__}`"
+            ),
+            (
+                f"{platform.system()} `{platform.release()}` · PID "
+                f"`{os.getpid()}`"
+            ),
         ]
 
         connection = [
@@ -123,14 +134,19 @@ class Debug(commands.Cog):
         ]
         disabled = sorted(config.loadDisabled())
         if disabled:
-            cogs.append("Disabled: " + ", ".join(f"`{name}`" for name in disabled))
+            cogs.append(
+                "Disabled: " + ", ".join(f"`{name}`" for name in disabled)
+            )
 
         storage = []
-        for db in sorted(jp_storage.databases(), key=lambda entry: entry.name):
+        for db in sorted(
+            jp_storage.databases(), key=lambda entry: entry.name
+        ):
             size = db.path.stat().st_size if db.path.exists() else 0
             state = "unsaved changes" if db.dirty else "clean"
             storage.append(
-                f"`{db.name}.jp` — {len(db.sections())} sections · {size}B · {state}"
+                f"`{db.name}.jp` — {len(db.sections())} sections · "
+                f"{size}B · {state}"
             )
 
         await interaction.response.send_message(
@@ -140,10 +156,16 @@ class Debug(commands.Cog):
                     ("Runtime", "\n".join(runtime)),
                     ("Connection", "\n".join(connection)),
                     ("Loaded", "\n".join(cogs)),
-                    ("Storage", "\n".join(storage) or "No databases opened yet."),
+                    (
+                        "Storage",
+                        "\n".join(storage) or "No databases opened yet.",
+                    ),
                     (
                         "Errors",
-                        f"{errors.count()} logged · `debug errors` to read them",
+                        (
+                            f"{errors.count()} logged · `debug errors` to "
+                            "read them"
+                        ),
                     ),
                 ],
                 footer=f"Owner-only · data in {config.dataDir}",
@@ -153,9 +175,14 @@ class Debug(commands.Cog):
 
     @debug.command(
         name="perms",
-        description="(owner) Compare the permissions I need against the ones I have",
+        description=(
+            "(owner) Compare the permissions I need against the ones I "
+            "have"
+        ),
     )
-    @app_commands.describe(channel="Channel to check. Defaults to this one.")
+    @app_commands.describe(
+        channel="Channel to check. Defaults to this one."
+    )
     @app_commands.guild_only()
     @ownerOnly()
     async def perms(
@@ -167,7 +194,8 @@ class Debug(commands.Cog):
         me = guild.me if guild is not None else None
         if guild is None or me is None:
             await interaction.response.send_message(
-                view=components.error("I'm not in this server."), ephemeral=True
+                view=components.error("I'm not in this server."),
+                ephemeral=True,
             )
             return
 
@@ -192,14 +220,20 @@ class Debug(commands.Cog):
                 held.append(f"`{prettyPermission(perm)}`")
                 continue
 
-            reason = "channel overwrite" if hasServer else "not granted to my role"
+            reason = (
+                "channel overwrite"
+                if hasServer
+                else "not granted to my role"
+            )
             users = byCommand.get(perm, [])
             breaks = (
                 " — breaks " + ", ".join(f"`{name}`" for name in users[:4])
                 if users
                 else ""
             )
-            missing.append(f"❌ `{prettyPermission(perm)}` ({reason}){breaks}")
+            missing.append(
+                f"❌ `{prettyPermission(perm)}` ({reason}){breaks}"
+            )
 
         fields = [
             (
@@ -212,7 +246,8 @@ class Debug(commands.Cog):
         ]
 
         extras = [
-            f"`{prettyPermission(perm)}` → {', '.join(f'`{n}`' for n in names)}"
+            f"`{prettyPermission(perm)}` → "
+            f"{', '.join(f'`{n}`' for n in names)}"
             for perm, names in sorted(byCommand.items())
         ]
         if extras:
@@ -225,7 +260,9 @@ class Debug(commands.Cog):
                 permissions=discord.Permissions(**required),
                 guild=guild,
             )
-            buttons.append(components.linkButton("Re-invite with these", invite))
+            buttons.append(
+                components.linkButton("Re-invite with these", invite)
+            )
 
         await interaction.response.send_message(
             view=components.panel(
@@ -238,13 +275,18 @@ class Debug(commands.Cog):
                 ),
                 fields=fields,
                 buttons=buttons,
-                footer=f"{len(missing)} missing · {len(required)} needed in total",
+                footer=(
+                    f"{len(missing)} missing · {len(required)} needed in "
+                    "total"
+                ),
                 color=components.RED if missing else components.FUCHSIA,
             ),
             ephemeral=True,
         )
 
-    @debug.command(name="errors", description="(owner) Show the most recent faults")
+    @debug.command(
+        name="errors", description="(owner) Show the most recent faults"
+    )
     @app_commands.describe(
         code="Only show one kind, e.g. WORKSHOP.",
         limit="How many to show. Defaults to 10.",
@@ -262,7 +304,9 @@ class Debug(commands.Cog):
         code: str | None = None,
         limit: app_commands.Range[int, 1, 25] = listLimit,
     ) -> None:
-        found = errors.byCode(code)[:limit] if code else errors.recent(limit)
+        found = (
+            errors.byCode(code)[:limit] if code else errors.recent(limit)
+        )
         if not found:
             await interaction.response.send_message(
                 view=components.panel(
@@ -270,7 +314,9 @@ class Debug(commands.Cog):
                     body=(
                         f"Nothing logged under `{errors.tidyRef(code)}`."
                         if code
-                        else "Nothing logged. Suspicious, but take the win."
+                        else (
+                            "Nothing logged. Suspicious, but take the win."
+                        )
                     ),
                     footer="Faults land here as commands and events fail.",
                 ),
@@ -294,14 +340,17 @@ class Debug(commands.Cog):
         )
 
     @debug.command(
-        name="codes", description="(owner) What each fault code means, and how many"
+        name="codes",
+        description="(owner) What each fault code means, and how many",
     )
     @ownerOnly()
     async def listCodes(self, interaction: discord.Interaction) -> None:
         tally: dict[str, int] = {}
         for entry in errors.entries():
             name = str(entry.get("code") or errors.fallbackCode)
-            tally[name] = tally.get(name, 0) + int(entry.get("count", 1) or 1)
+            tally[name] = tally.get(name, 0) + int(
+                entry.get("count", 1) or 1
+            )
 
         lines = [
             f"`{name}` — {meaning}"
@@ -314,7 +363,8 @@ class Debug(commands.Cog):
                 title="Debug · fault codes",
                 body="\n".join(lines),
                 footer=(
-                    "A fault reads `CODE-XXXX`: the code says what went wrong, "
+                    "A fault reads `CODE-XXXX`: the code says what went "
+                    "wrong, "
                     "the four characters say which one."
                 ),
             ),
@@ -333,7 +383,8 @@ class Debug(commands.Cog):
         return [
             app_commands.Choice(
                 name=(
-                    f"{entry.get('ref', '?')} — {entry.get('kind', '?')} in "
+                    f"{entry.get('ref', '?')} — {entry.get('kind', '?')} "
+                    "in "
                     f"{entry.get('command', '—')}"
                 )[:100],
                 value=str(entry.get("ref", "")),
@@ -350,13 +401,17 @@ class Debug(commands.Cog):
     )
     @app_commands.autocomplete(reference=referenceAutocomplete)
     @ownerOnly()
-    async def trace(self, interaction: discord.Interaction, reference: str) -> None:
+    async def trace(
+        self, interaction: discord.Interaction, reference: str
+    ) -> None:
         entry = errors.find(reference)
         if entry is None:
             await interaction.response.send_message(
                 view=components.error(
-                    f"Nothing logged under `{errors.tidyRef(reference)}`. It may have "
-                    f"aged out of the last {errors.keepLimit}, or been cleared."
+                    f"Nothing logged under `{errors.tidyRef(reference)}`. "
+                    "It may have "
+                    f"aged out of the last {errors.keepLimit}, or been "
+                    "cleared."
                 ),
                 ephemeral=True,
             )
@@ -376,7 +431,10 @@ class Debug(commands.Cog):
             history += f", first <t:{first}:R>"
 
         fields = [
-            ("Message", components.codeBlock(str(entry.get("text", "—"))[:900])),
+            (
+                "Message",
+                components.codeBlock(str(entry.get("text", "—"))[:900]),
+            ),
             (
                 "Last seen",
                 (
@@ -392,17 +450,25 @@ class Debug(commands.Cog):
             fields.append(
                 (
                     "Missing permissions",
-                    ", ".join(f"`{prettyPermission(perm)}`" for perm in missing),
+                    ", ".join(
+                        f"`{prettyPermission(perm)}`" for perm in missing
+                    ),
                 )
             )
         if trace:
             fields.append(
-                ("Traceback", components.codeBlock(trace[-traceDisplayLimit:], "py"))
+                (
+                    "Traceback",
+                    components.codeBlock(trace[-traceDisplayLimit:], "py"),
+                )
             )
 
         await interaction.response.send_message(
             view=components.panel(
-                title=f"Debug · {entry.get('ref', '?')} · {entry.get('kind', '?')}",
+                title=(
+                    f"Debug · {entry.get('ref', '?')} · "
+                    f"{entry.get('kind', '?')}"
+                ),
                 body=(
                     (f"{meaning}\n\n" if meaning else "")
                     + f"{history}.\n"
@@ -413,7 +479,10 @@ class Debug(commands.Cog):
                     )
                 ),
                 fields=fields,
-                footer=f"One of {errors.count()} logged · `debug errors` for the list",
+                footer=(
+                    f"One of {errors.count()} logged · `debug errors` for "
+                    "the list"
+                ),
                 color=components.RED,
             ),
             ephemeral=True,
@@ -423,7 +492,11 @@ class Debug(commands.Cog):
     @ownerOnly()
     async def clearErrors(self, interaction: discord.Interaction) -> None:
         cleared = errors.clear()
-        body = f"Cleared {cleared} errors." if cleared else "Nothing to clear."
+        body = (
+            f"Cleared {cleared} errors."
+            if cleared
+            else "Nothing to clear."
+        )
         await interaction.response.send_message(
             view=components.panel(body=body), ephemeral=True
         )

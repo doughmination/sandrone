@@ -1,15 +1,13 @@
+from aiohttp import web
+from datetime import UTC, datetime
 import math
 import os
-import time
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
-from xml.sax.saxutils import escape
-
-from aiohttp import web
-
 from sandrone import config
+import time
+from typing import Any
 from utils import cf, downloads
+from xml.sax.saxutils import escape
 
 runner: web.AppRunner | None = None
 
@@ -22,7 +20,7 @@ def webAsset(name: str) -> Path | None:
         root = config.webDir.resolve()
         path = (root / name).resolve()
         path.relative_to(root)
-    except (OSError, RuntimeError, ValueError):
+    except OSError, RuntimeError, ValueError:
         return None
     return path if path.is_file() else None
 
@@ -37,7 +35,9 @@ async def index(request: web.Request) -> web.FileResponse:
 async def serveDownload(request: web.Request) -> web.FileResponse:
     slot = request.match_info["slot"]
     name = request.match_info["name"]
-    if not downloads.slotPattern.fullmatch(slot) or not downloads.validName(name):
+    if not downloads.slotPattern.fullmatch(
+        slot
+    ) or not downloads.validName(name):
         raise web.HTTPNotFound
 
     directory = downloads.managedSlot(config.downloadsDir / slot)
@@ -57,6 +57,7 @@ async def serveDownload(request: web.Request) -> web.FileResponse:
 
     return web.FileResponse(path)
 
+
 async def status(request: web.Request) -> web.Response:
     bot = request.app[botKey]
     payload: dict[str, Any] = {
@@ -69,14 +70,22 @@ async def status(request: web.Request) -> web.Response:
         if math.isfinite(bot.latency):
             payload["latency"] = round(bot.latency * 1000)
 
-    return web.json_response(payload, headers={"Cache-Control": "no-store"})
+    return web.json_response(
+        payload, headers={"Cache-Control": "no-store"}
+    )
 
 
 async def openDocs(request) -> web.HTTPMovedPermanently:
-    raise web.HTTPMovedPermanently("https://docs.doughmination.gay/projects/sandrone")
+    raise web.HTTPMovedPermanently(
+        "https://docs.doughmination.gay/projects/sandrone"
+    )
+
 
 async def inviteBot(request) -> web.HTTPMovedPermanently:
-    raise web.HTTPMovedPermanently(f"https://discord.com/oauth2/authorize?client_id={config.requireClientID()}")
+    raise web.HTTPMovedPermanently(
+        f"https://discord.com/oauth2/authorize?client_id={config.requireClientID()}"
+    )
+
 
 async def supportServer(request) -> web.HTTPMovedPermanently:
     raise web.HTTPMovedPermanently("https://discord.gg/N8gCjS294R")
@@ -102,7 +111,12 @@ def publicPages() -> list[tuple[str, float]]:
             continue
         if not path.is_file() or stat.st_size == 0:
             continue
-        pages.append(("/" if path.name == "index.html" else f"/{path.name}", stat.st_mtime))
+        pages.append(
+            (
+                "/" if path.name == "index.html" else f"/{path.name}",
+                stat.st_mtime,
+            )
+        )
 
     return pages
 
@@ -159,7 +173,11 @@ async def notFound(request: web.Request) -> web.FileResponse:
 
 async def serveAsset(request: web.Request) -> web.FileResponse:
     path = webAsset(request.match_info["asset"])
-    return web.FileResponse(path) if path is not None else await notFound(request)
+    return (
+        web.FileResponse(path)
+        if path is not None
+        else await notFound(request)
+    )
 
 
 def createApp(bot: Any = None) -> web.Application:
@@ -188,17 +206,25 @@ async def startServer(bot: Any = None) -> None:
     runner = web.AppRunner(createApp(bot), access_log=None)
     await runner.setup()
     try:
-        await web.TCPSite(runner, config.downloadsHost, config.downloadsPort).start()
+        await web.TCPSite(
+            runner, config.downloadsHost, config.downloadsPort
+        ).start()
     except OSError as error:
         await runner.cleanup()
         runner = None
-        print(cf.red(f"[website] could not listen on {config.downloadsPort}: {error}"))
+        print(
+            cf.red(
+                f"[website] could not listen on {config.downloadsPort}: "
+                f"{error}"
+            )
+        )
         return
 
     print(
         cf.cyan(
             f"[website] serving {config.webDir} on "
-            f"{config.downloadsHost}:{config.downloadsPort} as {config.downloadsUrl}"
+            f"{config.downloadsHost}:{config.downloadsPort} as "
+            f"{config.downloadsUrl}"
         )
     )
 

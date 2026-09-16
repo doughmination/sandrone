@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import io
 from functools import lru_cache
-from typing import Any
-
+import io
 from PIL import Image, ImageDraw, ImageFont
-
 from sandrone import config
+from typing import Any
 
 CANVAS = (1462, 609)
 
@@ -73,7 +71,7 @@ def _open(images: dict[str, bytes], url: str | None) -> Image.Image | None:
         return None
     try:
         return Image.open(io.BytesIO(blob)).convert("RGBA")
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return None
 
 
@@ -91,7 +89,9 @@ def formatStatValue(stat: dict[str, Any]) -> str:
     return f"{round(value):,}"
 
 
-def _star_points(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
+def _star_points(
+    cx: float, cy: float, r: float
+) -> list[tuple[float, float]]:
     import math
 
     pts: list[tuple[float, float]] = []
@@ -99,7 +99,12 @@ def _star_points(cx: float, cy: float, r: float) -> list[tuple[float, float]]:
         outer = math.radians(-90 + i * 72)
         inner = math.radians(-90 + i * 72 + 36)
         pts.append((cx + r * math.cos(outer), cy + r * math.sin(outer)))
-        pts.append((cx + r * 0.42 * math.cos(inner), cy + r * 0.42 * math.sin(inner)))
+        pts.append(
+            (
+                cx + r * 0.42 * math.cos(inner),
+                cy + r * 0.42 * math.sin(inner),
+            )
+        )
     return pts
 
 
@@ -113,7 +118,11 @@ def _draw_stars(
 
 
 def _draw_diamond(
-    draw: ImageDraw.ImageDraw, cx: int, cy: int, r: int, fill: tuple[int, int, int, int]
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    r: int,
+    fill: tuple[int, int, int, int],
 ) -> None:
     draw.polygon(
         [(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)],
@@ -122,12 +131,17 @@ def _draw_diamond(
 
 
 def _draw_heart(
-    draw: ImageDraw.ImageDraw, cx: int, cy: int, r: int, fill: tuple[int, int, int, int]
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    r: int,
+    fill: tuple[int, int, int, int],
 ) -> None:
     draw.ellipse((cx - r, cy - r, cx, cy), fill=fill)
     draw.ellipse((cx, cy - r, cx + r, cy), fill=fill)
     draw.polygon(
-        [(cx - r, cy - r // 3), (cx + r, cy - r // 3), (cx, cy + r)], fill=fill
+        [(cx - r, cy - r // 3), (cx + r, cy - r // 3), (cx, cy + r)],
+        fill=fill,
     )
 
 
@@ -176,7 +190,10 @@ def _hgrad_mask(
     row = Image.new("L", (w, 1))
     row.putdata(
         [
-            round(left_val + (right_val - left_val) * (x / max(1, w - 1)) ** ease)
+            round(
+                left_val
+                + (right_val - left_val) * (x / max(1, w - 1)) ** ease
+            )
             for x in range(w)
         ]
     )
@@ -191,7 +208,9 @@ def _character_art(base: Image.Image, art: Image.Image | None) -> None:
     left = max(0, int(art.width * 0.30))
     left = min(left, art.width - slice_w)
     top = 6
-    art = art.crop((left, top, left + slice_w, min(art.height, top + CANVAS[1])))
+    art = art.crop(
+        (left, top, left + slice_w, min(art.height, top + CANVAS[1]))
+    )
 
     fade_from = int(art.width * 0.78)
     mask = Image.new("L", art.size, 255)
@@ -223,20 +242,34 @@ def _left_column(
     w = draw.textlength(name, font=_font("semibold", 34))
     nick = detail.get("nickname")
     if nick:
-        draw.text((48 + w, 46), str(nick), font=_font("regular", 16), fill=DIM)
+        draw.text(
+            (48 + w, 46), str(nick), font=_font("regular", 16), fill=DIM
+        )
 
     level = detail.get("level") or "?"
-    draw.text((40, 74), f"Lv. {level}", font=_font("medium", 22), fill=WHITE)
+    draw.text(
+        (40, 74), f"Lv. {level}", font=_font("medium", 22), fill=WHITE
+    )
 
     friendship = detail.get("friendship")
     if friendship is not None:
         _draw_heart(draw, 44, 114, 8, (255, 120, 140, 255))
-        draw.text((62, 104), str(friendship), font=_font("medium", 20), fill=WHITE)
+        draw.text(
+            (62, 104),
+            str(friendship),
+            font=_font("medium", 20),
+            fill=WHITE,
+        )
 
     total_c = 6
     unlocked = int(detail.get("constellation") or 0)
-    accent = (*ELEMENT_TINT.get(detail.get("element", ""), (200, 200, 200)), 255)
-    draw.text((38, 148), f"C{unlocked}", font=_font("medium", 15), fill=DIM)
+    accent = (
+        *ELEMENT_TINT.get(detail.get("element", ""), (200, 200, 200)),
+        255,
+    )
+    draw.text(
+        (38, 148), f"C{unlocked}", font=_font("medium", 15), fill=DIM
+    )
     for i in range(total_c):
         cy = 176 + i * 42
         box = (36, cy, 62, cy + 26)
@@ -244,13 +277,20 @@ def _left_column(
             draw.ellipse(box, fill=accent, outline=WHITE, width=2)
         else:
             draw.ellipse(
-                box, fill=(24, 26, 34, 200), outline=(255, 255, 255, 90), width=2
+                box,
+                fill=(24, 26, 34, 200),
+                outline=(255, 255, 255, 90),
+                width=2,
             )
 
     y = CANVAS[1] - 44
-    draw.text((40, y), f"UID {roster_uid}", font=_font("regular", 17), fill=DIM)
+    draw.text(
+        (40, y), f"UID {roster_uid}", font=_font("regular", 17), fill=DIM
+    )
     if ar:
-        draw.text((40, y - 24), f"AR {ar}", font=_font("medium", 17), fill=BEIGE)
+        draw.text(
+            (40, y - 24), f"AR {ar}", font=_font("medium", 17), fill=BEIGE
+        )
 
 
 def _talents(base: Image.Image, talents: dict | None) -> None:
@@ -273,24 +313,44 @@ def _talents(base: Image.Image, talents: dict | None) -> None:
             outline=WHITE,
             width=2,
         )
-        d.text((cx, cy - 4), label, font=_font("semibold", 20), fill=WHITE, anchor="mm")
+        d.text(
+            (cx, cy - 4),
+            label,
+            font=_font("semibold", 20),
+            fill=WHITE,
+            anchor="mm",
+        )
         boosted = int(lvl) >= 10
         pill = (cx - 16, cy + 16, cx + 16, cy + 38)
         d.rounded_rectangle(
-            pill, radius=11, fill=(79, 188, 212, 255) if boosted else (20, 22, 30, 220)
+            pill,
+            radius=11,
+            fill=(79, 188, 212, 255) if boosted else (20, 22, 30, 220),
         )
         d.text(
-            (cx, cy + 27), str(lvl), font=_font("medium", 15), fill=WHITE, anchor="mm"
+            (cx, cy + 27),
+            str(lvl),
+            font=_font("medium", 15),
+            fill=WHITE,
+            anchor="mm",
         )
         base.alpha_composite(layer)
 
 
 def _weapon(
-    base: Image.Image, draw: ImageDraw.ImageDraw, images: dict, weapon: dict | None
+    base: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    images: dict,
+    weapon: dict | None,
 ) -> None:
     x0 = 560
     if not weapon:
-        draw.text((x0, 40), "No weapon equipped", font=_font("regular", 18), fill=DIM)
+        draw.text(
+            (x0, 40),
+            "No weapon equipped",
+            font=_font("regular", 18),
+            fill=DIM,
+        )
         return
 
     icon = _open(images, weapon.get("icon_url"))
@@ -303,15 +363,24 @@ def _weapon(
 
     tx = x0 + 130
     draw.text(
-        (tx, 30), str(weapon.get("name", "")), font=_font("semibold", 22), fill=WHITE
+        (tx, 30),
+        str(weapon.get("name", "")),
+        font=_font("semibold", 22),
+        fill=WHITE,
     )
 
-    pills: list[tuple[str, tuple[int, int, int, int], tuple[int, int, int, int]]] = []
+    pills: list[
+        tuple[str, tuple[int, int, int, int], tuple[int, int, int, int]]
+    ] = []
     for key in ("base_stat", "sub_stat"):
         stat = weapon.get(key)
         if stat:
-            pills.append((formatStatValue(stat), (235, 235, 235, 40), WHITE))
-    pills.append((f"R{weapon.get('refinement', 1)}", (0, 0, 0, 110), BEIGE))
+            pills.append(
+                (formatStatValue(stat), (235, 235, 235, 40), WHITE)
+            )
+    pills.append(
+        (f"R{weapon.get('refinement', 1)}", (0, 0, 0, 110), BEIGE)
+    )
     lvl = weapon.get("level", 1)
     pills.append((f"Lv. {lvl}/90", (0, 0, 0, 110), WHITE))
 
@@ -324,12 +393,17 @@ def _weapon(
         tw = int(draw.textlength(text, font=_font("medium", 20)))
         _rounded(base, (px, py, px + tw + 34, py + 30), 5, bg)
         _draw_diamond(draw, px + 15, py + 15, 6, (*(fg[:3]), 220))
-        draw.text((px + 27, py + 4), text, font=_font("medium", 20), fill=fg)
+        draw.text(
+            (px + 27, py + 4), text, font=_font("medium", 20), fill=fg
+        )
         px += tw + 46
 
 
 def _stats(
-    base: Image.Image, draw: ImageDraw.ImageDraw, stats: list[dict], element: str
+    base: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    stats: list[dict],
+    element: str,
 ) -> None:
     if not stats:
         draw.text(
@@ -346,7 +420,12 @@ def _stats(
     for i, stat in enumerate(stats):
         y = top + i * step
         _draw_diamond(draw, 566, y + 12, 6, accent)
-        draw.text((584, y), stat.get("name", ""), font=_font("regular", 20), fill=WHITE)
+        draw.text(
+            (584, y),
+            stat.get("name", ""),
+            font=_font("regular", 20),
+            fill=WHITE,
+        )
         if stat.get("base") is not None and not stat.get("is_percent"):
             draw.text(
                 (990, y - 8),
@@ -381,7 +460,9 @@ def _stats(
             )
 
 
-def _sets(base: Image.Image, draw: ImageDraw.ImageDraw, sets: list[dict]) -> None:
+def _sets(
+    base: Image.Image, draw: ImageDraw.ImageDraw, sets: list[dict]
+) -> None:
     y = 556
     _rounded(base, (560, y, 604, y + 44), 6, (0, 0, 0, 60))
     _draw_diamond(draw, 582, y + 22, 12, (150, 255, 169, 200))
@@ -415,7 +496,10 @@ def _sets(base: Image.Image, draw: ImageDraw.ImageDraw, sets: list[dict]) -> Non
 
 
 def _artifacts(
-    base: Image.Image, draw: ImageDraw.ImageDraw, images: dict, artifacts: list[dict]
+    base: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    images: dict,
+    artifacts: list[dict],
 ) -> None:
     order = ["flower", "plume", "sands", "goblet", "circlet"]
     by_slot = {a.get("slot"): a for a in artifacts}
@@ -426,11 +510,17 @@ def _artifacts(
         y0 = 14 + spacer * i
         art = by_slot.get(slot)
         _rounded(
-            base, (1008, y0, 1452, y0 + 106), 6, (0, 0, 0, 70) if art else (0, 0, 0, 26)
+            base,
+            (1008, y0, 1452, y0 + 106),
+            6,
+            (0, 0, 0, 70) if art else (0, 0, 0, 26),
         )
         if not art:
             draw.text(
-                (1030, y0 + 44), f"No {slot}", font=_font("regular", 15), fill=DIM
+                (1030, y0 + 44),
+                f"No {slot}",
+                font=_font("regular", 15),
+                fill=DIM,
             )
             continue
 
@@ -447,7 +537,11 @@ def _artifacts(
                 fill=DIM,
             )
 
-        draw.line((div_x, y0 + 12, div_x, y0 + 94), fill=(255, 255, 255, 30), width=2)
+        draw.line(
+            (div_x, y0 + 12, div_x, y0 + 94),
+            fill=(255, 255, 255, 30),
+            width=2,
+        )
 
         main = art.get("main_stat")
         _draw_diamond(draw, 1100, y0 + 30, 6, (255, 255, 255, 210))
@@ -461,13 +555,24 @@ def _artifacts(
         lvl = f"+{art.get('level', 0)}"
         lw = draw.textlength(lvl, font=_font("medium", 13))
         _rounded(
-            base, (int(val_x - lw - 12), y0 + 52, val_x, y0 + 72), 3, (0, 0, 0, 180)
+            base,
+            (int(val_x - lw - 12), y0 + 52, val_x, y0 + 72),
+            3,
+            (0, 0, 0, 180),
         )
         draw.text(
-            (val_x - 2, y0 + 54), lvl, font=_font("medium", 13), fill=WHITE, anchor="ra"
+            (val_x - 2, y0 + 54),
+            lvl,
+            font=_font("medium", 13),
+            fill=WHITE,
+            anchor="ra",
         )
         _draw_stars(
-            draw, int(val_x - 5 * 13), y0 + 80, int(art.get("rarity") or 5), r=6
+            draw,
+            int(val_x - 5 * 13),
+            y0 + 80,
+            int(art.get("rarity") or 5),
+            r=6,
         )
 
         subs = (art.get("sub_stats") or [])[:4]
@@ -486,7 +591,11 @@ def _artifacts(
 
 
 def renderCard(
-    detail: dict[str, Any], images: dict[str, bytes], *, uid: str, ar: int | None = None
+    detail: dict[str, Any],
+    images: dict[str, bytes],
+    *,
+    uid: str,
+    ar: int | None = None,
 ) -> bytes:
     element = detail.get("element", "All")
     base = _background(element)

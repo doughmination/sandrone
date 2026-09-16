@@ -1,11 +1,9 @@
-import math
-from typing import NamedTuple
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import math
 from sandrone import mood
+from typing import NamedTuple
 from utils import components
 
 
@@ -43,14 +41,34 @@ fahrenheitOffset = 273.15 - 160 / 9
 unitTable: dict[str, tuple[Unit, ...]] = {
     "temperature": (
         Unit("kelvin", "Kelvin", "K", 1, ("k",)),
-        Unit("celsius", "Celsius", "°C", 1, ("c", "degc", "centigrade"), 273.15),
-        Unit("fahrenheit", "Fahrenheit", "°F", 5 / 9, ("f", "degf"), fahrenheitOffset),
+        Unit(
+            "celsius",
+            "Celsius",
+            "°C",
+            1,
+            ("c", "degc", "centigrade"),
+            273.15,
+        ),
+        Unit(
+            "fahrenheit",
+            "Fahrenheit",
+            "°F",
+            5 / 9,
+            ("f", "degf"),
+            fahrenheitOffset,
+        ),
         Unit("rankine", "Rankine", "°R", 5 / 9, ("r", "degr")),
     ),
     "length": (
         Unit("metre", "Metre", "m", 1, ("meter", "metres", "meters")),
         Unit("nanometre", "Nanometre", "nm", 1e-9, ("nanometer",)),
-        Unit("micrometre", "Micrometre", "µm", 1e-6, ("um", "micron", "micrometer")),
+        Unit(
+            "micrometre",
+            "Micrometre",
+            "µm",
+            1e-6,
+            ("um", "micron", "micrometer"),
+        ),
         Unit("millimetre", "Millimetre", "mm", 1e-3, ("millimeter",)),
         Unit("centimetre", "Centimetre", "cm", 1e-2, ("centimeter",)),
         Unit("kilometre", "Kilometre", "km", 1e3, ("kilometer",)),
@@ -59,7 +77,13 @@ unitTable: dict[str, tuple[Unit, ...]] = {
         Unit("yard", "Yard", "yd", 0.9144, ("yards",)),
         Unit("mile", "Mile", "mi", 1609.344, ("miles",)),
         Unit("nautical_mile", "Nautical mile", "nmi", 1852),
-        Unit("light_year", "Light-year", "ly", 9460730472580800, ("lightyear",)),
+        Unit(
+            "light_year",
+            "Light-year",
+            "ly",
+            9460730472580800,
+            ("lightyear",),
+        ),
         Unit("au", "Astronomical unit", "AU", 149597870700),
     ),
     "mass": (
@@ -112,7 +136,13 @@ unitTable: dict[str, tuple[Unit, ...]] = {
     ),
     "speed": (
         Unit("metre_s", "Metre/second", "m/s", 1, ("ms",)),
-        Unit("kilometre_h", "Kilometre/hour", "km/h", 1 / 3.6, ("kph", "kmh")),
+        Unit(
+            "kilometre_h",
+            "Kilometre/hour",
+            "km/h",
+            1 / 3.6,
+            ("kph", "kmh"),
+        ),
         Unit("mile_h", "Mile/hour", "mph", 0.44704),
         Unit("foot_s", "Foot/second", "ft/s", 0.3048, ("fps",)),
         Unit("knot", "Knot", "kn", 1852 / 3600, ("kt", "knots")),
@@ -134,11 +164,23 @@ unitTable: dict[str, tuple[Unit, ...]] = {
         Unit("litre", "Litre", "L", 1, ("liter", "litres", "liters")),
         Unit("millilitre", "Millilitre", "ml", 1e-3, ("milliliter",)),
         Unit("centilitre", "Centilitre", "cl", 1e-2, ("centiliter",)),
-        Unit("cubic_centimetre", "Cubic centimetre", "cm³", 1e-3, ("cc", "cm3")),
+        Unit(
+            "cubic_centimetre",
+            "Cubic centimetre",
+            "cm³",
+            1e-3,
+            ("cc", "cm3"),
+        ),
         Unit("cubic_metre", "Cubic metre", "m³", 1000, ("m3",)),
         Unit("teaspoon", "US teaspoon", "tsp", 0.00492892159375),
         Unit("tablespoon", "US tablespoon", "tbsp", 0.01478676478125),
-        Unit("fluid_ounce", "US fluid ounce", "fl oz", 0.0295735295625, ("floz",)),
+        Unit(
+            "fluid_ounce",
+            "US fluid ounce",
+            "fl oz",
+            0.0295735295625,
+            ("floz",),
+        ),
         Unit("cup", "US cup", "cup", 0.2365882365, ("cups",)),
         Unit("pint", "US pint", "pt", 0.473176473),
         Unit("quart", "US quart", "qt", 0.946352946),
@@ -165,7 +207,13 @@ unitTable: dict[str, tuple[Unit, ...]] = {
         Unit("kilowatt_hour", "Kilowatt-hour", "kWh", 3600000),
         Unit("electronvolt", "Electronvolt", "eV", 1.602176634e-19),
         Unit("btu", "British thermal unit", "BTU", 1055.05585262),
-        Unit("foot_pound", "Foot-pound", "ft⋅lb", 1.3558179483314004, ("ftlb",)),
+        Unit(
+            "foot_pound",
+            "Foot-pound",
+            "ft⋅lb",
+            1.3558179483314004,
+            ("ftlb",),
+        ),
     ),
     "angle": (
         Unit("degree", "Degree", "°", 1, ("deg", "degrees")),
@@ -237,12 +285,16 @@ def matchRank(unit: Unit, query: str) -> int:
         return 1
     if unit.symbol.lower() == query or query in unit.aliases:
         return 0
-    if unit.name.lower().startswith(query) or unit.symbol.lower().startswith(query):
+    if unit.name.lower().startswith(
+        query
+    ) or unit.symbol.lower().startswith(query):
         return 0
     return 1
 
 
-def suggestUnits(current: str, partner: str | None) -> list[app_commands.Choice[str]]:
+def suggestUnits(
+    current: str, partner: str | None
+) -> list[app_commands.Choice[str]]:
     query = current.strip().lower()
     other = resolveUnit(partner)
 
@@ -254,7 +306,10 @@ def suggestUnits(current: str, partner: str | None) -> list[app_commands.Choice[
     ]
     found.sort(key=lambda unit: matchRank(unit, query))
 
-    return [app_commands.Choice(name=unit.label, value=unit.key) for unit in found[:25]]
+    return [
+        app_commands.Choice(name=unit.label, value=unit.key)
+        for unit in found[:25]
+    ]
 
 
 class Convert(commands.Cog):
@@ -264,23 +319,35 @@ class Convert(commands.Cog):
     async def sourceAutocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        return suggestUnits(current, getattr(interaction.namespace, "to", None))
+        return suggestUnits(
+            current, getattr(interaction.namespace, "to", None)
+        )
 
     async def targetAutocomplete(
         self, interaction: discord.Interaction, current: str
     ) -> list[app_commands.Choice[str]]:
-        return suggestUnits(current, getattr(interaction.namespace, "source", None))
+        return suggestUnits(
+            current, getattr(interaction.namespace, "source", None)
+        )
 
-    @app_commands.command(name="convert", description="Convert a value between units")
+    @app_commands.command(
+        name="convert", description="Convert a value between units"
+    )
     @app_commands.describe(
         value="The number to convert",
         source="The unit the value is in",
         to="The unit to convert into",
     )
-    @app_commands.autocomplete(source=sourceAutocomplete, to=targetAutocomplete)
+    @app_commands.autocomplete(
+        source=sourceAutocomplete, to=targetAutocomplete
+    )
     @mood.sassy
     async def convert(
-        self, interaction: discord.Interaction, value: float, source: str, to: str
+        self,
+        interaction: discord.Interaction,
+        value: float,
+        source: str,
+        to: str,
     ) -> None:
         await interaction.response.send_message(
             view=self.getConversionPanel(value, source, to)
@@ -305,9 +372,11 @@ class Convert(commands.Cog):
 
         if sourceUnit.category != targetUnit.category:
             return components.error(
-                f"{sourceUnit.label} is {categoryLabels[sourceUnit.category].lower()} "
+                f"{sourceUnit.label} is "
+                f"{categoryLabels[sourceUnit.category].lower()} "
                 f"and {targetUnit.label} is "
-                f"{categoryLabels[targetUnit.category].lower()} — those don't convert."
+                f"{categoryLabels[targetUnit.category].lower()} — those "
+                "don't convert."
             )
 
         if not math.isfinite(value):

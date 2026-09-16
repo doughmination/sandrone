@@ -1,9 +1,7 @@
-from pathlib import Path
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+from pathlib import Path
 from sandrone import config
 from utils import cf, components
 
@@ -56,7 +54,9 @@ class CogManager(commands.Cog):
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
     @app_commands.autocomplete(name=loadAutocomplete)
     @ownerOnly()
-    async def load(self, interaction: discord.Interaction, name: str) -> None:
+    async def load(
+        self, interaction: discord.Interaction, name: str
+    ) -> None:
         await interaction.response.defer()
 
         if name not in discoverCogNames():
@@ -74,21 +74,32 @@ class CogManager(commands.Cog):
             await self.bot.load_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to load {extension}: {e}"))
-            await interaction.followup.send(f"Failed to load `{name}`: {e}")
+            await interaction.followup.send(
+                f"Failed to load `{name}`: {e}"
+            )
             return
 
         config.setDisabled(name, False)
-        print(cf.yellow(f"[cog] loaded {extension} (requested by {interaction.user})"))
+        print(
+            cf.yellow(
+                f"[cog] loaded {extension} (requested by "
+                f"{interaction.user})"
+            )
+        )
         await self.bot.tree.sync()
         await interaction.followup.send(
             f"Loaded `{name}`. Will stay loaded across restarts."
         )
 
-    @cog.command(name="unload", description="Unload a cog from commands.cogs")
+    @cog.command(
+        name="unload", description="Unload a cog from commands.cogs"
+    )
     @app_commands.describe(name="Cog module name, e.g. 'stats'")
     @app_commands.autocomplete(name=unloadAutocomplete)
     @ownerOnly()
-    async def unload(self, interaction: discord.Interaction, name: str) -> None:
+    async def unload(
+        self, interaction: discord.Interaction, name: str
+    ) -> None:
         await interaction.response.defer()
 
         extension = f"{cogsPackage}.{name}"
@@ -100,12 +111,17 @@ class CogManager(commands.Cog):
             await self.bot.unload_extension(extension)
         except commands.ExtensionError as e:
             print(cf.yellow(f"[cog] failed to unload {extension}: {e}"))
-            await interaction.followup.send(f"Failed to unload `{name}`: {e}")
+            await interaction.followup.send(
+                f"Failed to unload `{name}`: {e}"
+            )
             return
 
         config.setDisabled(name, True)
         print(
-            cf.yellow(f"[cog] unloaded {extension} (requested by {interaction.user})")
+            cf.yellow(
+                f"[cog] unloaded {extension} (requested by "
+                f"{interaction.user})"
+            )
         )
         await self.bot.tree.sync()
         await interaction.followup.send(
@@ -114,7 +130,10 @@ class CogManager(commands.Cog):
 
     @cog.command(
         name="list",
-        description="Show which cogs are loaded and whether they'll survive a restart",
+        description=(
+            "Show which cogs are loaded and whether they'll survive a "
+            "restart"
+        ),
     )
     @ownerOnly()
     async def listCogs(self, interaction: discord.Interaction) -> None:
@@ -125,10 +144,13 @@ class CogManager(commands.Cog):
             if loaded:
                 status = "✅ loaded"
             elif name in disabled:
-                status = "⛔ unloaded (disabled — stays off across restarts)"
+                status = (
+                    "⛔ unloaded (disabled — stays off across restarts)"
+                )
             else:
                 status = (
-                    "⚠️ unloaded (not disabled, but not loaded — check startup logs)"
+                    "⚠️ unloaded (not disabled, but not loaded — check "
+                    "startup logs)"
                 )
             lines.append(f"`{name}` — {status}")
 

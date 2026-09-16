@@ -1,9 +1,7 @@
-import random
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import random
 from sandrone import mood
 from utils import components
 
@@ -11,7 +9,10 @@ responses = [
     "Hmph. Fine, yes. Not that I did the math for your sake or anything.",
     "Obviously yes. Did you really need to ask?",
     "I-it's a yes, okay?! Don't look at me like that.",
-    "Yes. And before you get any ideas, I only answered because I felt like it.",
+    (
+        "Yes. And before you get any ideas, I only answered because I "
+        "felt like it."
+    ),
     "Ugh, fine — yes. Happy now?",
     "It's a yes. Not that I care what happens either way.",
     "No. And don't ask again, it's embarrassing for both of us.",
@@ -19,7 +20,10 @@ responses = [
     "No way. I-it's not like I'd tell you even if it were a maybe.",
     "That's a no. Don't cry about it.",
     "No. Absolutely not. ...Was that too harsh? Whatever, it's still no.",
-    "Ooo, what's inside that question... not that I care. Ask again later.",
+    (
+        "Ooo, what's inside that question... not that I care. Ask again "
+        "later."
+    ),
     "I-I don't know, okay?! It's not like I have every answer memorized!",
     "Unclear. Stop making me think so hard about your problems.",
     "Ask me later. I'm busy. ...Doing nothing in particular. Shut up.",
@@ -34,7 +38,10 @@ class EightBall(commands.Cog):
 
     @app_commands.command(
         name="8ball",
-        description="Ask Sandrone a question. Don't expect her to be nice about it.",
+        description=(
+            "Ask Sandrone a question. Don't expect her to be nice about "
+            "it."
+        ),
     )
     @app_commands.describe(question="The question you want answered")
     @mood.sassy

@@ -1,30 +1,38 @@
-import asyncio
-import hashlib
-import io
-import re
-import time
-from pathlib import Path
-from typing import Any, NamedTuple
-
 import aiohttp
+import asyncio
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import hashlib
+import io
+from pathlib import Path
+import re
 from sandrone import mood
+import time
+from typing import Any, NamedTuple
 from utils import components, genshin_card
-from utils.doughmination import DoughminationError, GenshinNotFoundError, dough
+from utils.doughmination import (
+    DoughminationError,
+    GenshinNotFoundError,
+    dough,
+)
 
 embedColor = components.FUCHSIA
 
 jumpPageSize = 25
-apiErrors = (DoughminationError, RuntimeError, aiohttp.ClientError, TimeoutError)
+apiErrors = (
+    DoughminationError,
+    RuntimeError,
+    aiohttp.ClientError,
+    TimeoutError,
+)
 
 CACHE_DIR = Path("img/genshin-cache")
 ROSTER_TTL = 20.0
 
 CONTROL_TEMPLATE = (
-    r"gsc:(?P<action>[a-z]+):(?P<uid>\d{9,10}):(?P<index>\d+):(?P<menu>\d+)"
+    r"gsc:(?P<action>[a-z]+):(?P<uid>\d{9,10}):"
+    r"(?P<index>\d+):(?P<menu>\d+)"
 )
 JUMP_TEMPLATE = r"gsj:(?P<uid>\d{9,10}):(?P<index>\d+):(?P<menu>\d+)"
 
@@ -70,7 +78,9 @@ async def getRoster(uid: str) -> dict:
     return data
 
 
-async def _fetchImage(session: aiohttp.ClientSession, url: str) -> bytes | None:
+async def _fetchImage(
+    session: aiohttp.ClientSession, url: str
+) -> bytes | None:
     if url in _imageMem:
         return _imageMem[url]
     key = hashlib.sha1(url.encode()).hexdigest()
@@ -83,11 +93,13 @@ async def _fetchImage(session: aiohttp.ClientSession, url: str) -> bytes | None:
     except OSError:
         pass
     try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+        async with session.get(
+            url, timeout=aiohttp.ClientTimeout(total=15)
+        ) as resp:
             if resp.status != 200:
                 return None
             data = await resp.read()
-    except (aiohttp.ClientError, TimeoutError):
+    except aiohttp.ClientError, TimeoutError:
         return None
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -102,14 +114,17 @@ async def gatherImages(urls: list[str]) -> dict[str, bytes]:
     if not urls:
         return {}
     async with aiohttp.ClientSession() as session:
-        blobs = await asyncio.gather(*(_fetchImage(session, u) for u in urls))
+        blobs = await asyncio.gather(
+            *(_fetchImage(session, u) for u in urls)
+        )
     return {u: b for u, b in zip(urls, blobs) if b}
 
 
 def buildErrorPanel(error: Exception, uid: str) -> components.Panel:
     notFound = isinstance(error, GenshinNotFoundError)
     message = (
-        f"No Enka.Network record for UID `{uid}`. The profile may be private, "
+        f"No Enka.Network record for UID `{uid}`. The profile may be "
+        "private, "
         "unindexed, or the UID is wrong."
         if notFound
         else str(error)
@@ -185,10 +200,13 @@ def renderContainer(
             components.image(f"attachment://{filename}", alt=char["name"])
         )
     )
-    tracked = "🟢 Live showcase" if char.get("tracked") else "⚪ Last known"
+    tracked = (
+        "🟢 Live showcase" if char.get("tracked") else "⚪ Last known"
+    )
     box.add_item(
         discord.ui.TextDisplay(
-            f"-# {char['name']} · Lv.{char.get('level', '?')} · {tracked} · "
+            f"-# {char['name']} · Lv.{char.get('level', '?')} · {tracked} "
+            "· "
             f"Character {index + 1}/{len(owned)} · UID {state.uid}"
         )
     )
@@ -218,12 +236,16 @@ def renderContainer(
     jumpRow.add_item(
         discord.ui.Select(
             custom_id=here.jumpId(),
-            placeholder=f"Jump to a character… ({start + 1}–{start + len(window)})",
+            placeholder=(
+                f"Jump to a character… ({start + 1}–{start + len(window)})"
+            ),
             options=[
                 discord.SelectOption(
                     label=c["name"][:100],
                     value=str(start + offset),
-                    description=f"Lv.{c.get('level', '?')} · {c['element']}"[:100],
+                    description=(
+                        f"Lv.{c.get('level', '?')} · {c['element']}"
+                    )[:100],
                     default=(start + offset) == index,
                 )
                 for offset, c in enumerate(window)
@@ -255,16 +277,23 @@ def renderContainer(
     return box
 
 
-async def buildView(state: State) -> tuple[components.Panel, discord.File | None]:
+async def buildView(
+    state: State,
+) -> tuple[components.Panel, discord.File | None]:
     roster = await getRoster(state.uid)
     owned = sortedOwned(roster)
     if not owned:
         note = (
-            'This account has no visible characters. Enable "Display all your '
-            'characters" on the in-game Character Showcase, or pin a few, then retry.'
+            'This account has no visible characters. Enable "Display all '
+            "your "
+            'characters" on the in-game Character Showcase, or pin a few, '
+            "then retry."
         )
         if roster.get("stale"):
-            note = "Enka.Network is unavailable right now — try again shortly."
+            note = (
+                "Enka.Network is unavailable right now — try again "
+                "shortly."
+            )
         return components.panel(
             title="❓ Nothing to show", body=note, color=components.RED
         ), None
@@ -276,7 +305,9 @@ async def buildView(state: State) -> tuple[components.Panel, discord.File | None
     return components.Panel(renderContainer(state, owned, filename)), file
 
 
-async def _swapView(interaction: discord.Interaction, state: State) -> None:
+async def _swapView(
+    interaction: discord.Interaction, state: State
+) -> None:
     await interaction.response.defer()
     try:
         view, file = await buildView(state)
@@ -296,7 +327,9 @@ class GenshinControl(
     def __init__(self, nextState: State, customId: str) -> None:
         self.nextState = nextState
         super().__init__(
-            discord.ui.Button(style=discord.ButtonStyle.secondary, custom_id=customId)
+            discord.ui.Button(
+                style=discord.ButtonStyle.secondary, custom_id=customId
+            )
         )
 
     @classmethod
@@ -306,9 +339,12 @@ class GenshinControl(
         item: discord.ui.Item[Any],
         match: re.Match[str],
         /,
-    ) -> "GenshinControl":
+    ) -> GenshinControl:
         nextState = applyAction(
-            match["action"], match["uid"], int(match["index"]), int(match["menu"])
+            match["action"],
+            match["uid"],
+            int(match["index"]),
+            int(match["menu"]),
         )
         return cls(nextState, match.string)
 
@@ -316,7 +352,9 @@ class GenshinControl(
         await _swapView(interaction, self.nextState)
 
 
-class GenshinJump(discord.ui.DynamicItem[discord.ui.Select], template=JUMP_TEMPLATE):
+class GenshinJump(
+    discord.ui.DynamicItem[discord.ui.Select], template=JUMP_TEMPLATE
+):
     def __init__(self, uid: str, customId: str) -> None:
         self.uid = uid
         super().__init__(
@@ -333,7 +371,7 @@ class GenshinJump(discord.ui.DynamicItem[discord.ui.Select], template=JUMP_TEMPL
         item: discord.ui.Item[Any],
         match: re.Match[str],
         /,
-    ) -> "GenshinJump":
+    ) -> GenshinJump:
         return cls(match["uid"], match.string)
 
     async def callback(self, interaction: discord.Interaction) -> None:
@@ -352,14 +390,17 @@ class Genshin(commands.Cog):
     )
     @app_commands.describe(uid="The 9–10 digit Genshin UID to look up")
     @mood.sassy
-    async def genshin(self, interaction: discord.Interaction, uid: str) -> None:
+    async def genshin(
+        self, interaction: discord.Interaction, uid: str
+    ) -> None:
         await interaction.response.defer()
 
         clean = validUid(uid)
         if clean is None:
             await interaction.followup.send(
                 view=components.error(
-                    "That doesn't look like a Genshin UID — it should be 9–10 digits."
+                    "That doesn't look like a Genshin UID — it should be "
+                    "9–10 digits."
                 )
             )
             return
@@ -368,7 +409,9 @@ class Genshin(commands.Cog):
         try:
             view, file = await buildView(state)
         except apiErrors as error:
-            await interaction.followup.send(view=buildErrorPanel(error, clean))
+            await interaction.followup.send(
+                view=buildErrorPanel(error, clean)
+            )
             return
 
         if file is not None:

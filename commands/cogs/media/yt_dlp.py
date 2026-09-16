@@ -1,20 +1,18 @@
 import asyncio
-import io
-import re
-import shutil
-from pathlib import Path
-from typing import NamedTuple
-from urllib.parse import parse_qs, urlsplit
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-from yt_dlp import YoutubeDL
-from yt_dlp.utils import YoutubeDLError
-
+import io
+from pathlib import Path
+import re
 from sandrone import config, mood
+import shutil
+from typing import NamedTuple
+from urllib.parse import parse_qs, urlsplit
 from utils import downloads
 from utils.choices import ChoiceSet
+from yt_dlp import YoutubeDL
+from yt_dlp.utils import YoutubeDLError
 
 opts = {
     "Audio": "mp3",
@@ -79,8 +77,12 @@ class YtDlp(commands.Cog):
             if interaction.guild
             else defaultUploadLimit
         )
-        content, file = await self.getVideoOrAudio(url, container, uploadLimit)
-        await interaction.followup.send(content, file=file or discord.utils.MISSING)
+        content, file = await self.getVideoOrAudio(
+            url, container, uploadLimit
+        )
+        await interaction.followup.send(
+            content, file=file or discord.utils.MISSING
+        )
 
     async def getVideoOrAudio(
         self, url: str, container: str, uploadLimit: int
@@ -102,25 +104,35 @@ class YtDlp(commands.Cog):
         slot = downloads.newSlot()
         keep = False
         try:
-            result = await asyncio.to_thread(self.download, url, container, slot)
+            result = await asyncio.to_thread(
+                self.download, url, container, slot
+            )
             size = result.path.stat().st_size
 
             if size <= uploadLimit:
                 data = await asyncio.to_thread(result.path.read_bytes)
                 return (
                     f"🎬 **{result.title}**",
-                    discord.File(io.BytesIO(data), filename=result.path.name),
+                    discord.File(
+                        io.BytesIO(data), filename=result.path.name
+                    ),
                 )
 
             downloads.recordSource(
                 slot,
                 key,
                 result.path.name,
-                {"title": result.title, "height": result.height, "size": size},
+                {
+                    "title": result.title,
+                    "height": result.height,
+                    "size": size,
+                },
             )
             keep = True
             link = downloads.publicUrl(slot, result.path.name)
-            return self.hostedReply(result.title, result.height, size, link), None
+            return self.hostedReply(
+                result.title, result.height, size, link
+            ), None
         except DownloadTooLarge as error:
             return (
                 (
@@ -134,10 +146,22 @@ class YtDlp(commands.Cog):
             line = self.firstLine(error)
             missing = "requested format is not available" in line.lower()
             if container == "mp4" and missing:
-                return "❌ That link has no video stream. Try the Audio option?", None
+                return (
+                    (
+                        "❌ That link has no video stream. Try the Audio "
+                        "option?"
+                    ),
+                    None,
+                )
             return f"❌ yt-dlp couldn't fetch that: `{line}`", None
         except (OSError, RuntimeError) as error:
-            return f"❌ Something went wrong handling that download: `{error}`", None
+            return (
+                (
+                    "❌ Something went wrong handling that download: "
+                    f"`{error}`"
+                ),
+                None,
+            )
         finally:
             if not keep:
                 await asyncio.to_thread(downloads.discard, slot)
@@ -156,7 +180,9 @@ class YtDlp(commands.Cog):
             return Result(path, title, info.get("height"))
 
         approx = self.expectedSize(requested)
-        raise DownloadTooLarge(f"~{approx / mib:.1f} MiB" if approx else "too large")
+        raise DownloadTooLarge(
+            f"~{approx / mib:.1f} MiB" if approx else "too large"
+        )
 
     def buildOptions(self, container: str, outDir: Path) -> dict:
         options: dict = {
@@ -235,9 +261,15 @@ class YtDlp(commands.Cog):
         leftovers = [
             p
             for p in outDir.iterdir()
-            if p.is_file() and p.suffix.lower() in wanted and p not in fragments
+            if p.is_file()
+            and p.suffix.lower() in wanted
+            and p not in fragments
         ]
-        return max(leftovers, key=lambda p: p.stat().st_size) if leftovers else None
+        return (
+            max(leftovers, key=lambda p: p.stat().st_size)
+            if leftovers
+            else None
+        )
 
     def mergeFragments(self, requested: list[dict]) -> set[Path]:
         return {
@@ -253,7 +285,9 @@ class YtDlp(commands.Cog):
             for entry in requested
             if (
                 total := sum(
-                    part.get("filesize") or part.get("filesize_approx") or 0
+                    part.get("filesize")
+                    or part.get("filesize_approx")
+                    or 0
                     for part in self.formatParts(entry)
                 )
             )
@@ -273,10 +307,16 @@ class YtDlp(commands.Cog):
             candidate = parsed.path.lstrip("/").split("/", 1)[0]
         else:
             candidate = parse_qs(parsed.query).get("v", [""])[0]
-        video = candidate if videoIdPattern.fullmatch(candidate) else url.strip()
+        video = (
+            candidate
+            if videoIdPattern.fullmatch(candidate)
+            else url.strip()
+        )
         return f"{container}\n{video}"
 
-    def hostedReply(self, title: str, height: int | None, size: int, link: str) -> str:
+    def hostedReply(
+        self, title: str, height: int | None, size: int, link: str
+    ) -> str:
         details = " · ".join(
             part
             for part in (

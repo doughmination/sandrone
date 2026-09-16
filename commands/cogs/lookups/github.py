@@ -1,10 +1,8 @@
 import asyncio
-
 import discord
 from discord import app_commands
 from discord.ext import commands
 from github import Auth, Github, GithubException
-
 from sandrone import checks, config, mood
 from sandrone.config import githubToken as GITHUB_TOKEN
 from utils import cf, components
@@ -40,14 +38,18 @@ class GitHub(commands.Cog):
     @app_commands.command(
         name="github", description="Look up a GitHub user"
     )
-    @app_commands.describe(username="The GitHub username to fetch information on")
+    @app_commands.describe(
+        username="The GitHub username to fetch information on"
+    )
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
     async def github(
         self, interaction: discord.Interaction, username: str
     ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.fetchUserPanel(username))
+        await interaction.followup.send(
+            view=await self.fetchUserPanel(username)
+        )
 
     async def fetchUserPanel(self, username: str) -> components.Panel:
         username = username.removeprefix("@")
@@ -60,20 +62,28 @@ class GitHub(commands.Cog):
                 user = gh.get_user(username)
                 _ = user.id
             except GithubException:
-                return components.error("That GitHub account does not exist.")
+                return components.error(
+                    "That GitHub account does not exist."
+                )
 
             parts: list[str] = []
             if user.bio:
                 parts.append(f"{user.bio}\n")
             if user.blog:
-                website = user.blog.removeprefix("https://").removeprefix("http://")
+                website = user.blog.removeprefix("https://").removeprefix(
+                    "http://"
+                )
                 parts.append(f"\n> **Website**: [{website}]({user.blog})")
             if user.email:
-                parts.append(f"\n> **Email**: [{user.email}](mailto:{user.email})")
+                parts.append(
+                    f"\n> **Email**: [{user.email}](mailto:{user.email})"
+                )
             if user.location:
                 parts.append(f"\n> **Location**: {user.location}")
             if user.hireable:
-                parts.append("\n> **Hireable**: This user is available for hire.")
+                parts.append(
+                    "\n> **Hireable**: This user is available for hire."
+                )
             if user.company:
                 parts.append(f"\n> **Company**: {user.company}")
             if user.followers:
@@ -82,19 +92,28 @@ class GitHub(commands.Cog):
                 parts.append(f"\n> **Following**: {user.following}")
             if user.created_at:
                 parts.append(
-                    f"\n> **Joined GitHub**: <t:{int(user.created_at.timestamp())}:D>"
+                    "\n> **Joined GitHub**: "
+                    f"<t:{int(user.created_at.timestamp())}:D>"
                 )
             if user.public_repos:
-                parts.append(f"\n> **Public Repositories**: {user.public_repos}")
+                parts.append(
+                    f"\n> **Public Repositories**: {user.public_repos}"
+                )
             if user.public_gists:
                 parts.append(f"\n> **Public Gists**: {user.public_gists}")
             privateRepos = self._fetchPrivateRepos(gh, username)
             if privateRepos is not None:
-                parts.append(f"\n> **Private Repositories**: {privateRepos}")
+                parts.append(
+                    f"\n> **Private Repositories**: {privateRepos}"
+                )
             if user.user_view_type != "public":
-                parts.append("\n\nThis user has set their profile as private.")
+                parts.append(
+                    "\n\nThis user has set their profile as private."
+                )
             if user.site_admin:
-                parts.append("\n\n**This user is a GitHub site administrator.**")
+                parts.append(
+                    "\n\n**This user is a GitHub site administrator.**"
+                )
 
             return components.panel(
                 title=username,
@@ -123,14 +142,18 @@ class GitHub(commands.Cog):
     @app_commands.command(
         name="repo", description="Look up a GitHub repository"
     )
-    @app_commands.describe(repository="The repository to fetch, as username/repo")
+    @app_commands.describe(
+        repository="The repository to fetch, as username/repo"
+    )
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
     async def repo(
         self, interaction: discord.Interaction, repository: str
     ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.fetchRepoPanel(repository))
+        await interaction.followup.send(
+            view=await self.fetchRepoPanel(repository)
+        )
 
     async def fetchRepoPanel(self, repository: str) -> components.Panel:
         return await asyncio.to_thread(self._buildRepoPanel, repository)
@@ -138,7 +161,9 @@ class GitHub(commands.Cog):
     def _buildRepoPanel(self, repository: str) -> components.Panel:
         fullName = normalizeRepo(repository)
         if fullName is None:
-            return components.error("Give the repository as `username/repo`.")
+            return components.error(
+                "Give the repository as `username/repo`."
+            )
 
         gh = Github(auth=Auth.Token(config.requireGithubToken()))
         try:
@@ -153,8 +178,14 @@ class GitHub(commands.Cog):
                 url=repo.html_url,
                 body=repo.description or None,
                 fields=[
-                    ("Stars", f"[{repo.stargazers_count}]({repo.html_url}/stargazers)"),
-                    ("Forks", f"[{repo.forks_count}]({repo.html_url}/forks)"),
+                    (
+                        "Stars",
+                        f"[{repo.stargazers_count}]({repo.html_url}/stargazers)",
+                    ),
+                    (
+                        "Forks",
+                        f"[{repo.forks_count}]({repo.html_url}/forks)",
+                    ),
                     (
                         "Open issues",
                         f"[{repo.open_issues_count}]({repo.html_url}/issues)",

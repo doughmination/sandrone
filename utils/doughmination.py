@@ -29,7 +29,9 @@ class DoughminationAPI:
         if self._session is not None and not self._session.closed:
             await self._session.close()
 
-    async def _get(self, url: str, notFoundError: type[DoughminationError]) -> dict:
+    async def _get(
+        self, url: str, notFoundError: type[DoughminationError]
+    ) -> dict:
         session = self._getSession()
         async with session.get(url) as resp:
             body = await resp.json()
@@ -42,10 +44,14 @@ class DoughminationAPI:
             return body["data"]
 
     async def getProfile(self, userId: int) -> dict:
-        return await self._get(f"{profileBase}/users/{userId}", ProfileNotFoundError)
+        return await self._get(
+            f"{profileBase}/users/{userId}", ProfileNotFoundError
+        )
 
     async def getGenshinRoster(self, uid: str) -> dict:
-        return await self._get(f"{genshinBase}/roster/{uid}", GenshinNotFoundError)
+        return await self._get(
+            f"{genshinBase}/roster/{uid}", GenshinNotFoundError
+        )
 
     async def getGenshinCharacter(self, uid: str, heroId: str) -> dict:
         return await self._get(

@@ -1,11 +1,9 @@
 import json
 import os
-import time
 from pathlib import Path
-
 import pytest
-
 from sandrone import config
+import time
 from utils import downloads
 
 
@@ -51,7 +49,9 @@ def test_discard_ignores_unmanaged_directories(downloadRoot: Path) -> None:
     assert directory.exists()
 
 
-def test_reserved_metadata_cannot_be_overridden(downloadRoot: Path) -> None:
+def test_reserved_metadata_cannot_be_overridden(
+    downloadRoot: Path,
+) -> None:
     slot = downloads.newSlot()
     downloads.recordSource(
         slot,
@@ -60,7 +60,9 @@ def test_reserved_metadata_cannot_be_overridden(downloadRoot: Path) -> None:
         {"key": "other", "name": "other.mp4", "title": "Video"},
     )
 
-    data = json.loads((slot / downloads.metaName).read_text(encoding="utf-8"))
+    data = json.loads(
+        (slot / downloads.metaName).read_text(encoding="utf-8")
+    )
     assert data["key"] == "expected-key"
     assert data["name"] == "video.mp4"
 
@@ -70,14 +72,20 @@ def test_reserved_metadata_cannot_be_overridden(downloadRoot: Path) -> None:
     [
         pytest.param([], id="not-an-object"),
         pytest.param(
-            {"key": "key", "name": "video.mp4", "size": 5}, id="missing-title"
+            {"key": "key", "name": "video.mp4", "size": 5},
+            id="missing-title",
         ),
         pytest.param(
             {"key": "key", "name": "video.mp4", "title": "Video"},
             id="missing-size",
         ),
         pytest.param(
-            {"key": "key", "name": "video.mp4", "title": "Video", "size": "5"},
+            {
+                "key": "key",
+                "name": "video.mp4",
+                "title": "Video",
+                "size": "5",
+            },
             id="invalid-size",
         ),
         pytest.param(
@@ -85,7 +93,12 @@ def test_reserved_metadata_cannot_be_overridden(downloadRoot: Path) -> None:
             id="invalid-title",
         ),
         pytest.param(
-            {"key": "key", "name": "video.mp4", "title": "Video", "size": True},
+            {
+                "key": "key",
+                "name": "video.mp4",
+                "title": "Video",
+                "size": True,
+            },
             id="boolean-size",
         ),
     ],
@@ -96,7 +109,9 @@ def test_invalid_cache_metadata_is_ignored(
     slot = downloads.newSlot()
     target = slot / "video.mp4"
     target.write_bytes(b"video")
-    (slot / downloads.metaName).write_text(json.dumps(metadata), encoding="utf-8")
+    (slot / downloads.metaName).write_text(
+        json.dumps(metadata), encoding="utf-8"
+    )
 
     assert downloads.findCached("key") is None
 

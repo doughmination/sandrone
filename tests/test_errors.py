@@ -1,11 +1,9 @@
-from types import SimpleNamespace
-from typing import Any, cast
-
 import aiohttp
 import discord
-import pytest
 from discord import app_commands
-
+import pytest
+from types import SimpleNamespace
+from typing import Any, cast
 from utils import errors
 
 
@@ -54,19 +52,27 @@ def test_the_newest_error_comes_first() -> None:
     for name in ("first", "second", "third"):
         errors.record(boom(name), source="event on_message")
 
-    assert [entry["text"] for entry in errors.recent()] == ["third", "second", "first"]
+    assert [entry["text"] for entry in errors.recent()] == [
+        "third",
+        "second",
+        "first",
+    ]
 
 
 def test_the_log_stops_growing_at_the_keep_limit() -> None:
     for index in range(errors.keepLimit + 10):
-        errors.record(boom(), source="event on_message", command="cmd" + "a" * index)
+        errors.record(
+            boom(), source="event on_message", command="cmd" + "a" * index
+        )
 
     assert errors.count() == errors.keepLimit
 
 
 def test_missing_permissions_are_pulled_out_of_the_error() -> None:
     errors.record(
-        app_commands.BotMissingPermissions(["attach_files", "embed_links"]),
+        app_commands.BotMissingPermissions(
+            ["attach_files", "embed_links"]
+        ),
         source="slash command",
         command="pride",
     )
@@ -89,7 +95,9 @@ def test_clearing_reports_how_many_went() -> None:
     assert errors.clear() == 0
 
 
-def test_a_broken_log_never_replaces_the_error_it_was_logging(monkeypatch) -> None:
+def test_a_broken_log_never_replaces_the_error_it_was_logging(
+    monkeypatch,
+) -> None:
     def refuse(*args, **kwargs):
         raise OSError("disk is on fire")
 
@@ -121,7 +129,7 @@ def test_the_same_fault_twice_keeps_one_reference_and_counts_up() -> None:
     assert second["first"] == first["first"]
 
 
-def test_the_same_fault_in_a_different_command_gets_its_own_reference() -> None:
+def test_same_fault_in_another_command_gets_its_own_reference() -> None:
     first = logged(boom(), source="slash command", command="qr")
     other = logged(boom(), source="slash command", command="pride")
 
@@ -130,8 +138,12 @@ def test_the_same_fault_in_a_different_command_gets_its_own_reference() -> None:
 
 
 def test_ids_in_the_message_do_not_split_one_fault_into_many() -> None:
-    mine = logged(boom("member 777888999000111222 is gone"), source="command")
-    yours = logged(boom("member 111222333444555666 is gone"), source="command")
+    mine = logged(
+        boom("member 777888999000111222 is gone"), source="command"
+    )
+    yours = logged(
+        boom("member 111222333444555666 is gone"), source="command"
+    )
 
     assert yours["ref"] == mine["ref"]
     assert yours["count"] == 2
@@ -183,8 +195,12 @@ def test_a_missing_permission_is_a_workshop_fault() -> None:
 def test_discord_refusing_is_told_apart_from_discord_breaking() -> None:
     response = cast(Any, SimpleNamespace(status=403, reason="Forbidden"))
 
-    forbidden = logged(discord.Forbidden(response, "no"), source="slash command")
-    broken = logged(discord.DiscordServerError(response, "oh dear"), source="command")
+    forbidden = logged(
+        discord.Forbidden(response, "no"), source="slash command"
+    )
+    broken = logged(
+        discord.DiscordServerError(response, "oh dear"), source="command"
+    )
 
     assert forbidden["code"] == "WORKSHOP"
     assert broken["code"] == "STRINGS"
@@ -199,7 +215,9 @@ def test_the_outside_world_and_the_disk_get_their_own_codes() -> None:
     assert codeFor(discord.NotFound(response, "gone")) == "VANISHED"
 
 
-def test_an_unknown_fault_depends_on_whether_a_command_was_running() -> None:
+def test_an_unknown_fault_depends_on_whether_a_command_was_running() -> (
+    None
+):
     assert errors.codeOf(boom(), "slash command") == errors.fallbackCode
     assert errors.codeOf(boom(), "event on_message") == errors.loneWorkCode
     assert errors.codeOf(boom(), "incident loop") == errors.loneWorkCode
@@ -220,5 +238,7 @@ def test_faults_can_be_pulled_out_by_their_code() -> None:
     )
     logged(boom(), source="slash command", command="b")
 
-    assert [entry["code"] for entry in errors.byCode("workshop")] == ["WORKSHOP"]
+    assert [entry["code"] for entry in errors.byCode("workshop")] == [
+        "WORKSHOP"
+    ]
     assert errors.byCode("BLIZZARD") == []

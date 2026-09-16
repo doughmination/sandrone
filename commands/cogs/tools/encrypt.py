@@ -1,10 +1,8 @@
 import base64
 import codecs
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import mood
 from utils.choices import ChoiceSet
 
@@ -38,7 +36,9 @@ class Encrypt(commands.Cog):
     ) -> None:
         await interaction.response.defer(ephemeral=True)
 
-        reply = await self.encodeMessage(input, encoders.resolve(method, "b64"))
+        reply = await self.encodeMessage(
+            input, encoders.resolve(method, "b64")
+        )
         await interaction.followup.send(reply, ephemeral=True)
 
     async def encodeMessage(self, input: str, method: str) -> str:
@@ -59,9 +59,14 @@ class Encrypt(commands.Cog):
             shifted = []
             for char in input:
                 if char.isalpha():
-                    stay_in_alphabet = ord("a") if char.islower() else ord("A")
+                    stay_in_alphabet = (
+                        ord("a") if char.islower() else ord("A")
+                    )
                     shifted.append(
-                        chr((ord(char) - stay_in_alphabet + 3) % 26 + stay_in_alphabet)
+                        chr(
+                            (ord(char) - stay_in_alphabet + 3) % 26
+                            + stay_in_alphabet
+                        )
                     )
                 else:
                     shifted.append(char)

@@ -1,14 +1,13 @@
 import asyncio
 import json
 import os
+from pathlib import Path
 import re
+from sandrone import config
 import secrets
 import shutil
 import time
-from pathlib import Path
 from urllib.parse import quote
-
-from sandrone import config
 from utils import cf
 
 sweepInterval = 3600
@@ -51,11 +50,14 @@ def managedSlot(slot: Path) -> Path | None:
     try:
         root = config.downloadsDir.resolve()
         resolved = slot.resolve()
-    except (OSError, RuntimeError):
+    except OSError, RuntimeError:
         return None
     if resolved.parent != root or not slotPattern.fullmatch(resolved.name):
         return None
-    if not (resolved / markerName).is_file() and not (resolved / metaName).is_file():
+    if (
+        not (resolved / markerName).is_file()
+        and not (resolved / metaName).is_file()
+    ):
         return None
     return resolved
 
@@ -65,7 +67,9 @@ def recordSource(slot: Path, key: str, name: str, extra: dict) -> None:
     if managed is None or not validName(name):
         raise ValueError("Invalid download slot or filename")
     data = {**extra, "key": key, "name": name}
-    (managed / metaName).write_text(json.dumps(data) + "\n", encoding="utf-8")
+    (managed / metaName).write_text(
+        json.dumps(data) + "\n", encoding="utf-8"
+    )
 
 
 def findCached(key: str) -> dict | None:
@@ -78,8 +82,10 @@ def findCached(key: str) -> dict | None:
         if entry is None:
             continue
         try:
-            meta = json.loads((entry / metaName).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            meta = json.loads(
+                (entry / metaName).read_text(encoding="utf-8")
+            )
+        except OSError, json.JSONDecodeError:
             continue
         if not isinstance(meta, dict) or meta.get("key") != key:
             continue
@@ -127,7 +133,11 @@ def purgeExpired() -> int:
             shutil.rmtree(entry)
             removed += 1
         except OSError as error:
-            print(cf.red(f"[downloads] could not remove {entry.name}: {error}"))
+            print(
+                cf.red(
+                    f"[downloads] could not remove {entry.name}: {error}"
+                )
+            )
     return removed
 
 
@@ -135,5 +145,9 @@ async def sweepForever() -> None:
     while True:
         removed = await asyncio.to_thread(purgeExpired)
         if removed:
-            print(cf.grey(f"[downloads] removed {removed} expired download(s)"))
+            print(
+                cf.grey(
+                    f"[downloads] removed {removed} expired download(s)"
+                )
+            )
         await asyncio.sleep(sweepInterval)

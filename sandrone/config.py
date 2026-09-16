@@ -1,9 +1,8 @@
+from dotenvx import load_dotenv
 import json
 import os
 from pathlib import Path
-
 import toml
-from dotenvx import load_dotenv
 
 load_dotenv()
 
@@ -24,7 +23,9 @@ if pyproject_toml_file.exists() and pyproject_toml_file.is_file():
 
 TOKEN = os.getenv("BOT_TOKEN")
 clientIdValue = os.getenv("CLIENT_ID")
-clientId = int(clientIdValue) if clientIdValue and clientIdValue.strip() else None
+clientId = (
+    int(clientIdValue) if clientIdValue and clientIdValue.strip() else None
+)
 devMode = os.getenv("DEV_MODE", "false").lower() == "true"
 githubToken = os.getenv("GITHUB_TOKEN")
 
@@ -51,7 +52,9 @@ siteUrl = (
 ).rstrip("/")
 
 downloadsRetention = int(os.getenv("DOWNLOADS_RETENTION_HOURS", "24"))
-downloadsMaxSize = int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
+downloadsMaxSize = (
+    int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
+)
 
 owners: list[int] = [
     1464890289922641993,
@@ -62,21 +65,26 @@ owners: list[int] = [
 def requireToken() -> str:
     if not TOKEN:
         raise RuntimeError(
-            "BOT_TOKEN is not set. Add it to your .env file before starting the bot."
+            "BOT_TOKEN is not set. Add it to your .env file before "
+            "starting the bot."
         )
     return TOKEN
+
 
 def requireClientID() -> int:
     if clientId is None:
         raise RuntimeError(
-            "CLIENT_ID is not set. Add it to your .env before starting the bot."
+            "CLIENT_ID is not set. Add it to your .env before starting "
+            "the bot."
         )
     return clientId
+
 
 def requireGithubToken() -> str:
     if not githubToken:
         raise RuntimeError(
-            "GITHUB_TOKEN is not set. Add it to your .env file to use /github."
+            "GITHUB_TOKEN is not set. Add it to your .env file to use "
+            "/github."
         )
     return githubToken
 
@@ -100,13 +108,15 @@ def loadDisabled() -> set[str]:
         return set()
     try:
         data = json.loads(cogStatePath.read_text())
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return set()
     return set(data.get("disabled", []))
 
 
 def saveDisabled(disabled: set[str]) -> None:
-    cogStatePath.write_text(json.dumps({"disabled": sorted(disabled)}, indent=2) + "\n")
+    cogStatePath.write_text(
+        json.dumps({"disabled": sorted(disabled)}, indent=2) + "\n"
+    )
 
 
 def setDisabled(name: str, disabled: bool) -> None:

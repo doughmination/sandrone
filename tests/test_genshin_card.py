@@ -1,9 +1,7 @@
 import io
-from typing import Any
-
-import pytest
 from PIL import Image
-
+import pytest
+from typing import Any
 from utils import genshin_card
 
 
@@ -63,7 +61,9 @@ FULL_DETAIL: dict[str, Any] = {
             ],
             "icon_url": f"https://cdn.example/UI_RelicIcon_15031_{i}.png",
         }
-        for i, slot in enumerate(["flower", "plume", "sands", "goblet", "circlet"], 1)
+        for i, slot in enumerate(
+            ["flower", "plume", "sands", "goblet", "circlet"], 1
+        )
     ],
     "sets": [{"name": "Marechaussee Hunter", "count": 4}],
 }
@@ -118,7 +118,8 @@ def test_partial_artifacts_and_missing_main_stat():
 
 
 @pytest.mark.parametrize(
-    "element", ["Pyro", "Hydro", "Anemo", "Electro", "Cryo", "Geo", "Dendro", "All"]
+    "element",
+    ["Pyro", "Hydro", "Anemo", "Electro", "Cryo", "Geo", "Dendro", "All"],
 )
 def test_every_element_tint(element):
     detail = dict(FULL_DETAIL, element=element)
@@ -135,5 +136,11 @@ def test_icon_urls_collects_every_remote_image():
 
 
 def test_format_stat_value():
-    assert genshin_card.formatStatValue(_stat("CRIT Rate", 48.53, True)) == "48.5%"
-    assert genshin_card.formatStatValue(_stat("Max HP", 37032.4, False)) == "37,032"
+    assert (
+        genshin_card.formatStatValue(_stat("CRIT Rate", 48.53, True))
+        == "48.5%"
+    )
+    assert (
+        genshin_card.formatStatValue(_stat("Max HP", 37032.4, False))
+        == "37,032"
+    )

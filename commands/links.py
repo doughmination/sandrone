@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import config, mood
 from utils import components
 
@@ -22,19 +21,30 @@ class Invite(commands.Cog):
     async def buildInvitePanel(self) -> components.Panel:
         return components.panel(
             title="Sandrone links",
-            body="Add the bot, join the support server, or dig into the source.",
+            body=(
+                "Add the bot, join the support server, or dig into the "
+                "source."
+            ),
             buttons=[
                 components.linkButton(
-                    "Invite", "https://sandrone.doughmination.gay/invite", emoji="➕"
+                    "Invite",
+                    "https://sandrone.doughmination.gay/invite",
+                    emoji="➕",
                 ),
                 components.linkButton(
-                    "Support server", "https://sandrone.doughmination.gay/support", emoji="💬"
+                    "Support server",
+                    "https://sandrone.doughmination.gay/support",
+                    emoji="💬",
                 ),
                 components.linkButton(
-                    "Website", "https://sandrone.doughmination.gay", emoji="🌐"
+                    "Website",
+                    "https://sandrone.doughmination.gay",
+                    emoji="🌐",
                 ),
                 components.linkButton(
-                    "Source", "https://github.com/doughmination/sandrone", emoji="🧑‍💻"
+                    "Source",
+                    "https://github.com/doughmination/sandrone",
+                    emoji="🧑‍💻",
                 ),
             ],
             footer=f"Sandrone v{config.version}",

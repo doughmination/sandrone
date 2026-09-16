@@ -1,12 +1,10 @@
 import asyncio
+import discord
+from discord import app_commands
+import pytest
+from sandrone import checks
 from types import SimpleNamespace
 from typing import Any, cast
-
-import discord
-import pytest
-from discord import app_commands
-
-from sandrone import checks
 
 
 def permissionPredicate(**permissions: bool):

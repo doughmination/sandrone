@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import mood
 
 
@@ -13,10 +12,14 @@ class UserId(commands.Cog):
         name="uid",
         description="Get a user's ID",
     )
-    @app_commands.describe(user="The user to get the ID of (Default to you)")
+    @app_commands.describe(
+        user="The user to get the ID of (Default to you)"
+    )
     @mood.sassy
     async def uid(
-        self, interaction: discord.Interaction, user: discord.User | None = None
+        self,
+        interaction: discord.Interaction,
+        user: discord.User | None = None,
     ) -> None:
         await interaction.response.defer()
         target = user or interaction.user

@@ -19,8 +19,9 @@ data/*.jp
 .env.keys
 .idea/
 
-# Linting
+# Caches
 .ruff_cache/
+.pytest_cache/
 
 # Sandrone Specific files
 cog_state.json

@@ -1,11 +1,9 @@
 import asyncio
-import io
-
 import discord
 from discord import app_commands
 from discord.ext import commands
+import io
 from PIL import Image, UnidentifiedImageError
-
 from sandrone import checks, mood
 from utils import components
 from utils.choices import ChoiceSet
@@ -75,7 +73,9 @@ class Pride(commands.Cog):
         gradient="Blend the stripes instead of hard edges",
         animated="Spin the flag, as a GIF",
     )
-    @app_commands.autocomplete(flag=flagAutocomplete, flag2=flagAutocomplete)
+    @app_commands.autocomplete(
+        flag=flagAutocomplete, flag2=flagAutocomplete
+    )
     @app_commands.choices(style=prideStyles.options)
     @checks.hasPermissions(attach_files=True)
     @mood.sassy
@@ -96,7 +96,9 @@ class Pride(commands.Cog):
 
         requested = [name for name in (flag or "pride", flag2) if name]
         chosen = [resolveFlag(name) for name in requested]
-        unknown = [name for name, slug in zip(requested, chosen) if slug is None]
+        unknown = [
+            name for name, slug in zip(requested, chosen) if slug is None
+        ]
         if unknown:
             await interaction.followup.send(
                 view=components.error(
@@ -108,7 +110,9 @@ class Pride(commands.Cog):
 
         target = user or interaction.user
         options = PrideOptions(
-            columns=tuple(flagColours[slug] for slug in chosen if slug is not None),
+            columns=tuple(
+                flagColours[slug] for slug in chosen if slug is not None
+            ),
             cutout=prideStyles.resolve(style, "circle"),
             cutoutSize=int(size),
             opacity=int(opacity),
@@ -124,7 +128,9 @@ class Pride(commands.Cog):
             )
         except discord.HTTPException:
             await interaction.followup.send(
-                view=components.error("Couldn't download that profile picture.")
+                view=components.error(
+                    "Couldn't download that profile picture."
+                )
             )
             return
 
@@ -135,7 +141,9 @@ class Pride(commands.Cog):
             )
         except (UnidentifiedImageError, OSError, ValueError) as error:
             await interaction.followup.send(
-                view=components.error(f"Couldn't render that one: `{error}`")
+                view=components.error(
+                    f"Couldn't render that one: `{error}`"
+                )
             )
             return
 
@@ -148,8 +156,11 @@ class Pride(commands.Cog):
         )
 
         view = components.panel(
-            title=" + ".join(flagLabels[slug] for slug in chosen if slug is not None),
-            body=f"-# {target.display_name}" + (f"\n\n{note}" if note else ""),
+            title=" + ".join(
+                flagLabels[slug] for slug in chosen if slug is not None
+            ),
+            body=f"-# {target.display_name}"
+            + (f"\n\n{note}" if note else ""),
             images=[f"attachment://{filename}"],
             footer=self.footerText(result),
         )
@@ -159,7 +170,11 @@ class Pride(commands.Cog):
         )
 
     def draw(
-        self, source: bytes, options: PrideOptions, animated: bool, budget: int
+        self,
+        source: bytes,
+        options: PrideOptions,
+        animated: bool,
+        budget: int,
     ) -> Rendered:
         with Image.open(io.BytesIO(source)) as opened:
             avatar = opened.convert("RGBA")

@@ -1,10 +1,9 @@
 import discord
-import wikipediaapi
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import checks, config, mood
 from utils import components
+import wikipediaapi
 
 
 def formatText(text: str) -> str:
@@ -22,9 +21,13 @@ class Wikipedia(commands.Cog):
     @app_commands.describe(query="The query")
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
-    async def wikipedia(self, interaction: discord.Interaction, query: str) -> None:
+    async def wikipedia(
+        self, interaction: discord.Interaction, query: str
+    ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.wikiDefPanel(query))
+        await interaction.followup.send(
+            view=await self.wikiDefPanel(query)
+        )
 
     async def wikiDefPanel(self, query: str) -> components.Panel:
         wiki = wikipediaapi.AsyncWikipedia(
@@ -35,9 +38,12 @@ class Wikipedia(commands.Cog):
         if not await wikiPage.exists():
             return components.error(
                 "That Wikipedia page does not exist. Try adjusting your "
-                "capitalisation, as results are occasionally case-sensitive!"
+                "capitalisation, as results are occasionally "
+                "case-sensitive!"
             )
-        elif "Category:All disambiguation pages" in (await wikiPage.categories):
+        elif "Category:All disambiguation pages" in (
+            await wikiPage.categories
+        ):
             pageSummary = f'Disambiguations for "{query}":'
             pageLinks = await wikiPage.links
             for name in pageLinks:

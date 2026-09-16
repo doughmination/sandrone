@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from utils import components, jp_storage
 
 db = jp_storage.database("mods", version=1)
@@ -36,6 +35,15 @@ def setMod(guildId: int, target: ModTarget, allowed: bool) -> bool:
     return True
 
 
+def requireGuild(interaction: discord.Interaction) -> discord.Guild:
+    """The interaction's guild, for commands marked `guild_only`."""
+    if interaction.guild is None:
+        raise app_commands.NoPrivateMessage(
+            "This command can only be used in a server."
+        )
+    return interaction.guild
+
+
 def hasServerPermissions(member: discord.Member) -> bool:
     permissions = member.guild_permissions
     return permissions.administrator or permissions.manage_guild
@@ -44,9 +52,10 @@ def hasServerPermissions(member: discord.Member) -> bool:
 def isMod(member: discord.Member) -> bool:
     """Whether *member* may change this bot's settings in their guild.
 
-    Manage Server and Administrator always pass, whatever the stored list says.
-    Bot owners get nothing here: owner powers live in `ownerOnly()` and stop at
-    the bot's own plumbing, so they cannot quietly override a server's choices.
+    Manage Server and Administrator always pass, whatever the stored list
+    says. Bot owners get nothing here: owner powers live in `ownerOnly()`
+    and stop at the bot's own plumbing, so they cannot quietly override a
+    server's choices.
     """
     if hasServerPermissions(member):
         return True
@@ -60,7 +69,7 @@ def isMod(member: discord.Member) -> bool:
 
 
 def isManager():
-    """Check for settings commands: a mod, or someone with Manage Server."""
+    """Check for settings commands: a mod, or a Manage Server holder."""
 
     async def predicate(interaction: discord.Interaction) -> bool:
         if interaction.guild is None:
@@ -86,44 +95,64 @@ class Mods(commands.Cog):
         default_permissions=discord.Permissions(manage_guild=True),
     )
 
-    @mod.command(name="add", description="Let a user or role change my settings")
+    @mod.command(
+        name="add", description="Let a user or role change my settings"
+    )
     @app_commands.describe(target="The user or role to allow.")
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True)
-    async def add(self, interaction: discord.Interaction, target: ModTarget) -> None:
+    async def add(
+        self, interaction: discord.Interaction, target: ModTarget
+    ) -> None:
+        guild = requireGuild(interaction)
         if isinstance(target, discord.Member) and target.bot:
             await interaction.response.send_message(
-                view=components.error("Bots cannot be moderators."), ephemeral=True
+                view=components.error("Bots cannot be moderators."),
+                ephemeral=True,
             )
             return
 
-        changed = setMod(interaction.guild.id, target, True)
+        changed = setMod(guild.id, target, True)
         body = (
             f"{target.mention} can now change my settings."
             if changed
             else f"{target.mention} already could."
         )
-        await interaction.response.send_message(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(
+            view=components.panel(body=body), ephemeral=True
+        )
 
     @mod.command(name="remove", description="Revoke a user or role")
     @app_commands.describe(target="The user or role to revoke.")
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True)
-    async def remove(self, interaction: discord.Interaction, target: ModTarget) -> None:
-        changed = setMod(interaction.guild.id, target, False)
+    async def remove(
+        self, interaction: discord.Interaction, target: ModTarget
+    ) -> None:
+        guild = requireGuild(interaction)
+        changed = setMod(guild.id, target, False)
         if changed:
             body = f"{target.mention} can no longer change my settings."
-        elif isinstance(target, discord.Member) and hasServerPermissions(target):
-            body = f"{target.mention} was not on the list — they have Manage Server."
+        elif isinstance(target, discord.Member) and hasServerPermissions(
+            target
+        ):
+            body = (
+                f"{target.mention} was not on the list — they have Manage "
+                "Server."
+            )
         else:
             body = f"{target.mention} was not on the list."
-        await interaction.response.send_message(view=components.panel(body=body), ephemeral=True)
+        await interaction.response.send_message(
+            view=components.panel(body=body), ephemeral=True
+        )
 
-    @mod.command(name="list", description="Show who may change my settings")
+    @mod.command(
+        name="list", description="Show who may change my settings"
+    )
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True)
     async def listMods(self, interaction: discord.Interaction) -> None:
-        guild = interaction.guild
+        guild = requireGuild(interaction)
         users = modUsers(guild.id)
         roles = modRoles(guild.id)
 
@@ -131,7 +160,10 @@ class Mods(commands.Cog):
             await interaction.response.send_message(
                 view=components.panel(
                     title="Moderators",
-                    body="Nobody extra — only Manage Server and Administrator.",
+                    body=(
+                        "Nobody extra — only Manage Server and "
+                        "Administrator."
+                    ),
                     footer="Use `mod add` to allow a user or role.",
                 ),
                 ephemeral=True,
@@ -140,33 +172,45 @@ class Mods(commands.Cog):
 
         fields = []
         if roles:
-            fields.append(("Roles", "\n".join(mentions(guild.get_role, roles))))
+            fields.append(
+                ("Roles", "\n".join(mentions(guild.get_role, roles)))
+            )
         if users:
-            fields.append(("Users", "\n".join(mentions(guild.get_member, users))))
+            fields.append(
+                ("Users", "\n".join(mentions(guild.get_member, users)))
+            )
 
         await interaction.response.send_message(
             view=components.panel(
                 title="Moderators",
-                body="These can change my settings, alongside Manage Server:",
+                body=(
+                    "These can change my settings, alongside Manage "
+                    "Server:"
+                ),
                 fields=fields,
                 footer=f"{len(roles)} roles · {len(users)} users",
             ),
             ephemeral=True,
         )
 
-    @mod.command(name="reset", description="Revoke every stored user and role")
+    @mod.command(
+        name="reset", description="Revoke every stored user and role"
+    )
     @app_commands.guild_only()
     @app_commands.checks.has_permissions(manage_guild=True)
     async def reset(self, interaction: discord.Interaction) -> None:
-        if not modUsers(interaction.guild.id) and not modRoles(interaction.guild.id):
+        guild = requireGuild(interaction)
+        if not modUsers(guild.id) and not modRoles(guild.id):
             await interaction.response.send_message(
-                view=components.panel(body="Nothing to clear."), ephemeral=True
+                view=components.panel(body="Nothing to clear."),
+                ephemeral=True,
             )
             return
 
-        db.guild(interaction.guild.id).clear().save()
+        db.guild(guild.id).clear().save()
         await interaction.response.send_message(
-            view=components.panel(body="Moderator list cleared."), ephemeral=True
+            view=components.panel(body="Moderator list cleared."),
+            ephemeral=True,
         )
 
 
@@ -174,7 +218,9 @@ def mentions(lookup, ids: list[int]) -> list[str]:
     found = []
     for entryId in ids:
         entry = lookup(entryId)
-        found.append(f"- {entry.mention}" if entry else f"- `{entryId}` (gone)")
+        found.append(
+            f"- {entry.mention}" if entry else f"- `{entryId}` (gone)"
+        )
     return found
 
 

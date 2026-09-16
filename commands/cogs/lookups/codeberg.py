@@ -1,10 +1,8 @@
-import datetime as dt
-
 import aiohttp
+import datetime as dt
 import discord
 from discord import app_commands
 from discord.ext import commands
-
 from sandrone import checks, mood
 from utils import components
 
@@ -20,14 +18,18 @@ class Codeberg(commands.Cog):
     @app_commands.command(
         name="codeberg", description="Look up a Codeberg user"
     )
-    @app_commands.describe(username="The Codeberg username to fetch information on")
+    @app_commands.describe(
+        username="The Codeberg username to fetch information on"
+    )
     @checks.hasPermissions(embed_links=True)
     @mood.sassy
     async def codeberg(
         self, interaction: discord.Interaction, username: str
     ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(view=await self.fetchUserPanel(username))
+        await interaction.followup.send(
+            view=await self.fetchUserPanel(username)
+        )
 
     async def fetchUserPanel(self, username: str) -> components.Panel:
         try:
@@ -35,7 +37,9 @@ class Codeberg(commands.Cog):
                 f"https://codeberg.org/api/v1/users/{username}"
             ) as resp:
                 if resp.status != 200:
-                    return components.error("That Codeberg account does not exist.")
+                    return components.error(
+                        "That Codeberg account does not exist."
+                    )
                 data = await resp.json()
 
             login = data.get("username") or username
@@ -44,10 +48,14 @@ class Codeberg(commands.Cog):
                 params={"limit": "1"},
             ) as resp:
                 repoCount = (
-                    resp.headers.get("X-Total-Count") if resp.status == 200 else None
+                    resp.headers.get("X-Total-Count")
+                    if resp.status == 200
+                    else None
                 )
-        except (aiohttp.ClientError, TimeoutError):
-            return components.error("Couldn't reach Codeberg — try again in a moment.")
+        except aiohttp.ClientError, TimeoutError:
+            return components.error(
+                "Couldn't reach Codeberg — try again in a moment."
+            )
 
         website = data.get("website")
 
@@ -55,25 +63,36 @@ class Codeberg(commands.Cog):
         if data.get("description"):
             parts.append(f"{data.get('description')}\n")
         if website:
-            label = website.removeprefix("https://").removeprefix("http://")
+            label = website.removeprefix("https://").removeprefix(
+                "http://"
+            )
             parts.append(f"\n> **Website**: [{label}]({website})")
         if data.get("email"):
             parts.append(
-                f"\n> **Email**: [{data.get('email')}](mailto:{data.get('email')})"
+                "\n> **Email**: "
+                f"[{data.get('email')}](mailto:{data.get('email')})"
             )
         if data.get("location"):
             parts.append(f"\n> **Location**: {data.get('location')}")
         if data.get("followers_count"):
-            parts.append(f"\n> **Followers**: {data.get('followers_count')}")
+            parts.append(
+                f"\n> **Followers**: {data.get('followers_count')}"
+            )
         if data.get("following_count"):
-            parts.append(f"\n> **Following**: {data.get('following_count')}")
+            parts.append(
+                f"\n> **Following**: {data.get('following_count')}"
+            )
         if repoCount:
             parts.append(f"\n> **Public Repositories**: {repoCount}")
         if data.get("created"):
             joined = dt.datetime.fromisoformat(data.get("created"))
-            parts.append(f"\n> **Joined Codeberg**: <t:{int(joined.timestamp())}:D>")
+            parts.append(
+                f"\n> **Joined Codeberg**: <t:{int(joined.timestamp())}:D>"
+            )
         if data.get("is_admin"):
-            parts.append("\n\n**This user is a Codeberg site administrator.**")
+            parts.append(
+                "\n\n**This user is a Codeberg site administrator.**"
+            )
 
         return components.panel(
             title=username,

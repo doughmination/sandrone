@@ -2,8 +2,13 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from pluralkit import Client
-from pluralkit.v2 import Member, NotFound, PluralKitException, System, Unauthorized
-
+from pluralkit.v2 import (
+    Member,
+    NotFound,
+    PluralKitException,
+    System,
+    Unauthorized,
+)
 from sandrone import mood
 from utils import components
 
@@ -21,7 +26,9 @@ class Pluralkit(commands.Cog):
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
     async def pksystem(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member | None = None,
     ) -> None:
         ephemeral = user is not None
         target = user or interaction.user
@@ -32,7 +39,10 @@ class Pluralkit(commands.Cog):
             system = await pk.get_system(target.id)
         except NotFound:
             await interaction.followup.send(
-                f"❌ {target.mention} doesn't have a registered PluralKit system.",
+                (
+                    f"❌ {target.mention} doesn't have a registered "
+                    "PluralKit system."
+                ),
                 ephemeral=ephemeral,
             )
             return
@@ -59,7 +69,9 @@ class Pluralkit(commands.Cog):
     @app_commands.describe(user="The user to look up (defaults to you)")
     @mood.sassy
     async def pkfront(
-        self, interaction: discord.Interaction, user: discord.Member | None = None
+        self,
+        interaction: discord.Interaction,
+        user: discord.Member | None = None,
     ) -> None:
         ephemeral = user is not None
         target = user or interaction.user
@@ -67,10 +79,15 @@ class Pluralkit(commands.Cog):
         await interaction.response.defer(ephemeral=ephemeral)
 
         try:
-            fronters = [member async for member in pk.get_fronters(target.id)]
+            fronters = [
+                member async for member in pk.get_fronters(target.id)
+            ]
         except NotFound:
             await interaction.followup.send(
-                f"❌ {target.mention} doesn't have a registered PluralKit system.",
+                (
+                    f"❌ {target.mention} doesn't have a registered "
+                    "PluralKit system."
+                ),
                 ephemeral=ephemeral,
             )
             return
@@ -104,7 +121,10 @@ class Pluralkit(commands.Cog):
             if system.color
             else components.FUCHSIA
         )
-        lead = [f"-# {user.display_name}'s System", f"## {system.name or system.id}"]
+        lead = [
+            f"-# {user.display_name}'s System",
+            f"## {system.name or system.id}",
+        ]
         if system.description:
             lead.append(system.description)
 
@@ -126,7 +146,10 @@ class Pluralkit(commands.Cog):
     def buildFrontPanel(
         self, fronters: list[Member], user: discord.Member | discord.User
     ) -> components.Panel:
-        lead = [f"-# {user.display_name}'s System", "## Currently fronting"]
+        lead = [
+            f"-# {user.display_name}'s System",
+            "## Currently fronting",
+        ]
 
         if not fronters:
             return components.panel(
@@ -142,7 +165,13 @@ class Pluralkit(commands.Cog):
         )
         names = "\n".join(m.display_name or m.name for m in fronters)
         fields: list[components.Field] = [
-            (f"Fronter{'s' if len(fronters) != 1 else ''} ({len(fronters)})", names)
+            (
+                (
+                    f"Fronter{'s' if len(fronters) != 1 else ''} "
+                    f"({len(fronters)})"
+                ),
+                names,
+            )
         ]
         if primary.pronouns:
             fields.append(("Pronouns", primary.pronouns))

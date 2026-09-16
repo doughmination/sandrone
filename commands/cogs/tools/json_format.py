@@ -1,10 +1,8 @@
-import io
-import json
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import io
+import json
 from sandrone import checks, mood
 from utils import components
 from utils.choices import ChoiceSet
@@ -44,7 +42,9 @@ class JsonFormat(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="json", description="Pretty-print compact JSON")
+    @app_commands.command(
+        name="json", description="Pretty-print compact JSON"
+    )
     @app_commands.describe(
         data="The JSON to format",
         indent="How far to indent each level (defaults to 2 spaces)",
@@ -52,7 +52,7 @@ class JsonFormat(commands.Cog):
     @app_commands.choices(indent=indents.options)
     @checks.hasPermissions(attach_files=True)
     @mood.sassy
-    async def json(
+    async def formatJson(
         self,
         interaction: discord.Interaction,
         data: app_commands.Range[str, 1, maxInput],
@@ -61,7 +61,9 @@ class JsonFormat(commands.Cog):
         await interaction.response.defer()
 
         view, file = self.getJsonReply(data, indents.resolve(indent, "2"))
-        await interaction.followup.send(view=view, file=file or discord.utils.MISSING)
+        await interaction.followup.send(
+            view=view, file=file or discord.utils.MISSING
+        )
 
     def getJsonReply(
         self, data: str, indent: str
@@ -71,7 +73,9 @@ class JsonFormat(commands.Cog):
         except json.JSONDecodeError as error:
             return self.buildErrorPanel(data, error), None
 
-        pretty = json.dumps(parsed, indent=indentValues[indent], ensure_ascii=False)
+        pretty = json.dumps(
+            parsed, indent=indentValues[indent], ensure_ascii=False
+        )
         fields = [
             ("Contains", describeData(parsed)),
             ("Size", f"{len(data):,} → {len(pretty):,} chars"),
@@ -94,7 +98,10 @@ class JsonFormat(commands.Cog):
         return (
             components.panel(
                 title="✅ Formatted JSON",
-                body="That's too long to show inline, so here it is as a file.",
+                body=(
+                    "That's too long to show inline, so here it is as a "
+                    "file."
+                ),
                 fields=fields,
                 files=["attachment://formatted.json"],
                 footer="Sandrone",
@@ -111,7 +118,9 @@ class JsonFormat(commands.Cog):
             fields=[
                 (
                     f"Line {error.lineno}, column {error.colno}",
-                    components.codeBlock(components.caretAt(data, error.pos)),
+                    components.codeBlock(
+                        components.caretAt(data, error.pos)
+                    ),
                 ),
             ],
             footer="Sandrone",

@@ -1,15 +1,13 @@
-import hashlib
-import re
-import traceback
-from pathlib import Path
-from typing import Any
-
 import aiohttp
 import discord
 from discord import app_commands
 from discord.utils import utcnow
+import hashlib
 from jpml import JPError
-
+from pathlib import Path
+import re
+import traceback
+from typing import Any
 from utils import cf, jp_storage
 
 db = jp_storage.database("errors", version=1)
@@ -19,16 +17,16 @@ keepLimit = 50
 textLimit = 400
 traceLimit = 2400
 
-# Crockford's alphabet: no I, L, O or U, so a code read aloud or retyped from a
-# screenshot lands on the same entry.
+# Crockford's alphabet: no I, L, O or U, so a code read aloud or retyped
+# from a screenshot lands on the same entry.
 refAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 refLength = 4
 
 fallbackCode = "MALFUNCTION"
 loneWorkCode = "PUPPET"
 
-# What each code means, in the order they are tested. Discord's NotFound and
-# Forbidden are HTTPExceptions, so the narrow ones have to come first.
+# What each code means, in the order they are tested. Discord's NotFound
+# and Forbidden are HTTPExceptions, so the narrow ones have to come first.
 codes: tuple[tuple[str, str, tuple[type[BaseException], ...]], ...] = (
     (
         "WORKSHOP",
@@ -61,7 +59,10 @@ codes: tuple[tuple[str, str, tuple[type[BaseException], ...]], ...] = (
     ),
     (
         "BLIZZARD",
-        "Somewhere outside Discord did not answer — an API or the network.",
+        (
+            "Somewhere outside Discord did not answer — an API or the "
+            "network."
+        ),
         (aiohttp.ClientError, TimeoutError, ConnectionError),
     ),
     (
@@ -71,7 +72,10 @@ codes: tuple[tuple[str, str, tuple[type[BaseException], ...]], ...] = (
     ),
     (
         "BLUEPRINT",
-        "The data was the wrong shape — bad JSON, a missing key, a bad value.",
+        (
+            "The data was the wrong shape — bad JSON, a missing key, a "
+            "bad value."
+        ),
         (ValueError, KeyError, TypeError, AttributeError, IndexError),
     ),
 )
@@ -138,7 +142,8 @@ def digestOf(error: BaseException, command: str | None = None) -> str:
         )
     )
     value = int.from_bytes(
-        hashlib.blake2b(seed.encode("utf-8"), digest_size=8).digest(), "big"
+        hashlib.blake2b(seed.encode("utf-8"), digest_size=8).digest(),
+        "big",
     )
 
     characters = []
@@ -159,7 +164,11 @@ def reference(
 
 
 def entries() -> list[Entry]:
-    return [entry for entry in db.key(recentKey).list() if isinstance(entry, dict)]
+    return [
+        entry
+        for entry in db.key(recentKey).list()
+        if isinstance(entry, dict)
+    ]
 
 
 def recent(limit: int = 10) -> list[Entry]:
@@ -171,7 +180,10 @@ def count() -> int:
 
 
 def tidyRef(ref: str) -> str:
-    """Take a code as a person types it: `workshop-4f2k`, #WORKSHOP–4F2K, spaced."""
+    """Take a code as a person types it.
+
+    Handles `workshop-4f2k`, #WORKSHOP–4F2K, spaced out, and so on.
+    """
     cleaned = ref.strip().strip("`").lstrip("#").upper()
     cleaned = re.sub(r"[\s_–—]+", "-", cleaned)
     return re.sub(r"-+", "-", cleaned).strip("-")
@@ -198,12 +210,14 @@ def find(ref: str) -> Entry | None:
 def byCode(code: str) -> list[Entry]:
     wanted = tidyRef(code)
     return [
-        entry for entry in entries() if str(entry.get("code", "")).upper() == wanted
+        entry
+        for entry in entries()
+        if str(entry.get("code", "")).upper() == wanted
     ]
 
 
 def note(entry: Entry | None) -> str:
-    """The line appended to whatever the person who hit the error is told."""
+    """The line appended to what the person who hit the error is told."""
     if not entry or not entry.get("ref"):
         return ""
     return f"\n-# Fault `{entry['ref']}` — quote that if you report this."
@@ -230,9 +244,10 @@ def record(
 ) -> Entry | None:
     """Log *error* under a short reference and return the entry.
 
-    The same fault hitting twice keeps its reference and bumps `count` instead
-    of filling the log with copies. Called from error handlers, so it swallows
-    its own failures rather than replacing one error with another.
+    The same fault hitting twice keeps its reference and bumps `count`
+    instead of filling the log with copies. Called from error handlers, so
+    it swallows its own failures rather than replacing one error with
+    another.
     """
     try:
         code = codeOf(error, source)
@@ -260,7 +275,11 @@ def record(
         db.key(recentKey).write([entry, *others[: keepLimit - 1]]).save()
         return entry
     except (JPError, OSError, TypeError, ValueError) as e:
-        print(cf.red(f"[errors] could not record {type(error).__name__}: {e}"))
+        print(
+            cf.red(
+                f"[errors] could not record {type(error).__name__}: {e}"
+            )
+        )
         return None
 
 
@@ -270,7 +289,9 @@ def fromInteraction(
     return record(
         error,
         source="slash command",
-        command=interaction.command.qualified_name if interaction.command else None,
+        command=interaction.command.qualified_name
+        if interaction.command
+        else None,
         guild=interaction.guild,
         channel=interaction.channel,
         user=interaction.user,

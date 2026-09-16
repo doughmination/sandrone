@@ -1,12 +1,10 @@
 import asyncio
-from pathlib import Path
-from typing import cast
-
-import pytest
-from discord.ext import commands
-
 from commands.cogs.media.yt_dlp import Result, YtDlp
+from discord.ext import commands
+from pathlib import Path
+import pytest
 from sandrone import config
+from typing import cast
 from utils import downloads
 
 
@@ -20,7 +18,9 @@ def test_failed_metadata_write_discards_download(
         target.write_bytes(b"too large")
         return Result(target, "Video", 720)
 
-    def failRecordSource(slot: Path, key: str, name: str, extra: dict) -> None:
+    def failRecordSource(
+        slot: Path, key: str, name: str, extra: dict
+    ) -> None:
         raise OSError("full")
 
     monkeypatch.setattr(config, "downloadsDir", tmp_path)

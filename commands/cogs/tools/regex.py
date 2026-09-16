@@ -1,9 +1,7 @@
-import re
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import mood
 from utils import components
 
@@ -23,7 +21,9 @@ flagNames = {
 
 
 def describeFlags(compiled: re.Pattern[str]) -> str:
-    names = [name for flag, name in flagNames.items() if compiled.flags & flag]
+    names = [
+        name for flag, name in flagNames.items() if compiled.flags & flag
+    ]
     return ", ".join(f"`{name}`" for name in names) if names else "None"
 
 
@@ -37,11 +37,15 @@ def describeGroups(compiled: re.Pattern[str]) -> str:
     if not named:
         return summary
 
-    listed = ", ".join(f"`{name}` (#{index})" for name, index in named.items())
+    listed = ", ".join(
+        f"`{name}` (#{index})" for name, index in named.items()
+    )
     return f"{summary}\nNamed: {listed}"
 
 
-def findIssues(pattern: str, compiled: re.Pattern[str]) -> tuple[list[str], list[str]]:
+def findIssues(
+    pattern: str, compiled: re.Pattern[str]
+) -> tuple[list[str], list[str]]:
     warnings: list[str] = []
     notes: list[str] = []
 
@@ -53,27 +57,35 @@ def findIssues(pattern: str, compiled: re.Pattern[str]) -> tuple[list[str], list
 
     if nestedQuantifier.search(pattern):
         warnings.append(
-            "⚠️ A quantified group contains another quantifier (like `(a+)+`). "
-            "On a near-miss this can backtrack forever — that's how ReDoS hangs happen."
+            "⚠️ A quantified group contains another quantifier (like "
+            "`(a+)+`). "
+            "On a near-miss this can backtrack forever — that's how ReDoS "
+            "hangs happen."
         )
 
     if emptyBranch.search(pattern):
         warnings.append(
-            "⚠️ One alternation branch is empty, so it matches nothing at all. "
+            "⚠️ One alternation branch is empty, so it matches nothing at "
+            "all. "
             "`(a|)` is almost always meant to be `(a)?`."
         )
 
     if compiled.fullmatch("") is not None:
         warnings.append(
-            "⚠️ The whole pattern matches the empty string, so it will accept "
-            "empty input. Check your `*` quantifiers if that wasn't deliberate."
+            "⚠️ The whole pattern matches the empty string, so it will "
+            "accept "
+            "empty input. Check your `*` quantifiers if that wasn't "
+            "deliberate."
         )
 
     anchoredStart = pattern.startswith(("^", r"\A"))
-    anchoredEnd = pattern.endswith(("$", r"\Z")) and not pattern.endswith(r"\$")
+    anchoredEnd = pattern.endswith(("$", r"\Z")) and not pattern.endswith(
+        r"\$"
+    )
     if not anchoredStart and not anchoredEnd:
         notes.append(
-            "ℹ️ Unanchored, so it matches anywhere inside a string. Add `^` and `$` "
+            "ℹ️ Unanchored, so it matches anywhere inside a string. Add "
+            "`^` and `$` "
             "if you meant to validate a whole value."
         )
 
@@ -95,7 +107,9 @@ class Regex(commands.Cog):
         interaction: discord.Interaction,
         pattern: app_commands.Range[str, 1, maxInput],
     ) -> None:
-        await interaction.response.send_message(view=self.getRegexPanel(pattern))
+        await interaction.response.send_message(
+            view=self.getRegexPanel(pattern)
+        )
 
     def getRegexPanel(self, pattern: str) -> components.Panel:
         try:
@@ -104,13 +118,20 @@ class Regex(commands.Cog):
             return self.buildErrorPanel(pattern, error)
         return self.buildValidPanel(pattern, compiled)
 
-    def buildErrorPanel(self, pattern: str, error: re.error) -> components.Panel:
+    def buildErrorPanel(
+        self, pattern: str, error: re.error
+    ) -> components.Panel:
         position = error.pos if error.pos is not None else 0
         return components.panel(
             title="❌ Invalid pattern",
             body=f"**{error.msg}**",
             fields=[
-                (f"Column {position + 1}", components.codeBlock(components.caretAt(pattern, position))),
+                (
+                    f"Column {position + 1}",
+                    components.codeBlock(
+                        components.caretAt(pattern, position)
+                    ),
+                ),
             ],
             footer="Sandrone",
             color=components.RED,
@@ -127,14 +148,20 @@ class Regex(commands.Cog):
         if warnings:
             fields.append(("Issues", "\n\n".join(warnings)[:fieldLimit]))
         if notes:
-            fields.append(("Worth knowing", "\n\n".join(notes)[:fieldLimit]))
+            fields.append(
+                ("Worth knowing", "\n\n".join(notes)[:fieldLimit])
+            )
 
         return components.panel(
-            title="⚠️ Valid, with caveats" if warnings else "✅ Valid pattern",
+            title="⚠️ Valid, with caveats"
+            if warnings
+            else "✅ Valid pattern",
             body=components.codeBlock(pattern),
             fields=fields,
             footer="Sandrone",
-            color=discord.Color.orange() if warnings else discord.Color.green(),
+            color=discord.Color.orange()
+            if warnings
+            else discord.Color.green(),
         )
 
 

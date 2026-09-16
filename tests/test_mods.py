@@ -1,11 +1,9 @@
-from types import SimpleNamespace
-from typing import cast
-
+from commands.settings import mods
 import discord
 import pytest
-
-from commands.settings import mods
 from sandrone import config
+from types import SimpleNamespace
+from typing import cast
 
 guildId = 1234567890
 otherGuildId = 9876543210

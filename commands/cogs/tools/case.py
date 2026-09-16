@@ -1,9 +1,7 @@
-import re
-
 import discord
 from discord import app_commands
 from discord.ext import commands
-
+import re
 from sandrone import mood
 from utils import components
 from utils.choices import ChoiceSet
@@ -61,7 +59,9 @@ def applyCase(words: list[str], style: str) -> str:
     if style == "title":
         return " ".join(word.capitalize() for word in lowered)
     if style == "camel":
-        return lowered[0] + "".join(word.capitalize() for word in lowered[1:])
+        return lowered[0] + "".join(
+            word.capitalize() for word in lowered[1:]
+        )
     if style == "pascal":
         return "".join(word.capitalize() for word in lowered)
     if style == "snake":
@@ -75,7 +75,9 @@ class Case(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @app_commands.command(name="case", description="Convert text between cases")
+    @app_commands.command(
+        name="case", description="Convert text between cases"
+    )
     @app_commands.describe(
         text="The text to convert",
         to="The case to convert into",
@@ -102,7 +104,10 @@ class Case(commands.Cog):
         return components.panel(
             fields=[
                 (detectCase(text), components.codeBlock(text)),
-                (styleLabels[style], components.codeBlock(applyCase(words, style))),
+                (
+                    styleLabels[style],
+                    components.codeBlock(applyCase(words, style)),
+                ),
             ],
             footer="Sandrone",
         )

@@ -22,14 +22,7 @@ I learned Python in the least accessible and most hated way possible, and I alwa
 
 ### LICENSE
 
-The bot, and all it's code, is licensed under DASL-1.0, please read the [License](./licence.md) for terms.
-
-Names fully exempt from the license for this repo:
-- Aria Twilight
-- Lilly Luna
-
-Names allowed to PR to this repo:
-- [devrock07](https://github.com/devrock07)
+The bot, and all it's code, is licensed under DASL, please read the [License](./licence.md) for terms.
 
 ### Contributions
 ![img](./img/contrib.svg)

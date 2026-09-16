@@ -1,7 +1,7 @@
 # Sandrone
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/doughmination/sandrone/refs/heads/main/assets/avatar.png" height="150">
+  <img src="https://raw.githubusercontent.com/doughmination/sandrone/refs/heads/main/web/assets/avatar.png" height="150">
 </div>
 
 ### Status Badges

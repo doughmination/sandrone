@@ -177,7 +177,6 @@ class Debug(commands.Cog):
                 ],
                 footer=f"Owner-only · data in {config.dataDir}",
             ),
-            ephemeral=True,
         )
 
     @debug.command(

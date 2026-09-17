@@ -94,8 +94,7 @@ class Debug(commands.Cog):
 
     debug = app_commands.Group(
         name="debug",
-        description="(owner) Look inside the bot",
-        default_permissions=discord.Permissions(administrator=True),
+        description="(owner) Look inside the bot"
     )
 
     @debug.command(

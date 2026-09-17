@@ -142,6 +142,21 @@ h4 {
   color: var(--text);
 }
 
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.4em;
+  vertical-align: -0.15em;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+.nav-icon {
+  font-size: 1.2em;
+}
+
 /* Hero */
 
 .hero {

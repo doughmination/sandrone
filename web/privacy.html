@@ -10,7 +10,7 @@
 
   <!-- SEO Meta Tags -->
   <meta name="description"
-    content="Sandrone's privacy policy: no database, no analytics, no user accounts. What the bot stores, what Discord sends it, and which third-party services individual commands talk to.">
+    content="Sandrone's privacy policy: what its local databases store, no analytics, no user accounts. What the bot stores, what Discord sends it, and which third-party services individual commands talk to.">
   <meta name="author" content="Clove Twilight">
   <meta name="robots" content="index, follow">
 
@@ -35,7 +35,7 @@
   <meta property="og:site_name" content="Sandrone">
   <meta property="og:title" content="Privacy Policy — Sandrone">
   <meta property="og:description"
-    content="No database, no analytics, no user accounts. What Sandrone stores, what Discord sends it, and which third-party services it talks to.">
+    content="What Sandrone's local databases store, no analytics, no user accounts. What Sandrone stores, what Discord sends it, and which third-party services it talks to.">
   <meta property="og:image" content="https://sandrone.doughmination.gay/assets/banner.png">
   <meta property="og:image:width" content="1920">
   <meta property="og:image:height" content="1206">
@@ -64,11 +64,11 @@
     <div class="wrap">
       <p class="eyebrow">Legal</p>
       <h1>Privacy Policy</h1>
-      <p class="subtitle">Effective 11 September 2026</p>
+      <p class="subtitle">Effective 17 September 2026</p>
       <p class="lede">
-        Sandrone is a personal, hobby Discord bot. It has no database, no analytics, and no
-        user accounts. It writes three kinds of file to its host, none of them about you, and
-        this policy explains the little that does happen.
+        Sandrone is a personal, hobby Discord bot. It has no analytics and no user accounts.
+        It keeps three small local databases and writes a couple of kinds of file to its
+        host, and this policy explains what's in each of them.
       </p>
     </div>
   </section>
@@ -78,13 +78,36 @@
     <section aria-labelledby="stores">
       <h2 id="stores">What Sandrone stores about you</h2>
       <p class="section-lede">
-        Nothing. There is no database, no log of who ran what, and no profile kept on any
-        user. The bot writes <code>cog_state.json</code>, which records which command
-        modules the owner has switched off; it writes the temporary media files described
-        below; and it caches the game artwork <code>/genshin</code> draws its cards from,
-        which is Genshin Impact character art, not anything of yours. None of the three
-        contains user data of any kind: nothing links a stored file to the person who
-        requested it.
+        Sandrone keeps three small local databases on its host, alongside the files
+        described below.
+      </p>
+      <ul>
+        <li>
+          <strong>mods</strong>, per server: the user IDs and role IDs a server's own admins
+          have granted permission to change Sandrone's settings there, via
+          <code>/mod add</code>. Nothing is added unless someone with Manage Server puts it
+          there, and <code>/mod reset</code> clears a server's list at any time.
+        </li>
+        <li>
+          <strong>incidents</strong>, per server: the IDs of channels a server's admins have
+          told the puppet-incident feature to skip, via <code>/incidents ignore</code>. Just
+          channel IDs &mdash; no user data.
+        </li>
+        <li>
+          <strong>errors</strong>, one log shared across every server: up to the 50 most
+          recent distinct faults, kept until the bot owner clears them with
+          <code>/debug errors clear</code>. Each entry records the command that failed, the
+          error text, a traceback, and a label &mdash; name and ID &mdash; for the user,
+          channel and server involved, so the fault can be found and fixed. It is visible
+          only to the bot owner, through owner-only <code>/debug</code> commands, and is
+          never posted publicly.
+        </li>
+      </ul>
+      <p class="section-lede">
+        Beyond those, the bot writes <code>cog_state.json</code>, which records which
+        command modules the owner has switched off, and it caches the game artwork
+        <code>/genshin</code> draws its cards from &mdash; Genshin Impact character art, not
+        anything of yours. Neither of those two contains user data of any kind.
       </p>
     </section>
 
@@ -141,8 +164,11 @@
         below.
       </p>
       <p class="section-lede">
-        The one thing that can outlast the reply is a hosted <code>/yt-dlp</code> file,
-        covered above, and that is the media only, never your ID or the text you typed.
+        Two things can outlast the reply. One is a hosted <code>/yt-dlp</code> file,
+        covered above &mdash; the media only, never your ID or the text you typed. The other
+        is an entry in the errors database, covered above, if the command itself failed:
+        that entry does record your name, your ID, and whatever you typed if that's what
+        caused the fault.
       </p>
       <p class="section-lede">
         Sandrone does not have the message content intent. It cannot read your
@@ -193,10 +219,12 @@
     <section aria-labelledby="logs">
       <h2 id="logs">Logs</h2>
       <p class="section-lede">
-        When a command fails, the bot prints the command's name and the error text to its
-        own console on the host machine. That output can include a search term you passed
-        if the term is what caused the error. It is not stored long-term, not published, and
-        not linked to your account.
+        When a command fails, the bot prints the same details to its own console on the host
+        machine and records them in the errors database described above: the command's
+        name, the error text, which can include a search term you passed if that's what
+        caused it, and your name and ID. Console output is not stored beyond the terminal's
+        own scrollback and is not published; the database entry persists until it ages out
+        past 50 entries or the owner clears it.
       </p>
       <p class="section-lede">
         The console also records module loads and unloads, the count of expired downloads
@@ -226,10 +254,15 @@
     <section aria-labelledby="rights">
       <h2 id="rights">Your rights</h2>
       <p class="section-lede">
-        Because nothing about you is stored, there is nothing to export, correct, or delete,
-        so a deletion request would have no data to act on. If you would like to check that
-        for yourself, the bot's entire source is public and linked at the bottom of this
-        page.
+        Most of what Sandrone touches about you passes through in memory and is gone. What
+        can persist is a moderator entry in the <strong>mods</strong> database, if a
+        server's admin put you there, or your name and ID in an <strong>errors</strong>
+        entry, if a command you ran happened to fail. Email
+        <code>admin@doughmination.win</code> to ask what's held about you or to have it
+        removed; a moderator entry can also just be revoked with <code>/mod remove</code> by
+        anyone with Manage Server in that server. The bot's entire source is public and
+        linked at the bottom of this page, if you would like to check any of this for
+        yourself.
       </p>
       <p class="section-lede">
         Your data on Discord itself is a separate matter, governed by

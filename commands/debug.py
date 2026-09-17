@@ -159,7 +159,7 @@ class Debug(commands.Cog):
                 title="Debug · info",
                 fields=[
                     ("Runtime", "\n".join(runtime)),
-                    ("Server", "\n".join(server))
+                    ("Server", "\n".join(server)),
                     ("Connection", "\n".join(connection)),
                     ("Loaded", "\n".join(cogs)),
                     (

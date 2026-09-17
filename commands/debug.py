@@ -8,6 +8,7 @@ import os
 import platform
 from sandrone import checks, config
 from utils import components, errors, jp_storage
+import psutil as psu
 
 # What the bot wants everywhere, on top of whatever individual commands
 # ask for.
@@ -118,6 +119,10 @@ class Debug(commands.Cog):
             ),
         ]
 
+        server = [
+            f"Memory `{psu.virtual_memory().percent}%`"
+        ]
+
         connection = [
             f"Latency `{round(bot.latency * 1000)}ms`",
             f"Up `{since(started)}`"
@@ -154,6 +159,7 @@ class Debug(commands.Cog):
                 title="Debug · info",
                 fields=[
                     ("Runtime", "\n".join(runtime)),
+                    ("Server", "\n".join(server))
                     ("Connection", "\n".join(connection)),
                     ("Loaded", "\n".join(cogs)),
                     (

@@ -49,6 +49,15 @@ body {
   margin: 0;
   font-size: 1rem;
   line-height: 1.6;
+  cursor: url("https://m.doughmination.gay/cursors/sandrone/Normal.png") 0 0, default;
+}
+
+a,
+button,
+.button,
+[role="button"],
+label[for] {
+  cursor: url("https://m.doughmination.gay/cursors/sandrone/Link.png") 4 0, pointer;
 }
 
 .wrap {

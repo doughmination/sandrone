@@ -164,6 +164,71 @@ async def robots(request: web.Request) -> web.Response:
     )
 
 
+async def shardsPage(request: web.Request) -> web.FileResponse:
+    path = webAsset("shards.html")
+    if path is None:
+        raise web.HTTPInternalServerError(
+            text="web/shards.html is missing"
+        )
+    return web.FileResponse(path, status=203)
+
+
+async def shardsData(request: web.Request) -> web.Response:
+    bot = request.app[botKey]
+    shards: list[dict[str, Any]] = []
+
+    if bot is not None:
+        latencies = dict(getattr(bot, "latencies", None) or [])
+        shardCount = bot.shard_count or 1
+
+        for shardId in range(shardCount):
+            if latencies:
+                latency = latencies.get(shardId)
+                guilds = sum(
+                    1 for g in bot.guilds if (g.shard_id or 0) == shardId
+                )
+            else:
+                latency = bot.latency
+                guilds = len(bot.guilds)
+
+            shards.append(
+                {
+                    "id": shardId,
+                    "guilds": guilds,
+                    "latency": (
+                        round(latency * 1000)
+                        if latency is not None and math.isfinite(latency)
+                        else None
+                    ),
+                }
+            )
+
+    payload = {"shardCount": len(shards), "shards": shards}
+    return web.json_response(
+        payload, headers={"Cache-Control": "no-store"}
+    )
+
+
+async def statusRedirect(request) -> web.HTTPMovedPermanently:
+    raise web.HTTPMovedPermanently("/shards")
+
+
+async def privacyPage(request: web.Request) -> web.FileResponse:
+    path = webAsset("privacy.html")
+    if path is None:
+        raise web.HTTPInternalServerError(
+            text="web/privacy.html is missing"
+        )
+    return web.FileResponse(path)
+
+
+async def termsPage(request: web.Request) -> web.FileResponse:
+    path = webAsset("terms.html")
+    if path is None:
+        raise web.HTTPInternalServerError(text="web/terms.html is missing")
+    return web.FileResponse(path)
+
+
 async def notFound(request: web.Request) -> web.FileResponse:
     path = webAsset("404.html")
     if path is None:
@@ -185,7 +250,12 @@ def createApp(bot: Any = None) -> web.Application:
     app[botKey] = bot
     app[startedAtKey] = time.monotonic()
     app.router.add_get("/", index)
+    app.router.add_get("/shards", shardsPage)
+    app.router.add_get("/status", statusRedirect)
+    app.router.add_get("/privacy", privacyPage)
+    app.router.add_get("/terms", termsPage)
     app.router.add_get("/api/status", status)
+    app.router.add_get("/api/shards", shardsData)
     app.router.add_get("/sitemap.xml", sitemap)
     app.router.add_get("/robots.txt", robots)
     app.router.add_get("/docs", openDocs)

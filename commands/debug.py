@@ -5,9 +5,9 @@ from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt, utcnow
 import platform
+import psutil as psu
 from sandrone import checks, config
 from utils import components, errors, jp_storage
-import psutil as psu
 
 # What the bot wants everywhere, on top of whatever individual commands
 # ask for.
@@ -93,8 +93,7 @@ class Debug(commands.Cog):
         self.bot = bot
 
     debug = app_commands.Group(
-        name="debug",
-        description="(owner) Look inside the bot"
+        name="debug", description="(owner) Look inside the bot"
     )
 
     @debug.command(
@@ -118,9 +117,10 @@ class Debug(commands.Cog):
         ]
 
         server = [
-            f"Memory `{psu.virtual_memory().percent}%` · Disk Used `{psu.disk_usage('/').percent}%`",
+            f"Memory `{psu.virtual_memory().percent}%` · "
+            + f"Disk Used `{psu.disk_usage('/').percent}%`",
             f"Booted <t:{int(psu.boot_time())}:R>",
-            f"Running as `{psu.Process().username()}`"
+            f"Running as `{psu.Process().username()}`",
         ]
 
         connection = [

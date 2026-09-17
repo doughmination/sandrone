@@ -29,7 +29,7 @@
   <meta name="theme-color" content="#0b0a0d">
 
   <!-- Icons, Styles and Fonts -->
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/assets/stylesheets/style.css">
   <link rel="icon" href="/assets/avatar.png" type="image/png">
   <link rel="preload" href="/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
 
@@ -134,8 +134,7 @@
 
       <div class="cta">
         <a class="button primary" href="/invite"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/plus.svg)"></span>Invite the bot</a>
-        <a class="button" href="/docs"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Read the docs</a>
-        <a class="button" href="/support"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/message.svg)"></span>Support server</a>
+        <a class="button" href="/status"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/circle-question.svg)"></span>Status Page</a>
       </div>
 
       <p class="status" id="status" hidden>
@@ -283,7 +282,7 @@
         the YouTube content itself — never anything about who asked for it.
       </p>
       <p class="more">
-        <a href="https://docs.doughmination.gay/projects/sandrone/privacy/"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy policy</a>
+        <a href="/privacy"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy policy</a>
         · <a href="https://docs.doughmination.gay/projects/sandrone/downloads/"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/download.svg)"></span>Hosted downloads →</a>
       </p>
     </section>
@@ -334,8 +333,8 @@
         </div>
         <div>
           <h4>Legal</h4>
-          <a href="https://docs.doughmination.gay/projects/sandrone/tos/"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/script-text.svg)"></span>Terms of Service</a>
-          <a href="https://docs.doughmination.gay/projects/sandrone/privacy/"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy Policy</a>
+          <a href="/terms"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/script-text.svg)"></span>Terms of Service</a>
+          <a href="/privacy"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy Policy</a>
           <a href="https://github.com/doughmination/sandrone/blob/main/licence.md"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/tag.svg)"></span>Licence</a>
         </div>
       </div>
@@ -346,40 +345,7 @@
     </div>
   </footer>
 
-  <script>
-    (async () => {
-      const box = document.getElementById("status");
-      const text = document.getElementById("status-text");
-      if (!box || !text) return;
-
-      const duration = (seconds) => {
-        const d = Math.floor(seconds / 86400);
-        const h = Math.floor((seconds % 86400) / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        if (d) return `${d}d ${h}h`;
-        if (h) return `${h}h ${m}m`;
-        return `${m}m`;
-      };
-
-      try {
-        const response = await fetch("/api/status", { cache: "no-store" });
-        if (!response.ok) return;
-        const status = await response.json();
-
-        const parts = ["Workshop online"];
-        if (status.version) parts.push(`v${status.version}`);
-        if (typeof status.uptime === "number") parts.push(`up ${duration(status.uptime)}`);
-        if (typeof status.servers === "number") {
-          parts.push(`${status.servers} server${status.servers === 1 ? "" : "s"}`);
-        }
-
-        text.textContent = parts.join(" · ");
-        box.hidden = false;
-      } catch {
-        /* the page reads fine without it */
-      }
-    })();
-  </script>
+  <script src="/assets/scripts/status.js"></script>
 </body>
 
 </html>

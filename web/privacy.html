@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+
+  <!-- Page Title -->
+  <title>Privacy Policy · Sandrone</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Sandrone's privacy policy: no database, no analytics, no user accounts. What the bot stores, what Discord sends it, and which third-party services individual commands talk to.">
+  <meta name="author" content="Clove Twilight">
+  <meta name="robots" content="index, follow">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://sandrone.doughmination.gay/privacy">
+
+  <!-- iOS Web App Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sandrone">
+  <link rel="apple-touch-icon" href="/assets/avatar.png">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#0b0a0d">
+
+  <!-- Icons, Styles and Fonts -->
+  <link rel="stylesheet" href="/assets/stylesheets/style.css">
+  <link rel="icon" href="/assets/avatar.png" type="image/png">
+  <link rel="preload" href="/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- Open Graph / Discord / Facebook -->
+  <meta property="og:site_name" content="Sandrone">
+  <meta property="og:title" content="Privacy Policy — Sandrone">
+  <meta property="og:description"
+    content="No database, no analytics, no user accounts. What Sandrone stores, what Discord sends it, and which third-party services it talks to.">
+  <meta property="og:image" content="https://sandrone.doughmination.gay/assets/banner.png">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1206">
+  <meta property="og:image:alt" content="The Sandrone banner: the Seventh Fatui Harbinger's workshop.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sandrone.doughmination.gay/privacy">
+  <meta property="og:locale" content="en_GB">
+</head>
+
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="/assets/avatar.png" alt="" width="32" height="32">
+      <span>Sandrone</span>
+    </a>
+    <nav>
+      <a href="/docs"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Docs</a>
+      <a href="/#commands"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/commands.svg)"></span>Commands</a>
+      <a href="https://github.com/doughmination/sandrone"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/code.svg)"></span>Source</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Legal</p>
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">Effective 11 September 2026</p>
+      <p class="lede">
+        Sandrone is a personal, hobby Discord bot. It has no database, no analytics, and no
+        user accounts. It writes three kinds of file to its host, none of them about you, and
+        this policy explains the little that does happen.
+      </p>
+    </div>
+  </section>
+
+  <main id="content" class="wrap legal">
+
+    <section aria-labelledby="stores">
+      <h2 id="stores">What Sandrone stores about you</h2>
+      <p class="section-lede">
+        Nothing. There is no database, no log of who ran what, and no profile kept on any
+        user. The bot writes <code>cog_state.json</code>, which records which command
+        modules the owner has switched off; it writes the temporary media files described
+        below; and it caches the game artwork <code>/genshin</code> draws its cards from,
+        which is Genshin Impact character art, not anything of yours. None of the three
+        contains user data of any kind: nothing links a stored file to the person who
+        requested it.
+      </p>
+    </section>
+
+    <section aria-labelledby="downloads">
+      <h2 id="downloads">Hosted downloads (<code>/yt-dlp</code>)</h2>
+      <p class="section-lede">
+        <code>/yt-dlp</code> fetches a YouTube link as a file. When the result is small
+        enough it is attached to the reply and nothing is kept. When it is too big to
+        attach, the file is saved on the bot's host and the reply links to it instead.
+      </p>
+      <ul>
+        <li>
+          What is stored is the media file itself, the YouTube video or audio. It is not
+          tagged with your name, your user ID, the server, or the time, and there is no
+          index of who asked for what. Alongside it sits a small record used for caching
+          &mdash; the video's ID, the format, the title, the resolution and the size &mdash;
+          which likewise identifies no one.
+        </li>
+        <li>
+          Each file lives in its own directory with a random, unguessable name. Anyone who
+          has the link can download it while it exists; it is not otherwise listed or
+          searchable.
+        </li>
+        <li>
+          Files are served only from <code>sandrone.doughmination.gay</code>. See
+          <a href="https://docs.doughmination.gay/projects/sandrone/official-links/">Official links</a>.
+        </li>
+        <li>
+          A sweep deletes each file once it is older than the retention window, 24 hours by
+          default. Asking for the same video again while its copy still exists hands back
+          the same link and restarts that 24-hour timer, so a file in active use is not
+          swept out from under it; fetching the link directly does the same.
+        </li>
+        <li>
+          The bot refuses to keep any single file larger than a configured cap (2&nbsp;GiB
+          by default), so one large pull cannot fill the host's disk.
+        </li>
+      </ul>
+      <p class="section-lede">
+        If you would rather a download not sit on the host at all, keep it under your
+        server's attachment limit, or do not use the command.
+        <a href="https://docs.doughmination.gay/projects/sandrone/downloads/">Hosted downloads</a>
+        covers the mechanics in full.
+      </p>
+    </section>
+
+    <section aria-labelledby="discord-sends">
+      <h2 id="discord-sends">What Discord sends when you run a command</h2>
+      <p class="section-lede">
+        When you use a slash command, Discord delivers your user ID, your username, and
+        whatever text you typed into the command's options. Sandrone uses these in memory
+        to build its reply and then discards them. They are not written down, not retained
+        after the reply is sent, and not shared with anyone beyond the third parties listed
+        below.
+      </p>
+      <p class="section-lede">
+        The one thing that can outlast the reply is a hosted <code>/yt-dlp</code> file,
+        covered above, and that is the media only, never your ID or the text you typed.
+      </p>
+      <p class="section-lede">
+        Sandrone does not have the message content intent. It cannot read your
+        conversations &mdash; only what you type into a slash command's options.
+      </p>
+      <p class="section-lede">
+        For the puppet-incident feature
+        (<a href="https://docs.doughmination.gay/projects/sandrone/commands/#sandrones-moods">Sandrone's moods</a>),
+        the bot does notice when a message is sent, so it knows which channel is currently
+        active. All it keeps is a single "most recently active channel" pointer, held in
+        memory and wiped on restart. It records no message content &mdash; it cannot read
+        any &mdash; no author, and no history; the previous channel is simply overwritten by
+        the next.
+      </p>
+    </section>
+
+    <section aria-labelledby="third-party">
+      <h2 id="third-party">Third-party services</h2>
+      <p class="section-lede">
+        Some commands work by asking another service on your behalf. When you use one, the
+        search term you typed is sent to that service, which has its own privacy policy and
+        its own logs. Sandrone has no control over what they keep.
+      </p>
+      <ul>
+        <li><strong>GitHub</strong>, which receives the username or repository you name in <code>/github</code> and <code>/repo</code>.</li>
+        <li><strong>Codeberg</strong>, which receives the username you name in <code>/codeberg</code>.</li>
+        <li><strong>Wikipedia</strong>, which receives your search term from <code>/wikipedia</code>.</li>
+        <li><strong>Urban Dictionary</strong>, which receives your search term from <code>/urban-dictionary</code>.</li>
+        <li><strong>PluralKit</strong>, which is linked by <code>/snippet</code>'s plurality explainer, and which <code>/pksystem</code> and <code>/pkfront</code> query directly. Those two send the Discord ID of whoever they're run on (you, or the user you name) to PluralKit's API, to look up that account's registered system.</li>
+        <li><strong>Pluralpedia</strong> and <strong>morethanone.info</strong>, which are linked by <code>/snippet</code>'s plurality explainer.</li>
+        <li><strong>girlcockx.com</strong>, which receives the post URL you give <code>/tweet</code>, to build the embed.</li>
+        <li><strong>Bluesky's public API</strong>, which receives the handle and post ID you give <code>/bluesky</code>. The resulting embed links to <strong>xsky.app</strong>.</li>
+        <li><strong>WHOIS servers</strong>, which receive the domain or IP you give <code>/whois</code>. The lookup starts at IANA and follows referrals to the registry and registrar for that name, so more than one operator sees the query. It never carries anything about you &mdash; WHOIS has no facility for it.</li>
+        <li><strong>The Doughmination API</strong> (<code>doughmination.uk</code>), which <code>/profile</code> queries with the Discord ID of whoever the command is run on, and which <code>/genshin</code> queries with the Genshin UID you type. That UID is a game account number you supply, not something Sandrone knows about you, and it is not recorded anywhere.</li>
+        <li><strong>Enka.Network</strong>, which is where the Doughmination API gets Genshin account data from. Your UID reaches it through that API when you run <code>/genshin</code>; nothing about your Discord account does.</li>
+        <li><strong>The Argos Translate package index</strong>, which <code>/translate</code> contacts to list and download language models. The translation itself runs locally on the bot's host &mdash; the text you type is <strong>not</strong> sent to a translation service.</li>
+        <li><strong>cataas</strong>, which serves <code>/kitty</code> a random image and receives nothing about you.</li>
+        <li><strong>m.doughmination.gay</strong>, the CDN that serves images and GIFs, which your Discord client fetches the way it fetches any embedded image.</li>
+      </ul>
+      <p class="section-lede">
+        One thing worth being explicit about: <code>/stats</code> calls
+        <strong>ip-api.com</strong> to report where the bot's own server is hosted. It never
+        sends your IP address, and it cannot, because the bot does not have it. The result
+        is cached until the next restart, so it is asked at most once per run of the bot.
+      </p>
+    </section>
+
+    <section aria-labelledby="logs">
+      <h2 id="logs">Logs</h2>
+      <p class="section-lede">
+        When a command fails, the bot prints the command's name and the error text to its
+        own console on the host machine. That output can include a search term you passed
+        if the term is what caused the error. It is not stored long-term, not published, and
+        not linked to your account.
+      </p>
+      <p class="section-lede">
+        The console also records module loads and unloads, the count of expired downloads
+        removed by each sweep, and the channel a puppet incident was posted into (its name
+        and server, never a user). None of it mentions a user. Nothing else is logged.
+      </p>
+    </section>
+
+    <section aria-labelledby="age-restricted">
+      <h2 id="age-restricted">Age-restricted commands</h2>
+      <p class="section-lede">
+        A small number of commands are marked age-restricted. Discord itself decides who may
+        run them and where, based on your account age setting and the channel's rating.
+        Sandrone does not record who used them.
+      </p>
+    </section>
+
+    <section aria-labelledby="children">
+      <h2 id="children">Children</h2>
+      <p class="section-lede">
+        Sandrone is used through Discord, which requires its users to be at least 13, or
+        older where local law says so. It is not directed at children, and since it
+        collects nothing, it holds no children's data to speak of.
+      </p>
+    </section>
+
+    <section aria-labelledby="rights">
+      <h2 id="rights">Your rights</h2>
+      <p class="section-lede">
+        Because nothing about you is stored, there is nothing to export, correct, or delete,
+        so a deletion request would have no data to act on. If you would like to check that
+        for yourself, the bot's entire source is public and linked at the bottom of this
+        page.
+      </p>
+      <p class="section-lede">
+        Your data on Discord itself is a separate matter, governed by
+        <a href="https://discord.com/privacy">Discord's Privacy Policy</a>.
+      </p>
+    </section>
+
+    <section aria-labelledby="changes">
+      <h2 id="changes">Changes</h2>
+      <p class="section-lede">
+        If this policy changes, the effective date above changes with it, and the edit will
+        be visible in the site's commit history.
+      </p>
+    </section>
+
+    <section aria-labelledby="contact">
+      <h2 id="contact">Contact</h2>
+      <p class="section-lede">
+        Questions about this policy, or anything else privacy-related: email
+        <code>admin@doughmination.win</code>, or ask in the
+        <a href="/support">support server</a>.
+      </p>
+      <p class="section-lede">
+        The source is at
+        <a href="https://github.com/doughmination/sandrone">github.com/doughmination/sandrone</a>,
+        and every claim on this page can be checked against it.
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div class="footer-links">
+        <div>
+          <h4>Bot</h4>
+          <a href="/invite"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/plus.svg)"></span>Invite</a>
+          <a href="/support"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/message.svg)"></span>Support server</a>
+          <a href="/docs"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Documentation</a>
+        </div>
+        <div>
+          <h4>Source</h4>
+          <a href="https://github.com/doughmination/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/code.svg)"></span>GitHub</a>
+          <a href="https://codeberg.org/clove/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/git-branch.svg)"></span>Codeberg</a>
+          <a href="https://backup.doughmination.gay/clove/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/server.svg)"></span>dough-git</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="/terms"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/script-text.svg)"></span>Terms of Service</a>
+          <a href="/privacy"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy Policy</a>
+          <a href="https://github.com/doughmination/sandrone/blob/main/licence.md"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/tag.svg)"></span>Licence</a>
+        </div>
+      </div>
+      <p class="disclaimer">
+        "Sandrone" is a Genshin Impact character. This is an unofficial fan project, not
+        affiliated with or endorsed by HoYoverse.
+      </p>
+    </div>
+  </footer>
+
+</body>
+
+</html>

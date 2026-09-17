@@ -4,7 +4,6 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.utils import format_dt, utcnow
-import os
 import platform
 from sandrone import checks, config
 from utils import components, errors, jp_storage
@@ -115,12 +114,14 @@ class Debug(commands.Cog):
             ),
             (
                 f"{platform.system()} `{platform.release()}` · PID "
-                f"`{os.getpid()}`"
+                f"`{psu.Process().pid}`"
             ),
         ]
 
         server = [
-            f"Memory `{psu.virtual_memory().percent}%`"
+            f"Memory `{psu.virtual_memory().percent}%` · Disk Used `{psu.disk_usage('/').percent}%`",
+            f"Booted <t:{int(psu.boot_time())}:R>",
+            f"Running as `{psu.Process().username()}`"
         ]
 
         connection = [

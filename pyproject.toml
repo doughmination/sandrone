@@ -16,6 +16,7 @@ dependencies = [
     "jpml>=1.1.1",
     "pillow>=11.0.0",
     "pluralkit>=1.2.1",
+    "psutil>=7.2.2",
     "pygithub>=2.9.1",
     "python-dotenvx>=2.0.0",
     "qrcode[pil]>=8.2",

@@ -3,7 +3,7 @@ import discord
 from discord import app_commands
 from discord.utils import utcnow
 import hashlib
-from jpml import JPError
+from jpcl import JPError
 from pathlib import Path
 import re
 import traceback

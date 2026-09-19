@@ -782,12 +782,12 @@ wheels = [
 ]
 
 [[package]]
-name = "jpml"
+name = "jpcl"
 version = "1.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ab/79/f7a2536c3d13e257bf3911ecc926f03106683e9845820ec38cb792fe3291/jpml-1.1.1.tar.gz", hash = "sha256:f17098324d869f73fa6730a36842fe47e5b00fa581cec887f8672e090310af0d", size = 21513, upload-time = "2026-09-12T00:37:31.812Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/19/6842eec98ba94645b4aedc4d912d0c774116541ec3ddffae224220a9a8e1/jpcl-1.1.1.tar.gz", hash = "sha256:c98c5008a4ff050873d07404ecb6cd8a4d96d978172f53547a4854543d6dee45", size = 21538, upload-time = "2026-09-19T16:28:47.53Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/6e/cd214a671f0f4f677ff74729d9c73b619f9f7300318bd2be1fb74bc8f408/jpml-1.1.1-py3-none-any.whl", hash = "sha256:59a8bf81c81100fa10486df673b5d313a500af2b365b5f7ad801506b3d7387ea", size = 25942, upload-time = "2026-09-12T00:37:30.642Z" },
+    { url = "https://files.pythonhosted.org/packages/66/a7/f0a99986482c1bcc68dd174b5afc356a6673226d45a67053d26016c43b2b/jpcl-1.1.1-py3-none-any.whl", hash = "sha256:df15a3e094205e42bc97ad6cbde51f0a9ecb9ce730aa75ec899ce31a6e525b76", size = 25967, upload-time = "2026-09-19T16:28:46.197Z" },
 ]
 
 [[package]]
@@ -1724,7 +1724,7 @@ dependencies = [
     { name = "colorful" },
     { name = "discord-py" },
     { name = "imageio-ffmpeg" },
-    { name = "jpml" },
+    { name = "jpcl" },
     { name = "pillow" },
     { name = "pluralkit" },
     { name = "psutil" },
@@ -1751,7 +1751,7 @@ requires-dist = [
     { name = "colorful", specifier = ">=0.5.8" },
     { name = "discord-py", specifier = ">=2.7.1" },
     { name = "imageio-ffmpeg", specifier = ">=0.6.0" },
-    { name = "jpml", specifier = ">=1.1.1" },
+    { name = "jpcl", specifier = ">=1.1.1" },
     { name = "pillow", specifier = ">=11.0.0" },
     { name = "pluralkit", specifier = ">=1.2.1" },
     { name = "psutil", specifier = ">=7.2.2" },

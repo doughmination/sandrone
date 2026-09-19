@@ -1,7 +1,7 @@
 import asyncio
 import builtins
 from collections.abc import Iterator, Mapping, MutableMapping
-from jpml import SUFFIX, JPConfig, JPError
+from jpcl import SUFFIX, JPConfig, JPError
 from pathlib import Path
 from sandrone import config
 from typing import Any

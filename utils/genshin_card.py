@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from functools import lru_cache
 import io
+import re
 from PIL import Image, ImageDraw, ImageFont
 from sandrone import config
 from typing import Any
 
 CANVAS = (1462, 609)
+
+ASSET_BASE = "https://img-sandrone.doughmination.gay"
 
 FONT_DIR = config.assetsDir / "fonts"
 FONT_FILES = {
@@ -73,6 +76,11 @@ def _open(images: dict[str, bytes], url: str | None) -> Image.Image | None:
         return Image.open(io.BytesIO(blob)).convert("RGBA")
     except OSError, ValueError:
         return None
+
+
+def characterAssetUrl(name: str | None) -> str | None:
+    slug = re.sub(r"[^a-z0-9]+", "_", (name or "").lower()).strip("_")
+    return f"{ASSET_BASE}/characters/{slug}.png" if slug else None
 
 
 def _fit_height(im: Image.Image, height: int) -> Image.Image:
@@ -599,7 +607,10 @@ def renderCard(
 ) -> bytes:
     element = detail.get("element", "All")
     base = _background(element)
-    _character_art(base, _open(images, detail.get("art_url")))
+    art = _open(images, characterAssetUrl(detail.get("name")))
+    if art is None:
+        art = _open(images, detail.get("art_url"))
+    _character_art(base, art)
     _left_scrim(base)
 
     _rounded(base, (548, 12, 1000, 596), 12, (10, 12, 20, 140))
@@ -619,9 +630,11 @@ def renderCard(
 
 def iconUrls(detail: dict[str, Any]) -> list[str]:
     urls: list[str] = []
-    for key in ("art_url",):
-        if detail.get(key):
-            urls.append(detail[key])
+    custom = characterAssetUrl(detail.get("name"))
+    if custom:
+        urls.append(custom)
+    if detail.get("art_url"):
+        urls.append(detail["art_url"])
     weapon = detail.get("weapon") or {}
     if weapon.get("icon_url"):
         urls.append(weapon["icon_url"])

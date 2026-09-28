@@ -144,3 +144,28 @@ def test_format_stat_value():
         genshin_card.formatStatValue(_stat("Max HP", 37032.4, False))
         == "37,032"
     )
+
+
+@pytest.mark.parametrize(
+    ("name", "slug"),
+    [
+        ("Neuvillette", "neuvillette"),
+        ("Hu Tao", "hu_tao"),
+        ("Kaedehara Kazuha", "kaedehara_kazuha"),
+    ],
+)
+def test_character_asset_url(name, slug):
+    assert genshin_card.characterAssetUrl(name) == (
+        f"{genshin_card.ASSET_BASE}/characters/{slug}.png"
+    )
+
+
+def test_character_asset_url_blank_name():
+    assert genshin_card.characterAssetUrl("") is None
+    assert genshin_card.characterAssetUrl(None) is None
+
+
+def test_icon_urls_prefers_custom_character_art():
+    urls = genshin_card.iconUrls(FULL_DETAIL)
+    custom = genshin_card.characterAssetUrl("Neuvillette")
+    assert urls.index(custom) < urls.index(FULL_DETAIL["art_url"])

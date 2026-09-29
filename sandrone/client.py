@@ -14,64 +14,14 @@ from watchfiles import Change, awatch
 
 def discoverExtensions(directory: Path, package: str) -> list[str]:
     return sorted(
-        f"{package}.{path.stem}"async def applyNameStyle(self) -> None:
-        """Set her display name font/effect/colours in every server she's in.
-
-        discord.py has no wrapper for these fields yet, so they go straight
-        through the raw member-edit route. It's per-guild because bots can't
-        style their global profile.
-        """
-        fields = {
-            key: value
-            for key, value in (
-                ("display_name_font_id", config.displayNameFont),
-                ("display_name_effect_id", config.displayNameEffect),
-                ("display_name_colors", config.displayNameColors),
-            )
-            if value is not None
-        }
-        if not fields:
-            return
-
-        for guild in self.guilds:
-            try:
-                await self.http.edit_my_member(guild.id, **fields)
-            except discord.HTTPException as e:
-                print(cf.red(f"[style] couldn't style my name in {guild.id}: {e}"))
-            else:
-                print(cf.yellow(f"[style] name style set in {guild.name}"))
+        f"{package}.{path.stem}"
         for path in directory.glob("*.py")
         if path.stem != "__init__"
     )
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwasync def applyNameStyle(self) -> None:
-        """Set her display name font/effect/colours in every server she's in.
-
-        discord.py has no wrapper for these fields yet, so they go straight
-        through the raw member-edit route. It's per-guild because bots can't
-        style their global profile.
-        """
-        fields = {
-            key: value
-            for key, value in (
-                ("display_name_font_id", config.displayNameFont),
-                ("display_name_effect_id", config.displayNameEffect),
-                ("display_name_colors", config.displayNameColors),
-            )
-            if value is not None
-        }
-        if not fields:
-            return
-
-        for guild in self.guilds:
-            try:
-                await self.http.edit_my_member(guild.id, **fields)
-            except discord.HTTPException as e:
-                print(cf.red(f"[style] couldn't style my name in {guild.id}: {e}"))
-            else:
-                print(cf.yellow(f"[style] name style set in {guild.name}"))args):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._profileSet = False
         self.startedAt = discord.utils.utcnow()
@@ -193,6 +143,12 @@ class Bot(commands.Bot):
                 await self.tree.sync()
 
     async def applyNameStyle(self) -> None:
+        """Set her display name font/effect/colours in every server she's in.
+
+        discord.py has no wrapper for these fields yet, so they go straight
+        through the raw member-edit route. It's per-guild because bots can't
+        style their global profile.
+        """
         fields = {
             key: value
             for key, value in (

@@ -56,6 +56,16 @@ downloadsMaxSize = (
     int(os.getenv("DOWNLOADS_MAX_SIZE_MIB", "2048")) * 1024 * 1024
 )
 
+displayNameFont: int | None = 16
+displayNameEffect: int | None = 7
+displayNameColors: list[int] | None = [
+    0xD52D00,
+    0xFF9A56,
+    0xFFFFFF,
+    0xD362A4,
+    0xA30262,
+]
+
 owners: list[int] = [
     1464890289922641993,
     1025770042245251122,

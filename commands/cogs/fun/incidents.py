@@ -1,8 +1,6 @@
-from commands.admin import ownerOnly
 from commands.settings.incidents import isIgnored
 from datetime import datetime, timedelta
 import discord
-from discord import app_commands
 from discord.ext import commands, tasks
 from discord.utils import utcnow
 import random
@@ -114,22 +112,6 @@ class Incidents(commands.Cog):
         self.lastChannel = None
         self.lastActivity = None
         return True
-
-    @app_commands.command(
-        name="incident",
-        description=(
-            "(owner) Force a puppet incident in the last active channel"
-        ),
-    )
-    @ownerOnly()
-    async def incident(self, interaction: discord.Interaction) -> None:
-        fired = await self.fireIncident()
-        message = (
-            "Incident dispatched."
-            if fired
-            else "No suitable active channel right now."
-        )
-        await interaction.response.send_message(message, ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

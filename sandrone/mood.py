@@ -4,14 +4,36 @@ import random
 from sandrone import config
 from utils import components
 
+SASSY_CHANCE = 5
+
+
+class ShuffleBag:
+    """Hands out every item once, in random order, before any repeat."""
+
+    def __init__(self, items: list[str]) -> None:
+        self.items = items
+        self.remaining: list[str] = []
+        self.last: str | None = None
+
+    def draw(self) -> str:
+        if not self.remaining:
+            self.remaining = random.sample(self.items, len(self.items))
+            # Don't repeat the last line straight across a refill.
+            if len(self.remaining) > 1 and self.remaining[-1] == self.last:
+                self.remaining[0], self.remaining[-1] = (
+                    self.remaining[-1],
+                    self.remaining[0],
+                )
+        self.last = self.remaining.pop()
+        return self.last
+
+
 sassy_replies = [
     "Sandrone has determined that this command is beneath her.",
     (
         "Sandrone is tired of your command usage. Ask again nicely and "
         "she might do it."
     ),
-    "No.",
-    "Absolutely not.",
     "Sandrone has decided that you have used enough commands today.",
     "The puppet has reviewed your request. It has declined.",
     (
@@ -21,19 +43,22 @@ sassy_replies = [
 ]
 
 
+sassy_bag = ShuffleBag(sassy_replies)
+
+
 class SassyDenial(app_commands.CheckFailure):
     pass
 
 
 async def _sassyCheck(interaction: discord.Interaction) -> bool:
-    if random.randint(1, 10) != 1:
+    if random.randint(1, SASSY_CHANCE) != 1:
         return True
 
     await interaction.response.send_message(
         view=components.panel(
             body=(
                 "<:sandrone_refuses:1546669792595939468> "
-                f"{random.choice(sassy_replies)}"
+                f"{sassy_bag.draw()}"
             ),
             color=discord.Color.gold(),
         )
@@ -203,5 +228,8 @@ incident_replies = [
 ]
 
 
+incident_bag = ShuffleBag(incident_replies)
+
+
 def randomIncident() -> str:
-    return random.choice(incident_replies)
+    return incident_bag.draw()

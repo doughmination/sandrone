@@ -4,7 +4,7 @@ version = "2.6.0"
 description = "Python utility bot"
 readme = "README.md"
 authors = [
-    { name = "Clove Twilight", email = "admin@doughmination.win" }
+    { name = "Clove Twilight", email = "clove@doughmination.gay" }
 ]
 requires-python = ">=3.14"
 dependencies = [

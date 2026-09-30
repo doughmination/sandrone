@@ -51,7 +51,7 @@ class EightBall(commands.Cog):
         view = components.panel(
             fields=[
                 ("You asked", question),
-                ("Sandrone says", random.choice(responses)),
+                ("Sandrone says", random.choice(mood.ShuffleBag(responses))),
             ],
             footer="Sandrone",
         )

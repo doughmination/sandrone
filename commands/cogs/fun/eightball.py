@@ -1,7 +1,6 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-import random
 from sandrone import mood
 from utils import components
 
@@ -31,6 +30,8 @@ responses = [
     "Hah?! How should I know that? Figure it out on your own for once.",
 ]
 
+responses_bag = mood.ShuffleBag("eightball", responses)
+
 
 class EightBall(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -51,7 +52,10 @@ class EightBall(commands.Cog):
         view = components.panel(
             fields=[
                 ("You asked", question),
-                ("Sandrone says", random.choice(mood.ShuffleBag(responses))),
+                (
+                    "Sandrone says",
+                    responses_bag.draw(interaction.guild_id),
+                ),
             ],
             footer="Sandrone",
         )

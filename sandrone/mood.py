@@ -2,30 +2,55 @@ import discord
 from discord import app_commands
 import random
 from sandrone import config
-from utils import components
+from utils import components, jp_storage
 
 SASSY_CHANCE = 5
 
+bagDb = jp_storage.database("shuffle", version=1)
+
+# Where draws outside a guild (DMs) keep their bag.
+noGuildSection = "dm"
+
 
 class ShuffleBag:
-    """Hands out every item once, in random order, before any repeat."""
+    """Hands out every item once, in random order, before any repeat.
 
-    def __init__(self, items: list[str]) -> None:
+    Each guild gets its own bag, kept in data/shuffle.jp so it survives
+    restarts and can be read back when something looks off.
+    """
+
+    def __init__(self, name: str, items: list[str]) -> None:
+        self.name = name
         self.items = items
-        self.remaining: list[str] = []
-        self.last: str | None = None
 
-    def draw(self) -> str:
-        if not self.remaining:
-            self.remaining = random.sample(self.items, len(self.items))
+    def _scope(self, guildId: int | None) -> jp_storage.Scope:
+        if guildId is None:
+            return bagDb.section(noGuildSection)
+        return bagDb.guild(guildId)
+
+    def draw(self, guildId: int | None) -> str:
+        scope = self._scope(guildId)
+        remainingField = scope.key(f"{self.name}_remaining")
+        lastField = scope.key(f"{self.name}_last")
+
+        # Drop anything edited out of the list since the bag was filled,
+        # so a reworded line can't come back in its old form.
+        known = set(self.items)
+        remaining = [
+            item for item in remainingField.list() if item in known
+        ]
+        last = lastField.read()
+
+        if not remaining:
+            remaining = random.sample(self.items, len(self.items))
             # Don't repeat the last line straight across a refill.
-            if len(self.remaining) > 1 and self.remaining[-1] == self.last:
-                self.remaining[0], self.remaining[-1] = (
-                    self.remaining[-1],
-                    self.remaining[0],
-                )
-        self.last = self.remaining.pop()
-        return self.last
+            if len(remaining) > 1 and remaining[-1] == last:
+                remaining[0], remaining[-1] = remaining[-1], remaining[0]
+
+        drawn = remaining.pop()
+        remainingField.write(remaining)
+        lastField.write(drawn)
+        return drawn
 
 
 sassy_replies = [
@@ -43,7 +68,7 @@ sassy_replies = [
 ]
 
 
-sassy_bag = ShuffleBag(sassy_replies)
+sassy_bag = ShuffleBag("sassy", sassy_replies)
 
 
 class SassyDenial(app_commands.CheckFailure):
@@ -58,7 +83,7 @@ async def _sassyCheck(interaction: discord.Interaction) -> bool:
         view=components.panel(
             body=(
                 "<:sandrone_refuses:1546669792595939468> "
-                f"{sassy_bag.draw()}"
+                f"{sassy_bag.draw(interaction.guild_id)}"
             ),
             color=discord.Color.gold(),
         )
@@ -228,8 +253,8 @@ incident_replies = [
 ]
 
 
-incident_bag = ShuffleBag(incident_replies)
+incident_bag = ShuffleBag("incident", incident_replies)
 
 
-def randomIncident() -> str:
-    return incident_bag.draw()
+def randomIncident(guildId: int | None) -> str:
+    return incident_bag.draw(guildId)

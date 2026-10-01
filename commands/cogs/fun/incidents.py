@@ -94,7 +94,7 @@ class Incidents(commands.Cog):
         try:
             await channel.send(
                 view=components.panel(
-                    body=mood.randomIncident(),
+                    body=mood.randomIncident(channel.guild.id),
                     color=INCIDENT_COLOR,
                 )
             )

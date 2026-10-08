@@ -4,7 +4,7 @@ import random
 from sandrone import config
 from utils import components, jp_storage
 
-SASSY_CHANCE = 5
+SASSY_CHANCE = 20
 
 bagDb = jp_storage.database("shuffle", version=1)
 

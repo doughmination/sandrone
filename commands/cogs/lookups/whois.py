@@ -59,7 +59,16 @@ domainFields = (
         ("registrar", "sponsoring registrar", "registrar name"),
         False,
     ),
-    ("Registrant", ("registrant organization", "holder", "org"), False),
+    (
+        "Owner",
+        (
+            "registrant name",
+            "registrant organization",
+            "holder",
+            "org",
+        ),
+        False,
+    ),
     ("Country", ("registrant country", "country"), False),
     (
         "Registered",
@@ -100,7 +109,7 @@ domainFields = (
 )
 
 domainContactFields = (
-    ("Registrar URL", ("registrar url", "referral url"), False),
+    ("URL", ("registrar url", "referral url"), False),
     (
         "Abuse Email",
         ("registrar abuse contact email", "abuse contact"),
@@ -131,9 +140,9 @@ networkFields = (
 )
 
 networkContactFields = (
-    ("Abuse Email", ("orgabuseemail", "abuse-mailbox"), False),
-    ("Abuse Phone", ("orgabusephone",), False),
-    ("Abuse Handle", ("abuse-c",), False),
+    ("Email", ("orgabuseemail", "abuse-mailbox"), False),
+    ("Phone", ("orgabusephone",), False),
+    ("Handle", ("abuse-c",), False),
 )
 
 dateFormats = (
@@ -153,16 +162,13 @@ redactionMarkers = (
     "data protected",
 )
 
-# person-level contact lines in raw port 43 text. the organisation,
-# country and state of a contact are kept since those identify the
-# registrant without pointing at anyone's front door
-personalLine = re.compile(
-    r"^\s*(?:"
-    r"(?:registrant|admin|administrative|tech|technical|billing)"
-    r"(?![^:]*\b(?:organi[sz]ation|org|country|state|province)\b)"
-    r"|person|address|phone|fax-no|e-mail"
-    r")[^:]*:",
-    re.IGNORECASE,
+# the contact roles a domain record carries, as (heading, rdap key
+# prefix, port 43 key prefix). the registrant is the owner and gets its
+# own page, the rest share the contacts page
+contactRoles = (
+    ("Admin", "admin", "admin"),
+    ("Technical", "technical", "tech"),
+    ("Billing", "billing", "billing"),
 )
 
 eppPrefixes = ("client", "server", "pending")
@@ -397,12 +403,65 @@ def nameServersFrom(fields: dict[str, list[str]]) -> list[str]:
     return servers
 
 
-def scrubRecord(text: str) -> str:
-    return "\n".join(
-        line.split(":", 1)[0] + ": [hidden]"
-        if personalLine.match(line)
-        else line
-        for line in text.strip().splitlines()
+def present(
+    pairs: tuple[tuple[str, str | None], ...],
+) -> list[components.Field]:
+    return [(name, value[:1024]) for name, value in pairs if value]
+
+
+def portContact(
+    fields: dict[str, list[str]], prefix: str
+) -> list[components.Field]:
+    def get(*suffixes: str) -> str | None:
+        return firstValue(
+            fields, tuple(f"{prefix} {suffix}" for suffix in suffixes)
+        )
+
+    streets = [
+        street
+        for street in fields.get(f"{prefix} street", [])
+        if not isPlaceholder(street)
+    ]
+    address = [
+        part
+        for part in (
+            *streets,
+            get("city"),
+            get("state/province", "state", "province"),
+            get("postal code"),
+            get("country"),
+        )
+        if part
+    ]
+    phone = get("phone")
+    fax = get("fax")
+    return present(
+        (
+            ("Name", get("name")),
+            ("Organisation", get("organization", "organisation")),
+            ("Email", get("email")),
+            ("Phone", formatPhone(phone) if phone else None),
+            ("Fax", formatPhone(fax) if fax else None),
+            ("Address", ", ".join(address) or None),
+        )
+    )
+
+
+def contactsBody(
+    groups: list[tuple[str, list[components.Field]]],
+    owner: list[components.Field],
+) -> str:
+    # admin and tech are usually the owner again, so say so rather than
+    # printing the same block three times
+    return "\n\n".join(
+        f"**{heading}**\n"
+        + (
+            "> Same as the owner"
+            if owner and fields == owner
+            else quoteLines(fields)
+        )
+        for heading, fields in groups
+        if fields
     )
 
 
@@ -410,7 +469,8 @@ def buildPages(
     overview: list[components.Field],
     statuses: list[str],
     nameServers: list[str],
-    contacts: list[components.Field],
+    owner: list[components.Field],
+    contacts: list[tuple[str, list[components.Field]]],
     raw: str | None = None,
 ) -> tuple[Page, ...]:
     pages: list[Page] = []
@@ -421,6 +481,15 @@ def buildPages(
                 "Overview",
                 "Registration, dates and ownership",
                 quoteLines(overview),
+            )
+        )
+    if owner:
+        pages.append(
+            Page(
+                "owner",
+                "Owner",
+                "Who the domain is registered to",
+                quoteLines(owner),
             )
         )
     if statuses:
@@ -441,13 +510,13 @@ def buildPages(
                 quoteList([f"`{server}`" for server in nameServers]),
             )
         )
-    if contacts:
+    if any(fields for _, fields in contacts):
         pages.append(
             Page(
                 "contacts",
                 "Contacts",
-                "Registrar and abuse contacts",
-                quoteLines(contacts),
+                "Registrar, abuse and other contacts",
+                contactsBody(contacts, owner),
             )
         )
     if raw:
@@ -479,10 +548,6 @@ def rdapCandidates(domain: str) -> list[tuple[str, str]]:
 
 
 def rdapPages(record: dict[str, Any]) -> tuple[Page, ...]:
-    # contact names, emails, phones and addresses for the registrant,
-    # admin and tech are left out on purpose: rdap hands them over for
-    # unredacted registrations, and the bot shouldn't post someone's
-    # home address into a channel
     def text(key: str) -> str | None:
         value = record.get(key)
         if not isinstance(value, str) or isPlaceholder(value):
@@ -495,35 +560,52 @@ def rdapPages(record: dict[str, Any]) -> tuple[Page, ...]:
             return None
         return formatStamp(value)
 
-    def present(
-        pairs: tuple[tuple[str, str | None], ...],
-    ) -> list[components.Field]:
-        return [(name, value) for name, value in pairs if value]
+    def phone(key: str) -> str | None:
+        value = text(key)
+        return formatPhone(value) if value else None
 
-    phone = text("registrar_phone")
-    abusePhone = text("abuse_phone")
+    def contact(prefix: str) -> list[components.Field]:
+        return present(
+            (
+                ("Name", text(f"{prefix}_name")),
+                ("Organisation", text(f"{prefix}_organization")),
+                ("Email", text(f"{prefix}_email")),
+                ("Phone", phone(f"{prefix}_phone")),
+                ("Fax", phone(f"{prefix}_fax")),
+                ("Address", text(f"{prefix}_address")),
+            )
+        )
+
     overview = present(
         (
             ("Registrar", text("registrar_name")),
-            ("Registrant", text("registrant_organization")),
+            (
+                "Owner",
+                text("registrant_name") or text("registrant_organization"),
+            ),
             ("Registered", date("created_date")),
             ("Updated", date("updated_date")),
             ("Expires", date("expires_date")),
             ("DNSSEC", text("dnssec")),
         )
     )
-    contacts = present(
+    owner = contact("registrant")
+    contacts = [
+        ("Registrar", contact("registrar")),
         (
-            ("Registrar Email", text("registrar_email")),
-            ("Registrar Phone", formatPhone(phone) if phone else None),
-            ("Registrar Address", text("registrar_address")),
-            ("Abuse Email", text("abuse_email")),
-            (
-                "Abuse Phone",
-                formatPhone(abusePhone) if abusePhone else None,
+            "Abuse",
+            present(
+                (
+                    ("Email", text("abuse_email")),
+                    ("Phone", phone("abuse_phone")),
+                )
             ),
-        )
-    )
+        ),
+        *(
+            (heading, contact(prefix))
+            for heading, prefix, _ in contactRoles
+        ),
+    ]
     statuses: list[str] = []
     for status in record.get("status") or []:
         code = eppCode(status) if isinstance(status, str) else ""
@@ -534,7 +616,7 @@ def rdapPages(record: dict[str, Any]) -> tuple[Page, ...]:
         for server in record.get("nameservers") or []
         if isinstance(server, str)
     ]
-    return buildPages(overview, statuses, servers, contacts)
+    return buildPages(overview, statuses, servers, owner, contacts)
 
 
 async def askServer(server: str, query: str) -> str:
@@ -648,10 +730,19 @@ async def buildReport(target: str) -> Report:
     server, text = records[-1]
     fields = mergeRecords(records)
     overview = pickFields(fields, networkFields if isIp else domainFields)
-    contacts = pickFields(
-        fields, networkContactFields if isIp else domainContactFields
-    )
-    raw = scrubRecord(text)
+    if isIp:
+        owner: list[components.Field] = []
+        contacts = [("Abuse", pickFields(fields, networkContactFields))]
+    else:
+        owner = portContact(fields, "registrant")
+        contacts = [
+            ("Registrar", pickFields(fields, domainContactFields)),
+            *(
+                (heading, portContact(fields, prefix))
+                for heading, _, prefix in contactRoles
+            ),
+        ]
+    raw = text.strip()
 
     if not overview and any(
         marker in text.lower() for marker in notFoundMarkers
@@ -667,6 +758,7 @@ async def buildReport(target: str) -> Report:
             overview,
             statusesFrom(fields),
             [] if isIp else nameServersFrom(fields),
+            owner,
             contacts,
             raw,
         ),

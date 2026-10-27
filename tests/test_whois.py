@@ -57,16 +57,20 @@ def test_epp_codes_from_rdap_and_port_43_agree() -> None:
     assert whois.formatStatus("connect") == "`connect`"
 
 
-def test_rdap_pages_never_leak_personal_contacts() -> None:
+def test_rdap_pages_show_the_owner_and_contacts() -> None:
+    owner = {
+        "name": "Some Person",
+        "email": "person@example.com",
+        "address": "1 Home Street, Sheffield",
+        "phone": "tel:+44.0000000000",
+    }
     record = {
         "domain_name": "example.gay",
         "registrar_name": "NAMECHEAP INC",
         "registrar_phone": "tel:+1.6613102107",
-        "registrant_name": "Some Person",
-        "registrant_email": "person@example.com",
-        "registrant_address": "1 Home Street",
-        "registrant_phone": "tel:+44.0000000000",
-        "technical_email": "person@example.com",
+        **{f"registrant_{key}": value for key, value in owner.items()},
+        **{f"technical_{key}": value for key, value in owner.items()},
+        "admin_name": "Someone Else",
         "abuse_email": "abuse@namecheap.com",
         "created_date": dt.datetime(2026, 3, 15, tzinfo=dt.UTC),
         "status": ["client transfer prohibited"],
@@ -74,46 +78,56 @@ def test_rdap_pages_never_leak_personal_contacts() -> None:
     }
 
     pages = {page.key: page for page in whois.rdapPages(record)}
-    rendered = "\n".join(page.body for page in pages.values())
 
-    assert list(pages) == ["overview", "status", "nameservers", "contacts"]
-    assert "> **Registrar**: NAMECHEAP INC" in pages["overview"].body
+    assert list(pages) == [
+        "overview",
+        "owner",
+        "status",
+        "nameservers",
+        "contacts",
+    ]
+    assert "> **Owner**: Some Person" in pages["overview"].body
     assert ":R>" in pages["overview"].body
+    assert "> **Email**: person@example.com" in pages["owner"].body
+    assert "> **Phone**: +44.0000000000" in pages["owner"].body
+    assert "1 Home Street, Sheffield" in pages["owner"].body
     assert "`ns1.example.com`" in pages["nameservers"].body
-    assert "+1.6613102107" in pages["contacts"].body
-    for leaked in ("Some Person", "person@example.com", "Home Street"):
-        assert leaked not in rendered
+    contacts = pages["contacts"].body
+    assert "> **Phone**: +1.6613102107" in contacts
+    assert "**Abuse**\n> **Email**: abuse@namecheap.com" in contacts
+    assert "**Technical**\n> Same as the owner" in contacts
+    assert "**Admin**\n> **Name**: Someone Else" in contacts
+    assert "Billing" not in contacts
 
 
 def test_rdap_pages_drop_redacted_registrant() -> None:
-    record = {"registrant_organization": "REDACTED FOR PRIVACY"}
+    record = {
+        "registrant_name": "REDACTED FOR PRIVACY",
+        "registrant_organization": "REDACTED FOR PRIVACY",
+    }
     assert whois.rdapPages(record) == ()
 
 
-def test_scrub_record_hides_people_but_keeps_registry_facts() -> None:
+def test_port_contact_builds_an_address_from_its_parts() -> None:
     lines = [
-        "Domain Name: example.gay",
-        "Registrar: NAMECHEAP INC",
         "Registrant Name: Some Person",
-        "Registrant Organization: Example Ltd",
+        "Registrant Organization: REDACTED FOR PRIVACY",
         "Registrant Street: 1 Home Street",
+        "Registrant Street: Flat 2",
+        "Registrant City: Sheffield",
+        "Registrant Postal Code: S1 1AA",
         "Registrant Country: GB",
-        "Admin Email: person@example.com",
-        "Tech Phone: +44.0000000000",
-        "Registrar Abuse Contact Email: abuse@namecheap.com",
-        "address:        1 Home Street",
-        "e-mail:         person@example.com",
+        "Registrant Phone: +44.0000000000",
+        "Registrant Email: person@example.com",
     ]
-    raw = "\n".join(lines)
+    fields = whois.parseRecord("\n".join(lines))
 
-    scrubbed = whois.scrubRecord(raw)
-
-    for leaked in ("Some Person", "Home Street", "person@example.com"):
-        assert leaked not in scrubbed
-    assert "Registrant Name: [hidden]" in scrubbed
-    assert "Registrant Organization: Example Ltd" in scrubbed
-    assert "Registrant Country: GB" in scrubbed
-    assert "abuse@namecheap.com" in scrubbed
+    assert whois.portContact(fields, "registrant") == [
+        ("Name", "Some Person"),
+        ("Email", "person@example.com"),
+        ("Phone", "+44.0000000000"),
+        ("Address", "1 Home Street, Flat 2, Sheffield, S1 1AA, GB"),
+    ]
 
 
 def test_report_menu_round_trips_through_its_custom_id() -> None:

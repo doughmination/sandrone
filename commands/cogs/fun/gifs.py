@@ -42,7 +42,7 @@ class Gifs(commands.Cog):
             return components.error(f"There's no gif called `{gif}`.")
 
         return components.panel(
-            images=[f"https://m.doughmination.gay/gif/{slug}.gif"],
+            images=[f"https://raw.doughmination.gay/gif/{slug}.gif"],
             footer="Sandrone",
         )
 

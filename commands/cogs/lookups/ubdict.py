@@ -81,7 +81,7 @@ class UrbanDictionary(commands.Cog):
             title=f"Searched '{query}' and found:",
             url=reply.get("permalink"),
             body="".join(parts),
-            thumbnail="https://m.doughmination.gay/img/search.png",
+            thumbnail="https://raw.doughmination.gay/img/search.png",
             footer=f"by {reply.get('author')}, Urban Dictionary",
         )
 

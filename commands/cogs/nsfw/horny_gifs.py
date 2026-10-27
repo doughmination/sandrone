@@ -49,7 +49,7 @@ class NsfwGifs(commands.Cog):
             return components.error(f"There's no gif called `{gif}`.")
 
         return components.panel(
-            images=[f"https://m.doughmination.gay/gif/nsfw/{slug}.gif"],
+            images=[f"https://raw.doughmination.gay/gif/nsfw/{slug}.gif"],
             footer="Sandrone",
         )
 

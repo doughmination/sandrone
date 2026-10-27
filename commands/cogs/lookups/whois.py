@@ -1,19 +1,38 @@
 import asyncio
+from dataclasses import dataclass
 import datetime as dt
 import discord
 from discord import app_commands
 from discord.ext import commands
+import httpx2
 import ipaddress
 import re
 from sandrone import mood
+import time
+from typing import Any
 from utils import components
+import whodap
+from whodap.errors import WhodapError
 
 ianaServer = "whois.iana.org"
 whoisPort = 43
 lookupTimeout = 10
 maxHops = 4
+# registered names sit at most this many labels above the tld, as in
+# example.co.uk, so www.a.b.example.com can't fan out into dozens of
+# requests
+maxRdapLookups = 3
+complaintForm = "https://www.icann.org/wicf/"
+eppStatusDocs = "https://icann.org/epp#"
 
-thumbnail = "https://m.doughmination.gay/img/search.png"
+thumbnail = "https://raw.doughmination.gay/img/search.png"
+
+cacheTtl = 300.0
+maxCached = 64
+rawLimit = 3500
+
+PAGE_PREFIX = "whois:"
+PAGE_TEMPLATE = r"whois:(?P<target>\S+)"
 
 queryFormats = {
     "whois.verisign-grs.com": "domain {query}",
@@ -40,6 +59,8 @@ domainFields = (
         ("registrar", "sponsoring registrar", "registrar name"),
         False,
     ),
+    ("Registrant", ("registrant organization", "holder", "org"), False),
+    ("Country", ("registrant country", "country"), False),
     (
         "Registered",
         (
@@ -75,19 +96,17 @@ domainFields = (
         ),
         True,
     ),
+    ("DNSSEC", ("dnssec",), False),
+)
+
+domainContactFields = (
+    ("Registrar URL", ("registrar url", "referral url"), False),
     (
-        "Registrant",
-        (
-            "registrant organization",
-            "registrant name",
-            "registrant",
-            "holder",
-            "org",
-        ),
+        "Abuse Email",
+        ("registrar abuse contact email", "abuse contact"),
         False,
     ),
-    ("Country", ("registrant country", "country"), False),
-    ("DNSSEC", ("dnssec",), False),
+    ("Abuse Phone", ("registrar abuse contact phone",), False),
 )
 
 networkFields = (
@@ -109,7 +128,12 @@ networkFields = (
     ("Country", ("country",), False),
     ("Registered", ("regdate", "created"), True),
     ("Updated", ("updated", "last-modified", "changed"), True),
-    ("Abuse", ("orgabuseemail", "abuse-mailbox", "abuse-c"), False),
+)
+
+networkContactFields = (
+    ("Abuse Email", ("orgabuseemail", "abuse-mailbox"), False),
+    ("Abuse Phone", ("orgabusephone",), False),
+    ("Abuse Handle", ("abuse-c",), False),
 )
 
 dateFormats = (
@@ -120,6 +144,61 @@ dateFormats = (
     "%Y/%m/%d",
     "%d.%m.%Y",
 )
+
+redactionMarkers = (
+    "redacted",
+    "privacy",
+    "withheld",
+    "not disclosed",
+    "data protected",
+)
+
+# person-level contact lines in raw port 43 text. the organisation,
+# country and state of a contact are kept since those identify the
+# registrant without pointing at anyone's front door
+personalLine = re.compile(
+    r"^\s*(?:"
+    r"(?:registrant|admin|administrative|tech|technical|billing)"
+    r"(?![^:]*\b(?:organi[sz]ation|org|country|state|province)\b)"
+    r"|person|address|phone|fax-no|e-mail"
+    r")[^:]*:",
+    re.IGNORECASE,
+)
+
+eppPrefixes = ("client", "server", "pending")
+eppStandalone = {
+    "ok",
+    "active",
+    "inactive",
+    "addperiod",
+    "autorenewperiod",
+    "renewperiod",
+    "transferperiod",
+    "redemptionperiod",
+}
+
+
+class WhoisError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class Page:
+    key: str
+    label: str
+    description: str | None
+    body: str
+
+
+@dataclass(frozen=True)
+class Report:
+    title: str
+    source: str
+    pages: tuple[Page, ...]
+    complaintForm: bool = False
+
+
+_reports: dict[str, tuple[float, Report]] = {}
 
 
 def normaliseQuery(query: str) -> str:
@@ -138,6 +217,12 @@ def isNetwork(query: str) -> bool:
     except ValueError:
         return query.isdigit()
     return True
+
+
+def isGeneric(domain: str) -> bool:
+    # country codes are always two letters, and icann only polices
+    # the rest
+    return len(domain.rsplit(".", 1)[-1]) > 2
 
 
 def addField(fields: dict[str, list[str]], key: str, value: str) -> None:
@@ -191,7 +276,8 @@ def parseRecord(text: str) -> dict[str, list[str]]:
 
 def isPlaceholder(value: str) -> bool:
     value = value.strip()
-    if value.lower() in (
+    lowered = value.lower()
+    if lowered in (
         "n/a",
         "na",
         "none",
@@ -200,6 +286,8 @@ def isPlaceholder(value: str) -> bool:
         "not applicable",
     ):
         return True
+    if any(marker in lowered for marker in redactionMarkers):
+        return True
     return value.startswith(("0000-00-00", "0001-01-01"))
 
 
@@ -207,10 +295,17 @@ def firstValue(
     fields: dict[str, list[str]], keys: tuple[str, ...]
 ) -> str | None:
     for key in keys:
-        values = fields.get(key)
-        if values:
-            return values[0]
+        for value in fields.get(key, []):
+            if not isPlaceholder(value):
+                return value
     return None
+
+
+def formatStamp(stamp: dt.datetime) -> str:
+    if stamp.tzinfo is None:
+        stamp = stamp.replace(tzinfo=dt.UTC)
+    seconds = int(stamp.timestamp())
+    return f"<t:{seconds}:D> (<t:{seconds}:R>)"
 
 
 def formatDate(value: str) -> str:
@@ -229,28 +324,64 @@ def formatDate(value: str) -> str:
                 continue
     if stamp is None:
         return value
-    if stamp.tzinfo is None:
-        stamp = stamp.replace(tzinfo=dt.UTC)
-    return f"<t:{int(stamp.timestamp())}:D>"
+    return formatStamp(stamp)
 
 
-def formatStatuses(fields: dict[str, list[str]]) -> str | None:
+def formatPhone(value: str) -> str:
+    return value.removeprefix("tel:")
+
+
+def eppCode(status: str) -> str:
+    words = status.split()
+    if len(words) > 1 and all(word.isalpha() for word in words):
+        return words[0].lower() + "".join(
+            word.capitalize() for word in words[1:]
+        )
+    return words[0].strip(",") if words else ""
+
+
+def formatStatus(status: str) -> str:
+    code = eppCode(status)
+    if code.startswith(eppPrefixes) or code.lower() in eppStandalone:
+        return f"[`{code}`](<{eppStatusDocs}{code}>)"
+    return f"`{code}`"
+
+
+def quoteLines(fields: list[components.Field]) -> str:
+    return "\n".join(f"> **{name}**: {value}" for name, value in fields)
+
+
+def quoteList(items: list[str]) -> str:
+    return "\n".join(f"> {item}" for item in items)
+
+
+def pickFields(
+    fields: dict[str, list[str]],
+    spec: tuple[tuple[str, tuple[str, ...], bool], ...],
+) -> list[components.Field]:
+    return [
+        (name, (formatDate(value) if isDate else value)[:1024])
+        for name, keys, isDate in spec
+        if (value := firstValue(fields, keys))
+    ]
+
+
+def statusesFrom(fields: dict[str, list[str]]) -> list[str]:
     statuses = (
         fields.get("domain status")
         or fields.get("status")
         or fields.get("state")
+        or []
     )
-    if not statuses:
-        return None
     cleaned: list[str] = []
     for status in statuses:
-        name = status.split()[0].strip(",")
-        if name and name not in cleaned:
-            cleaned.append(name)
-    return ", ".join(f"`{name}`" for name in cleaned[:6]) or None
+        code = eppCode(status)
+        if code and code not in cleaned:
+            cleaned.append(code)
+    return cleaned
 
 
-def formatNameServers(fields: dict[str, list[str]]) -> str | None:
+def nameServersFrom(fields: dict[str, list[str]]) -> list[str]:
     servers: list[str] = []
     for key in (
         "name server",
@@ -263,9 +394,374 @@ def formatNameServers(fields: dict[str, list[str]]) -> str | None:
             host = value.split()[0].lower().rstrip(".")
             if host and host not in servers:
                 servers.append(host)
-    if not servers:
+    return servers
+
+
+def scrubRecord(text: str) -> str:
+    return "\n".join(
+        line.split(":", 1)[0] + ": [hidden]"
+        if personalLine.match(line)
+        else line
+        for line in text.strip().splitlines()
+    )
+
+
+def buildPages(
+    overview: list[components.Field],
+    statuses: list[str],
+    nameServers: list[str],
+    contacts: list[components.Field],
+    raw: str | None = None,
+) -> tuple[Page, ...]:
+    pages: list[Page] = []
+    if overview:
+        pages.append(
+            Page(
+                "overview",
+                "Overview",
+                "Registration, dates and ownership",
+                quoteLines(overview),
+            )
+        )
+    if statuses:
+        pages.append(
+            Page(
+                "status",
+                "Status",
+                f"{len(statuses)} status code(s)",
+                quoteList([formatStatus(s) for s in statuses]),
+            )
+        )
+    if nameServers:
+        pages.append(
+            Page(
+                "nameservers",
+                "Name Servers",
+                f"{len(nameServers)} name server(s)",
+                quoteList([f"`{server}`" for server in nameServers]),
+            )
+        )
+    if contacts:
+        pages.append(
+            Page(
+                "contacts",
+                "Contacts",
+                "Registrar and abuse contacts",
+                quoteLines(contacts),
+            )
+        )
+    if raw:
+        clipped = raw[:rawLimit] + ("\n…" if len(raw) > rawLimit else "")
+        pages.append(
+            Page(
+                "raw",
+                "Raw Record",
+                "The record as the server sent it",
+                components.codeBlock(clipped),
+            )
+        )
+    return tuple(pages)
+
+
+def rdapCandidates(domain: str) -> list[tuple[str, str]]:
+    # rdap wants the name and tld apart, so example.co.uk is example.co
+    # + uk. longest first: www.example.com still falls back to
+    # example.com, and registries like co.uk answer for themselves
+    parts = domain.split(".")
+    if len(parts) < 2:
+        return []
+    tld = parts[-1]
+    first = max(0, len(parts) - 1 - maxRdapLookups)
+    return [
+        (".".join(parts[start:-1]), tld)
+        for start in range(first, len(parts) - 1)
+    ]
+
+
+def rdapPages(record: dict[str, Any]) -> tuple[Page, ...]:
+    # contact names, emails, phones and addresses for the registrant,
+    # admin and tech are left out on purpose: rdap hands them over for
+    # unredacted registrations, and the bot shouldn't post someone's
+    # home address into a channel
+    def text(key: str) -> str | None:
+        value = record.get(key)
+        if not isinstance(value, str) or isPlaceholder(value):
+            return None
+        return value[:1024]
+
+    def date(key: str) -> str | None:
+        value = record.get(key)
+        if not isinstance(value, dt.datetime):
+            return None
+        return formatStamp(value)
+
+    def present(
+        pairs: tuple[tuple[str, str | None], ...],
+    ) -> list[components.Field]:
+        return [(name, value) for name, value in pairs if value]
+
+    phone = text("registrar_phone")
+    abusePhone = text("abuse_phone")
+    overview = present(
+        (
+            ("Registrar", text("registrar_name")),
+            ("Registrant", text("registrant_organization")),
+            ("Registered", date("created_date")),
+            ("Updated", date("updated_date")),
+            ("Expires", date("expires_date")),
+            ("DNSSEC", text("dnssec")),
+        )
+    )
+    contacts = present(
+        (
+            ("Registrar Email", text("registrar_email")),
+            ("Registrar Phone", formatPhone(phone) if phone else None),
+            ("Registrar Address", text("registrar_address")),
+            ("Abuse Email", text("abuse_email")),
+            (
+                "Abuse Phone",
+                formatPhone(abusePhone) if abusePhone else None,
+            ),
+        )
+    )
+    statuses: list[str] = []
+    for status in record.get("status") or []:
+        code = eppCode(status) if isinstance(status, str) else ""
+        if code and code not in statuses:
+            statuses.append(code)
+    servers = [
+        server.lower().rstrip(".")
+        for server in record.get("nameservers") or []
+        if isinstance(server, str)
+    ]
+    return buildPages(overview, statuses, servers, contacts)
+
+
+async def askServer(server: str, query: str) -> str:
+    request = queryFormats.get(server, "{query}").format(query=query)
+    reader, writer = await asyncio.open_connection(server, whoisPort)
+    try:
+        writer.write(f"{request}\r\n".encode())
+        await writer.drain()
+        data = await reader.read(-1)
+    finally:
+        writer.close()
+        await writer.wait_closed()
+    return data.decode("utf-8", errors="replace")
+
+
+async def portLookup(query: str, isIp: bool) -> list[tuple[str, str]]:
+    server = ianaServer
+    target = query if isIp else query.rsplit(".", 1)[-1]
+    records: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    for hop in range(maxHops):
+        if not server or server in seen:
+            break
+        seen.add(server)
+        try:
+            text = await asyncio.wait_for(
+                askServer(server, target), timeout=lookupTimeout
+            )
+        except OSError, TimeoutError:
+            if hop == 0:
+                raise
+            break
+        records.append((server, text))
+        referral = firstValue(parseRecord(text), referralKeys)
+        server = (
+            referral.split()[0].lower().rstrip(".") if referral else ""
+        )
+        if not server and hop == 0 and not isIp:
+            server = f"whois.nic.{target}"
+        target = query
+
+    return records
+
+
+async def rdapLookup(domain: str) -> dict[str, Any] | None:
+    candidates = rdapCandidates(domain)
+    if not candidates:
         return None
-    return "\n".join(servers[:8])
+    async with whodap.DNSClient.new_aio_client_context() as client:
+        for name, tld in candidates:
+            try:
+                response = await asyncio.wait_for(
+                    client.aio_lookup(name, tld),
+                    timeout=lookupTimeout,
+                )
+            except WhodapError, httpx2.HTTPError, TimeoutError:
+                continue
+            return response.to_whois_dict()
+    return None
+
+
+def mergeRecords(records: list[tuple[str, str]]) -> dict[str, list[str]]:
+    usable = records[1:] if len(records) > 1 else records
+    merged: dict[str, list[str]] = {}
+    for _, text in usable:
+        for key, values in parseRecord(text).items():
+            if key in merged and all(
+                isPlaceholder(value) for value in values
+            ):
+                continue
+            merged[key] = values
+    return merged
+
+
+async def buildReport(target: str) -> Report:
+    isIp = isNetwork(target)
+    if not target or (not isIp and "." not in target):
+        raise WhoisError(
+            "That doesn't look like a domain or IP address. Try "
+            "`example.com`."
+        )
+
+    if not isIp:
+        try:
+            record = await rdapLookup(target)
+        except NotImplementedError, httpx2.HTTPError, TimeoutError:
+            # no rdap server for this tld (.de and friends), so port 43
+            # it is
+            record = None
+        if record and (pages := rdapPages(record)):
+            return Report(
+                title=str(record.get("domain_name") or target).lower(),
+                source="RDAP",
+                pages=pages,
+                complaintForm=isGeneric(target),
+            )
+
+    try:
+        records = await portLookup(target, isIp)
+    except OSError, TimeoutError:
+        raise WhoisError(
+            "Couldn't reach the WHOIS servers — try again in a moment."
+        ) from None
+
+    if len(records) < 2:
+        raise WhoisError(
+            f"No WHOIS server published a record for `{target}`."
+        )
+
+    server, text = records[-1]
+    fields = mergeRecords(records)
+    overview = pickFields(fields, networkFields if isIp else domainFields)
+    contacts = pickFields(
+        fields, networkContactFields if isIp else domainContactFields
+    )
+    raw = scrubRecord(text)
+
+    if not overview and any(
+        marker in text.lower() for marker in notFoundMarkers
+    ):
+        raise WhoisError(f"No WHOIS record found for `{target}`.")
+    if not raw:
+        raise WhoisError("The WHOIS server returned nothing useful.")
+
+    return Report(
+        title=target,
+        source=f"WHOIS · {server}",
+        pages=buildPages(
+            overview,
+            statusesFrom(fields),
+            [] if isIp else nameServersFrom(fields),
+            contacts,
+            raw,
+        ),
+        complaintForm=not isIp and isGeneric(target),
+    )
+
+
+async def getReport(target: str) -> Report:
+    hit = _reports.get(target)
+    if hit and time.monotonic() - hit[0] < cacheTtl:
+        return hit[1]
+    report = await buildReport(target)
+    if len(_reports) >= maxCached:
+        _reports.clear()
+    _reports[target] = (time.monotonic(), report)
+    return report
+
+
+def renderReport(
+    target: str, report: Report, pageKey: str = "overview"
+) -> components.Panel:
+    page = next(
+        (page for page in report.pages if page.key == pageKey),
+        report.pages[0],
+    )
+    customId = f"{PAGE_PREFIX}{target}"
+    # custom ids cap at 100 characters, so a very long name just gets
+    # its first page without the menu
+    menu = (
+        components.pagePicker(
+            customId,
+            [(p.key, p.label, p.description) for p in report.pages],
+            page.key,
+        )
+        if len(report.pages) > 1 and len(customId) <= 100
+        else None
+    )
+    return components.panel(
+        title=f"WHOIS Information for {report.title}"[:256],
+        body=page.body,
+        thumbnail=thumbnail,
+        menu=menu,
+        buttons=[
+            components.linkButton("Report inaccurate data", complaintForm)
+        ]
+        if report.complaintForm
+        else None,
+        footer=f"{page.label} · Powered by {report.source}",
+    )
+
+
+async def whoisPanel(
+    query: str, pageKey: str = "overview"
+) -> components.Panel:
+    target = normaliseQuery(query)
+    try:
+        report = await getReport(target)
+    except WhoisError as error:
+        return components.panel(
+            body=f":x: {error}",
+            thumbnail=thumbnail,
+            color=components.RED,
+        )
+    return renderReport(target, report, pageKey)
+
+
+class WhoisPage(
+    discord.ui.DynamicItem[discord.ui.Select], template=PAGE_TEMPLATE
+):
+    def __init__(self, target: str, customId: str) -> None:
+        self.target = target
+        super().__init__(
+            discord.ui.Select(
+                custom_id=customId,
+                options=[
+                    discord.SelectOption(label="_", value="overview")
+                ],
+            )
+        )
+
+    @classmethod
+    async def from_custom_id(
+        cls,
+        interaction: discord.Interaction,
+        item: discord.ui.Item[Any],
+        match: re.Match[str],
+        /,
+    ) -> WhoisPage:
+        return cls(match["target"], match.string)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await interaction.response.defer()
+        await interaction.edit_original_response(
+            view=await whoisPanel(self.target, self.item.values[0])
+        )
 
 
 class Whois(commands.Cog):
@@ -284,140 +780,9 @@ class Whois(commands.Cog):
         self, interaction: discord.Interaction, query: str
     ) -> None:
         await interaction.response.defer()
-        await interaction.followup.send(
-            view=await self.getWhoisPanel(query)
-        )
-
-    async def askServer(self, server: str, query: str) -> str:
-        request = queryFormats.get(server, "{query}").format(query=query)
-        reader, writer = await asyncio.open_connection(server, whoisPort)
-        try:
-            writer.write(f"{request}\r\n".encode())
-            await writer.drain()
-            data = await reader.read(-1)
-        finally:
-            writer.close()
-            await writer.wait_closed()
-        return data.decode("utf-8", errors="replace")
-
-    async def lookup(
-        self, query: str, isIp: bool
-    ) -> list[tuple[str, str]]:
-        server = ianaServer
-        target = query if isIp else query.rsplit(".", 1)[-1]
-        records: list[tuple[str, str]] = []
-        seen: set[str] = set()
-
-        for hop in range(maxHops):
-            if not server or server in seen:
-                break
-            seen.add(server)
-            try:
-                text = await asyncio.wait_for(
-                    self.askServer(server, target), timeout=lookupTimeout
-                )
-            except OSError, TimeoutError:
-                if hop == 0:
-                    raise
-                break
-            records.append((server, text))
-            referral = firstValue(parseRecord(text), referralKeys)
-            server = (
-                referral.split()[0].lower().rstrip(".") if referral else ""
-            )
-            if not server and hop == 0 and not isIp:
-                server = f"whois.nic.{target}"
-            target = query
-
-        return records
-
-    def mergeRecords(
-        self, records: list[tuple[str, str]]
-    ) -> dict[str, list[str]]:
-        usable = records[1:] if len(records) > 1 else records
-        merged: dict[str, list[str]] = {}
-        for _, text in usable:
-            for key, values in parseRecord(text).items():
-                if key in merged and all(
-                    isPlaceholder(value) for value in values
-                ):
-                    continue
-                merged[key] = values
-        return merged
-
-    def errorPanel(self, message: str) -> components.Panel:
-        return components.panel(
-            body=f":x: {message}",
-            thumbnail=thumbnail,
-            color=components.RED,
-        )
-
-    async def getWhoisPanel(self, query: str) -> components.Panel:
-        target = normaliseQuery(query)
-
-        isIp = isNetwork(target)
-        if not target or (not isIp and "." not in target):
-            return self.errorPanel(
-                "That doesn't look like a domain or IP address. Try "
-                "`example.com`."
-            )
-
-        try:
-            records = await self.lookup(target, isIp)
-        except OSError, TimeoutError:
-            return self.errorPanel(
-                "Couldn't reach the WHOIS servers — try again in a moment."
-            )
-
-        if len(records) < 2:
-            return self.errorPanel(
-                f"No WHOIS server published a record for `{target}`."
-            )
-
-        fields = self.mergeRecords(records)
-        body = records[-1][1].lower()
-        fieldSet = networkFields if isIp else domainFields
-        values: list[components.Field] = [
-            (name, (formatDate(value) if isDate else value)[:1024])
-            for name, keys, isDate in fieldSet
-            if (value := firstValue(fields, keys))
-        ]
-
-        if not values and any(
-            marker in body for marker in notFoundMarkers
-        ):
-            return self.errorPanel(
-                f"No WHOIS record found for `{target}`."
-            )
-
-        statuses = formatStatuses(fields)
-        if statuses:
-            values.append(("Status", statuses[:1024]))
-
-        nameServers = formatNameServers(fields)
-        if nameServers and not isIp:
-            values.append(("Name Servers", nameServers))
-
-        if not values:
-            snippet = records[-1][1].strip()[:1000]
-            return components.panel(
-                title=target,
-                body=(
-                    f"```\n{snippet}\n```"
-                    if snippet
-                    else ":x: The WHOIS server returned nothing useful."
-                ),
-                thumbnail=thumbnail,
-                footer=f"Powered by WHOIS · {records[-1][0]}",
-            )
-
-        return components.panel(
-            title=target,
-            fields=values,
-            thumbnail=thumbnail,
-            footer=f"Powered by WHOIS · {records[-1][0]}",
-        )
+        await interaction.followup.send(view=await whoisPanel(query))
 
 
 async def setup(bot: commands.Bot) -> None:
+    bot.add_dynamic_items(WhoisPage)
     await bot.add_cog(Whois(bot))

@@ -9,6 +9,8 @@ RED = discord.Color.red()
 
 type Field = tuple[str, str]
 type Media = str | discord.MediaGalleryItem
+# key, label, description
+type PageOption = tuple[str, str, str | None]
 
 
 def image(
@@ -39,6 +41,27 @@ def linkButton(
     )
 
 
+def pagePicker(
+    customId: str,
+    pages: list[PageOption],
+    current: str,
+    placeholder: str = "Jump to a section…",
+) -> ui.Select:
+    return ui.Select(
+        custom_id=customId,
+        placeholder=placeholder,
+        options=[
+            discord.SelectOption(
+                label=label[:100],
+                value=key,
+                description=description[:100] if description else None,
+                default=key == current,
+            )
+            for key, label, description in pages[:25]
+        ],
+    )
+
+
 def container(
     *,
     title: str | None = None,
@@ -48,6 +71,7 @@ def container(
     thumbnail: str | None = None,
     images: Sequence[Media] | None = None,
     files: list[str] | None = None,
+    menu: ui.Select | None = None,
     buttons: list[ui.Button] | None = None,
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
@@ -89,6 +113,9 @@ def container(
     for ref in files or []:
         blocks.append(ui.File(ref))
 
+    if menu:
+        blocks.append(ui.ActionRow(menu))
+
     if buttons:
         row = ui.ActionRow()
         for btn in buttons:
@@ -114,6 +141,7 @@ def panel(
     thumbnail: str | None = None,
     images: Sequence[Media] | None = None,
     files: list[str] | None = None,
+    menu: ui.Select | None = None,
     buttons: list[ui.Button] | None = None,
     footer: str | None = None,
     color: discord.Color | int | None = FUCHSIA,
@@ -127,6 +155,7 @@ def panel(
             thumbnail=thumbnail,
             images=images,
             files=files,
+            menu=menu,
             buttons=buttons,
             footer=footer,
             color=color,

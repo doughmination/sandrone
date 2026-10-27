@@ -59,7 +59,7 @@ class Wikipedia(commands.Cog):
             img = next(iter(pageImages.values()))
             thumbnail = await img.url
         else:
-            thumbnail = "https://m.doughmination.gay/img/search.png"
+            thumbnail = "https://raw.doughmination.gay/img/search.png"
 
         return components.panel(
             title=wikiPage.title,

@@ -12,6 +12,7 @@ dependencies = [
     "argostranslate>=1.11.0",
     "colorful>=0.5.8",
     "discord-py>=2.7.1",
+    "dnspython>=2.9.0",
     "imageio-ffmpeg>=0.6.0",
     "jpcl>=1.1.1",
     "pillow>=11.0.0",
@@ -22,6 +23,7 @@ dependencies = [
     "qrcode[pil]>=8.2",
     "toml>=0.10.2",
     "watchfiles>=1.2.0",
+    "whodap>=0.2.1",
     "wikipedia-api>=0.15.0",
     "yt-dlp>=2026.8.19",
 ]

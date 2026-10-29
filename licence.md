@@ -1,316 +1,150 @@
-# Doughmination Authorised Source Licence
+# Sandbina Open Source Licence (SOSL)
+Version 1.0
 
-**Version 1.2**
+Copyright © Clove Nytrix Doughmination Twilight. All rights reserved, except as expressly permitted by this Licence.
 
-This Licence may be referred to as the **Doughmination Authorised Source Licence (DASL)**. This version may be referred to as **DASL-1.2**.
-
-Copyright © 2026 Clove Nytrix Doughmination Twilight.
-
----
-
-# 1. Definitions
+## 1. Definitions
 
 For the purposes of this Licence:
 
-**"Software"** means the source code, object code, documentation, configuration, assets, and any associated files distributed under this Licence.
+- **Licensor** means Clove Nytrix Doughmination Twilight, the original author and copyright holder of the covered software.
+- **Software** means Sandrone, Columbina, and any other software expressly distributed under this Licence.
+- **Original Software** means the Software as published by the Licensor, including its original source code and accompanying materials.
+- **Modified Version** means any version of the Software that has been altered, extended, adapted, or otherwise changed.
+- **Redistribution** means making the Software, or a derivative version of it, available to another person or the public.
+- **Commercial Use** means using the Software primarily for commercial advantage or monetary compensation, including charging for access to the Software or a service that provides its functionality.
 
-**"Authorisation"** means explicit written permission granted by Clove Nytrix Doughmination Twilight permitting specific use of the Software.
+## 2. Grant of Permission
 
-**"Authorised Person"** means a person or organisation expressly identified as authorised in an official licensing record maintained by Clove Nytrix Doughmination Twilight, including the `PEOPLE.md` file of an Official Licensing Repository or, where applicable, the `README.md` file of the relevant Software project.
+Subject to compliance with this Licence, the Licensor grants you a non-exclusive, worldwide, royalty-free licence to use, study, copy, modify, and redistribute the Software for permitted non-commercial purposes.
 
-**"Contributor"** means any person or organisation that has received Authorisation, or is otherwise expressly authorised under this Licence, to modify, contribute to, or submit changes to the Software.
+This permission does not transfer ownership of the Software or its intellectual property to you.
 
-**"Contribution"** means any source code, object code, documentation, configuration, assets, or other material submitted, provided, or incorporated into the Software by a Contributor.
+No permission is granted except as expressly stated in this Licence or separately authorised in writing by the Licensor.
 
-**"Fork"** means a copy or repository of the Software created through a version-control forking mechanism or an equivalent process, including forks hosted on third-party platforms.
+## 3. Permitted Activities
 
-**"Contribution Fork"** means a Fork created and used solely for the purpose of preparing, reviewing, testing, or submitting Contributions to the original Software.
+You may:
 
-**"Official Licensing Repositories"** means the repositories maintained by Clove Nytrix Doughmination Twilight for the administration and publication of licensing information:
+1. Use the Software for personal, educational, community, and other non-commercial purposes.
+2. Copy and fork the Software.
+3. Modify the Software and develop derivative versions.
+4. Redistribute unmodified or modified versions, subject to this Licence.
+5. Reuse individual portions of the source code, subject to the attribution requirements in Section 5.
+6. Accept voluntary donations or contributions to support development, maintenance, or hosting, provided these are not a condition of access to the Software or its functionality.
 
-* GitHub: https://github.com/doughmination/licencing
-* Codeberg: https://codeberg.org/clove/licencing
-* Backup Forge: https://backup.doughmination.gay/clove/licencing
-
-**"Official Licensing Records"** means licensing records published within an Official Licensing Repository, including `PEOPLE.md`, or other records expressly identified as authoritative by Clove Nytrix Doughmination Twilight.
-
-**"Artificial Intelligence System"** means any artificial intelligence, machine-learning, generative, automated code-generation, or substantially similar system capable of generating, modifying, analysing, or transforming Software or other material.
-
-**"Meaningful Human Contribution"** means substantive human involvement in the creation, review, understanding, testing, modification, or approval of a Contribution sufficient for the Contributor to reasonably understand and take responsibility for the resulting Contribution.
-
-**"Trademarked Components"** means any trademarks, trade names, service marks, logos, branding, identifiers, product names, system names, or other distinctive branding owned or claimed by Clove Nytrix Doughmination Twilight, whether registered or unregistered.
-
----
-
-# 2. Grant of Rights
-
-Except where expressly permitted by this Licence, by an applicable Official Licensing Record, or by separate written Authorisation, no licence or permission is granted to use, copy, modify, merge, publish, distribute, sublicense, host, deploy, execute, sell, create derivative works from, or otherwise exploit the Software.
-
-The Software is made available solely for inspection and review of its source code, subject to the specific permissions expressly granted by this Licence.
-
-All rights not expressly granted are reserved.
-
----
-
-# 3. Forking and Contribution Forks
-
-Forking of the Software is expressly permitted to **all persons and organisations**, without requiring prior written Authorisation.
-
-This permission to fork is granted **solely to facilitate contribution to the original Software**.
-
-An unauthorised Fork does **not** constitute an authorised copy of the Software and does not grant the person or organisation creating the Fork any general right to use, operate, deploy, distribute, publish, commercialise, or otherwise exploit the Software.
-
-An unauthorised Fork may be used only for activities directly connected with contributing to the original Software, including:
-
-* inspecting and studying the Software;
-* preparing proposed changes to the Software;
-* modifying the Software for the purpose of preparing a Contribution;
-* testing or validating proposed Contributions;
-* submitting pull requests, patches, merge requests, or equivalent proposals to the original Software; and
-* performing other activities reasonably necessary to prepare or submit Contributions to the original Software.
-
-Without separate Authorisation, an unauthorised Fork **must not** be:
-
-* operated as an independent instance of the Software;
-* deployed for personal, private, public, organisational, or production use;
-* used to provide services to the Fork creator or to third parties;
-* made available to third parties for use;
-* distributed as an independent application or product;
-* published as an independent project;
-* used as the basis of a competing or replacement service;
-* commercially exploited;
-* sublicensed;
-* used to create or distribute derivative works for purposes unrelated to contributing to the original Software; or
-* otherwise used in any manner that constitutes independent use of the Software.
-
-The fact that a version-control platform permits a person to create, access, host, or publish a Fork does not constitute Authorisation to use that Fork for any purpose beyond those expressly permitted by this Section.
-
-The person or organisation creating an unauthorised Fork is responsible for ensuring that the Fork remains within the scope of this Section.
-
-Where a person or organisation wishes to use a Fork for any purpose other than contributing to the original Software, they must first obtain separate Authorisation from Clove Nytrix Doughmination Twilight or hold an applicable Authorisation recorded in an Official Licensing Record.
-
-A Contribution Fork may contain modifications that are necessary to prepare or test a Contribution, provided that those modifications remain within the scope of this Section.
-
-The permission to create a Fork does **not** constitute general permission to use the Software and does not grant any rights beyond those expressly stated in this Section.
-
----
-
-# 4. Authorised Use
-
-Any person or organisation wishing to use the Software for purposes other than the permitted inspection, review, or Contribution Fork activities described in this Licence must first obtain written Authorisation from Clove Nytrix Doughmination Twilight, unless an applicable Official Licensing Record expressly grants the required permission.
-
-Authorisation may:
-
-* permit commercial or non-commercial use;
-* permit modification or contribution to the Software;
-* permit use of a Fork beyond Contribution Fork activities;
-* impose conditions or limitations;
-* restrict fields of use, duration, territory, or distribution;
-* specify particular projects, repositories, components, or versions;
-* require attribution, reporting, licensing fees, revenue sharing, or other obligations; or
-* be refused entirely.
-
-Authorisation to contribute to the Software does not, by itself, grant permission to redistribute, publish, deploy, sublicense, commercially exploit, or otherwise use the Software outside the scope of the authorised contribution activity.
-
-Any Authorisation permitting contribution is subject to the Contributor and Human Authorship Requirements set out in Section 8 unless expressly stated otherwise in writing.
-
-No Authorisation shall be implied through publication of the Software, possession of the Software, creation of a Fork, prior communications, or previous permissions granted to other parties.
-
----
-
-# 5. Trusted Persons and Allowlist
-
-Clove Nytrix Doughmination Twilight may maintain an allowlist of trusted persons or organisations who are authorised to perform specified activities relating to the Software.
-
-The allowlist may be published in:
-
-* `PEOPLE.md` within an Official Licensing Repository; or
-* the `README.md` of the relevant Software project where that file expressly identifies the applicable Authorisation and scope.
-
-The allowlist may specify, for each Authorised Person:
-
-* the identity or account of the Authorised Person;
-* the projects or repositories to which the Authorisation applies;
-* the activities they may perform;
-* whether they may modify or contribute to the Software;
-* whether they may create or maintain Contribution Forks;
-* whether they may operate or deploy the Software;
-* whether they may use a Fork for purposes beyond contributing to the original Software;
-* whether they may review or approve Contributions;
-* whether they may distribute or publish particular material;
-* whether they may exercise additional rights beyond those granted to ordinary Contributors;
-* any restrictions or conditions applicable to their Authorisation; and
-* the duration or status of the Authorisation.
-
-An Authorised Person is permitted only to the extent expressly specified by the applicable allowlist entry.
-
-Being listed as an Authorised Person does not grant unrestricted rights to the Software.
-
-Clove Nytrix Doughmination Twilight may add, modify, restrict, suspend, or remove an Authorised Person or their authorised scope at any time.
-
-Where an Authorised Person is listed in both `PEOPLE.md` and a project's `README.md`, the more specific project-level scope shall apply to that project unless the applicable record expressly states otherwise.
-
-Where multiple Official Licensing Records contain conflicting entries concerning the same person or project, the most recently published applicable record shall control, unless the applicable record specifies another precedence rule.
-
-An allowlist entry constitutes Authorisation for the scope expressly stated in that entry and does not require separate written permission for activities falling within that scope.
-
----
-
-# 6. Requesting Authorisation
-
-Requests for Authorisation should be submitted to:
-
-**[admin@doughmination.win](mailto:admin@doughmination.win)**
-
-Clove Nytrix Doughmination Twilight may maintain Official Licensing Records identifying authorised persons, organisations, and licensing conditions.
-
-The Official Licensing Repositories are:
-
-* GitHub: https://github.com/doughmination/licencing
-* Codeberg: https://codeberg.org/clove/licencing
-* Backup Forge: https://backup.doughmination.gay/clove/licencing
-
-Where an individual or organisation is expressly listed as authorised within an applicable Official Licensing Record, that listing constitutes evidence of an active Authorisation subject to any accompanying conditions.
-
-Absence from the Official Licensing Records shall not be interpreted as evidence that permission has been granted.
-
----
-
-# 7. Attribution
-
-Where Authorisation permits redistribution of the Software, all copies or substantial portions of the Software must include:
-
-* this Licence;
-* the copyright notice; and
-* reasonable attribution to **Clove Nytrix Doughmination Twilight**.
-
-Modified versions must clearly indicate that they have been modified.
-
----
-
-# 8. Contributor and Human Authorship Requirements
-
-Where Authorisation permits a Contributor to modify, contribute to, or submit changes to the Software, the Contributor must retain Meaningful Human Contribution and responsibility for each Contribution.
-
-Artificial Intelligence Systems may be used as development tools or aids. Permitted uses may include, but are not limited to:
-
-* explaining programming concepts or existing code;
-* assisting with research;
-* identifying potential bugs or errors;
-* suggesting implementations or approaches;
-* assisting with debugging;
-* suggesting refactoring;
-* generating or assisting with tests;
-* assisting with documentation; and
-* other development activities where the Contributor retains meaningful human involvement and responsibility.
-
-The use of an Artificial Intelligence System must not replace the Contributor's substantive development work, judgement, understanding, review, testing, or responsibility for a Contribution.
-
-A Contributor must not submit or incorporate a Contribution where the Contributor has not meaningfully reviewed, understood, and taken responsibility for the resulting Contribution.
-
-Submitting substantially AI-generated material with little or no Meaningful Human Contribution is prohibited.
-
-In particular, a Contributor must not delegate the substantive development of a Contribution to an Artificial Intelligence System and submit the resulting material with only superficial or cursory human review.
-
-The use of an Artificial Intelligence System does not transfer responsibility for a Contribution away from the Contributor. The Contributor remains responsible for ensuring that every Contribution complies with this Licence and any applicable Authorisation.
-
-A Contributor may be required, as a condition of Authorisation, to disclose material use of Artificial Intelligence Systems in a Contribution where reasonably requested by Clove Nytrix Doughmination Twilight.
-
-Nothing in this Section prohibits ordinary use of automated development tooling where such tooling does not materially replace the Contributor's Meaningful Human Contribution.
-
-Violation of this Section constitutes a breach of the applicable Authorisation.
-
----
-
-# 9. Representation and Branding
+## 4. Restrictions on Commercial Use
 
 You must not:
 
-* misrepresent the origin of the Software;
-* claim authorship of the original Software;
-* imply endorsement, sponsorship, certification, or affiliation by Clove Nytrix Doughmination Twilight; or
-* represent modified versions as official releases without prior written Authorisation.
+1. Sell the Software or charge a fee for access to it.
+2. Place the Software or its functionality behind a paywall.
+3. Offer paid hosting, paid access, or paid subscriptions to a service whose provision of the Software's functionality is the subject of the charge.
+4. Require donations, contributions, subscriptions, or payments in exchange for access to the Software.
+5. Use the Software in a commercial offering in a manner prohibited by this Licence.
+
+Voluntary donations are permitted only where they are genuinely optional and do not provide preferential access, unlock functionality, or otherwise constitute payment for access.
+
+## 5. Attribution and Notices
+
+When redistributing the Software, whether modified or unmodified, you must:
+
+1. Retain existing copyright notices, author attributions, and applicable licence notices.
+2. Include a complete copy of this Licence.
+3. Clearly identify any modifications you have made.
+4. Credit the original author, Clove Twilight, and make clear that your version is a fork or derivative rather than the original project, where applicable.
+5. Preserve applicable third-party copyright notices and licence terms.
+
+When redistributing an individual snippet or portion of the Software outside the complete project, you must provide reasonable attribution to the original author. An appropriate comment may read:
+
+`Code/method taken by Clove Twilight`
+
+Attribution must not falsely imply that the Licensor endorses your project or modified version.
+
+## 6. Modified Versions and Forks
+
+Modified Versions and forks may be distributed provided that:
+
+1. The modifications are disclosed clearly and accurately.
+2. The original author is appropriately credited.
+3. The applicable copyright and licence notices are retained.
+4. The redistributed fork is licensed under SOSL, subject to applicable third-party rights.
+5. No additional terms are imposed that remove or contradict the permissions granted by this Licence in respect of the original Software.
+
+You may license your own original contributions separately where you have the rights to do so, but you may not relicense the original Software or claim ownership of code authored by the Licensor.
+
+You must not misrepresent a modified version as an official release.
+
+## 7. Copyright, Branding, and Trademarks
+
+The Software and its original components remain the intellectual property of their respective rights holders.
+
+This Licence does not grant permission to use the Licensor's name, trademarks, logos, branding, or other identifying materials except where necessary to provide accurate attribution or identify the origin of a fork.
+
+You must not impersonate the Licensor, falsely claim official status, or represent a derivative project as the original Software.
+
+## 8. Reporting Upstream Issues
+
+If you discover that an update or change to an upstream release of the Software causes a fault in your deployment, you should notify the Licensor and provide sufficient information to help reproduce or understand the issue.
+
+The Licensor does not guarantee that every release will be free from defects or compatible with every deployment, and does not accept responsibility for breakage caused by a user's decision to update, except to the extent that such responsibility cannot lawfully be excluded.
+
+You are responsible for evaluating updates and maintaining your own deployment.
+
+## 9. Violations and Termination
+
+If you breach this Licence, the Licensor may notify you by email, through an issue on your repository or fork, or by another reasonable means.
+
+The Licensor may also report the suspected violation to the relevant code hosting platform or service provider.
+
+Unless otherwise required by law or the circumstances warrant immediate action, you will have 24 hours from receipt of a breach notice to rectify the violation.
+
+If the breach is not rectified within that period, the permissions granted to you under this Licence may terminate, subject to applicable law.
+
+Upon termination, you must cease activities that rely on the terminated permissions. Any reinstatement of permissions is at the Licensor's discretion, subject to applicable law.
+
+Nothing in this section prevents the Licensor from pursuing other lawful remedies.
+
+## 10. Appeals and Additional Permissions
+
+You may appeal a termination or request an exception directly to the Licensor.
+
+The Licensor may, at their discretion, grant additional or alternative permissions in writing. Such permissions apply only to the person, project, activities, and circumstances expressly identified in the grant.
+
+An exception granted to one person does not automatically grant the same exception to anyone else.
+
+## 11. Licence Changes
+
+The Licensor may publish revised versions of SOSL and may distribute future releases of the Software under different licence terms.
+
+Unless expressly stated otherwise, a new version of this Licence does not automatically alter the terms governing an earlier release already distributed under a previous version.
+
+Recipients may continue to rely on the licence applicable to a version they lawfully received, subject to its terms and applicable law.
+
+## 12. Disclaimer of Warranty
+
+To the maximum extent permitted by applicable law, the Software is provided "AS IS", without warranties or conditions of any kind, whether express or implied, including warranties of fitness for a particular purpose, satisfactory quality, and non-infringement.
+
+The Licensor does not guarantee availability, continued maintenance, compatibility, security, or uninterrupted operation.
+
+## 13. Limitation of Liability
+
+To the maximum extent permitted by applicable law, the Licensor shall not be liable for indirect, incidental, special, consequential, or exemplary losses arising from the use of, inability to use, modification of, or distribution of the Software.
+
+Nothing in this Licence excludes or limits liability where such exclusion or limitation is prohibited by law, including any applicable statutory rights.
+
+## 14. General Provisions
+
+If any provision of this Licence is found unenforceable, the remaining provisions shall continue to apply to the extent permitted by law.
+
+A failure to enforce a provision on one occasion does not constitute a permanent waiver of that provision.
+
+This Licence is governed by the laws of England and Wales, subject to any mandatory legal protections that apply.
+
+## 15. Contact
+
+For permissions, licence questions, breach notices, appeals, and requests for exceptions, contact the Licensor through their published contact details or the relevant official project repository.
 
 ---
 
-# 10. Trademarked Components
-
-This Licence grants no rights to use any Trademarked Components.
-
-Without prior written Authorisation, you may not use any Trademarked Components in a manner that suggests endorsement, official status, compatibility certification, partnership, or origin.
-
-Current trademarks include, but are not limited to:
-
-* **Doughmination System®** (United Kingdom, UK00004263144)
-
-This list is non-exhaustive.
-
----
-
-# 11. No Implied Rights
-
-No rights, licences, permissions, waivers, or immunities shall arise by implication, estoppel, or otherwise.
-
-Publication of the Software does not constitute permission to use the Software beyond the rights expressly granted by this Licence.
-
-The creation of a Fork does not constitute permission to use the Software independently of the original Software.
-
-The ability to access, clone, fork, download, or host the Software through a version-control platform does not constitute additional Authorisation.
-
----
-
-# 12. Source-Available Status
-
-The Software is source-available.
-
-It is **not** open-source software.
-
-This Licence is not an Open Source Initiative-approved licence and should not be interpreted as granting the freedoms commonly associated with open-source licences.
-
----
-
-# 13. Revocation
-
-Unless otherwise agreed in writing, any Authorisation granted under this Licence may be revoked by Clove Nytrix Doughmination Twilight.
-
-An allowlist entry may likewise be modified, suspended, or removed.
-
-Upon revocation or removal of Authorisation, all use relying upon that Authorisation must cease immediately unless otherwise specified within the revocation notice, applicable Official Licensing Record, or written agreement.
-
-The general permission to create Contribution Forks under Section 3 is not an individual Authorisation and may only be restricted or withdrawn by a subsequent version of this Licence or another legally applicable notice issued by Clove Nytrix Doughmination Twilight.
-
-Revocation does not affect obligations that, by their nature, survive termination.
-
----
-
-# 14. Disclaimer of Warranty
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, OR NON-INFRINGEMENT.
-
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE ENTIRE RISK ARISING OUT OF THE USE OF THE SOFTWARE REMAINS WITH THE USER.
-
----
-
-# 15. Limitation of Liability
-
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL CLOVE NYTRIX DOUGHMINATION TWILIGHT BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, REVENUE, DATA, GOODWILL, BUSINESS INTERRUPTION, OR OTHER COMMERCIAL LOSS ARISING FROM OR RELATING TO THE SOFTWARE OR ITS USE, WHETHER BASED IN CONTRACT, TORT, NEGLIGENCE, STRICT LIABILITY, OR OTHERWISE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
-
----
-
-# 16. Governing Law
-
-This Licence shall be governed by and construed in accordance with the laws of England and Wales.
-
-The courts of England and Wales shall have exclusive jurisdiction over disputes arising from or relating to this Licence unless otherwise required by applicable law.
-
----
-
-# 17. Derivative Licences
-
-No person may publish, distribute, or present a licence derived from, based upon, or substantially similar to this Licence without prior written Authorisation from Clove Nytrix Doughmination Twilight.
-
-Where such permission is granted, the derivative licence must prominently state that it is derived from the Doughmination Authorised Source Licence (DASL) and must credit Clove Nytrix Doughmination Twilight as the original author.
-
----
-
-**End of Licence**
+**End of Sandbina Open Source Licence (SOSL) 1.0**

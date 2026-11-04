@@ -1,9 +1,71 @@
 import discord
 from discord import app_commands
-from sandrone import mood
+import math
+from sandrone import config, mood
 from utils import cf, errors
 
 permsAttr = "__sandrone_bot_perms__"
+cooldownAttr = "__sandrone_cooldown__"
+
+# Every command gets this unless it's decorated with its own `cooldown`.
+defaultRate = 3
+defaultPer = 10.0
+
+
+def perUserCooldown(rate: int, per: float):
+    """A per-user cooldown check that owners are never held back by."""
+
+    def factory(
+        interaction: discord.Interaction,
+    ) -> app_commands.Cooldown | None:
+        if interaction.user.id in config.owners:
+            return None
+        return app_commands.Cooldown(rate, per)
+
+    return app_commands.checks.dynamic_cooldown(factory)
+
+
+def cooldown(rate: int, per: float):
+    """Let each user run the command *rate* times every *per* seconds.
+
+    The limit is stashed on the callback so the default cooldown knows to
+    leave the command alone.
+    """
+    check = perUserCooldown(rate, per)
+
+    def decorator(func):
+        target = getattr(func, "callback", func)
+        setattr(target, cooldownAttr, (rate, per))
+        return check(func)
+
+    return decorator
+
+
+def applyDefaultCooldown(
+    command: app_commands.Command | app_commands.ContextMenu,
+) -> None:
+    """Give *command* the default cooldown if it has none of its own.
+
+    Cogs copy their commands but share callbacks, so the default is
+    marked on the command itself, not the callback.
+    """
+    if hasattr(command.callback, cooldownAttr) or hasattr(
+        command, cooldownAttr
+    ):
+        return
+    perUserCooldown(defaultRate, defaultPer)(command)
+    setattr(command, cooldownAttr, (defaultRate, defaultPer))
+
+
+def commandCooldown(
+    command: app_commands.Command | app_commands.ContextMenu,
+) -> tuple[int, float] | None:
+    """The (rate, per) limit *command* runs under, if any."""
+    return getattr(
+        command.callback,
+        cooldownAttr,
+        getattr(command, cooldownAttr, None),
+    )
 
 
 def hasPermissions(*, guildOnly: bool = False, **perms: bool):
@@ -103,7 +165,7 @@ async def handleAppCommandError(
     if isinstance(error, app_commands.CommandOnCooldown):
         await respond(
             interaction,
-            f"Slow down. Try again in {error.retry_after:.0f}s.",
+            f"Slow down. Try again in {math.ceil(error.retry_after)}s.",
         )
         return
 

@@ -5,7 +5,7 @@ from discord.ext import commands
 import io
 from pathlib import Path
 import re
-from sandrone import config, mood
+from sandrone import checks, config, mood
 import shutil
 from typing import NamedTuple
 from urllib.parse import parse_qs, urlsplit
@@ -63,6 +63,7 @@ class YtDlp(commands.Cog):
         url="YouTube URL", type="Audio or Video? (defaults to Video)"
     )
     @app_commands.choices(type=containers.options)
+    @checks.cooldown(1, 60)
     @mood.sassy
     async def ytDlp(
         self,

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 import io
-import re
 from PIL import Image, ImageDraw, ImageFont
+import re
 from sandrone import config
 from typing import Any
 

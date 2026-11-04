@@ -1,10 +1,11 @@
 import asyncio
 import contextlib
 import discord
+from discord import app_commands
 from discord.ext import commands
 from pathlib import Path
 from sandrone import config, website
-from sandrone.checks import handleAppCommandError
+from sandrone.checks import applyDefaultCooldown, handleAppCommandError
 import signal
 import sys
 from utils import cf, downloads, errors, jp_storage
@@ -18,6 +19,23 @@ def discoverExtensions(directory: Path, package: str) -> list[str]:
         for path in directory.glob("*.py")
         if path.stem != "__init__"
     )
+
+
+class Tree(app_commands.CommandTree):
+    """Hands every command the default cooldown as it's added.
+
+    Cogs, /help and hot reloads all come through add_command, so nothing
+    slips past without a limit.
+    """
+
+    def add_command(self, command, /, **kwargs) -> None:
+        if isinstance(command, app_commands.Group):
+            for child in command.walk_commands():
+                if isinstance(child, app_commands.Command):
+                    applyDefaultCooldown(child)
+        else:
+            applyDefaultCooldown(command)
+        super().add_command(command, **kwargs)
 
 
 class Bot(commands.Bot):
@@ -143,11 +161,11 @@ class Bot(commands.Bot):
                 await self.tree.sync()
 
     async def applyNameStyle(self) -> None:
-        """Set her display name font/effect/colours in every server she's in.
+        """Set her display name font/effect/colours in every server.
 
-        discord.py has no wrapper for these fields yet, so they go straight
-        through the raw member-edit route. It's per-guild because bots can't
-        style their global profile.
+        discord.py has no wrapper for these fields yet, so they go
+        straight through the raw member-edit route. It's per-guild
+        because bots can't style their global profile.
         """
         fields = {
             key: value
@@ -165,7 +183,12 @@ class Bot(commands.Bot):
             try:
                 await self.http.edit_my_member(guild.id, **fields)
             except discord.HTTPException as e:
-                print(cf.red(f"[style] couldn't style my name in {guild.id}: {e}"))
+                print(
+                    cf.red(
+                        f"[style] couldn't style my name in {guild.id}: "
+                        f"{e}"
+                    )
+                )
             else:
                 print(cf.yellow(f"[style] name style set in {guild.name}"))
 
@@ -205,6 +228,7 @@ def createBot() -> Bot:
         intents=intents,
         activity=activity,
         help_command=None,
+        tree_cls=Tree,
     )
 
 

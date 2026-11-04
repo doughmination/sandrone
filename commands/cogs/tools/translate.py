@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import re
-from sandrone import mood
+from sandrone import checks, mood
 from utils import components
 
 titleBrackets = (("『", "』"), ("《", "》"))
@@ -46,6 +46,7 @@ class Translate(commands.Cog):
     @app_commands.autocomplete(
         source=languageAutocomplete, to=languageAutocomplete
     )
+    @checks.cooldown(2, 30)
     @mood.sassy
     async def translate(
         self,

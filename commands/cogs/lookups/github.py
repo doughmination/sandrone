@@ -42,6 +42,7 @@ class GitHub(commands.Cog):
         username="The GitHub username to fetch information on"
     )
     @checks.hasPermissions(embed_links=True)
+    @checks.cooldown(3, 30)
     @mood.sassy
     async def github(
         self, interaction: discord.Interaction, username: str
@@ -146,6 +147,7 @@ class GitHub(commands.Cog):
         repository="The repository to fetch, as username/repo"
     )
     @checks.hasPermissions(embed_links=True)
+    @checks.cooldown(3, 30)
     @mood.sassy
     async def repo(
         self, interaction: discord.Interaction, repository: str

@@ -78,6 +78,7 @@ class Pride(commands.Cog):
     )
     @app_commands.choices(style=prideStyles.options)
     @checks.hasPermissions(attach_files=True)
+    @checks.cooldown(2, 30)
     @mood.sassy
     async def pride(
         self,

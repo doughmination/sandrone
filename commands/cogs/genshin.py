@@ -7,7 +7,7 @@ import hashlib
 import io
 from pathlib import Path
 import re
-from sandrone import mood
+from sandrone import checks, mood
 import time
 from typing import Any, NamedTuple
 from utils import components, genshin_card
@@ -389,6 +389,7 @@ class Genshin(commands.Cog):
         description="Look up a Genshin Impact account by UID",
     )
     @app_commands.describe(uid="The 9–10 digit Genshin UID to look up")
+    @checks.cooldown(2, 30)
     @mood.sassy
     async def genshin(
         self, interaction: discord.Interaction, uid: str

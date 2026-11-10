@@ -1,0 +1,18 @@
+# Deno
+node_modules/
+
+# Runtime data
+data/*.jp
+!data/*.example.jp
+
+# Environment variables
+.env
+.env.keys
+.idea/
+
+# Sandrone specific files
+cog_state.json
+downloads/
+
+# Genshin card image cache
+img/genshin-cache/

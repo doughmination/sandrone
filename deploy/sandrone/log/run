@@ -1,0 +1,5 @@
+#!/bin/sh
+LOG_DIR=/var/log/sandrone
+
+mkdir -p "$LOG_DIR"
+exec svlogd -tt "$LOG_DIR"

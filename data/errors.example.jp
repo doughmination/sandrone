@@ -1,0 +1,56 @@
+# The last 50 distinct faults the bot ran into, newest first. Written by
+# utils/errors.py whenever a command or event blows up, read back by
+# `debug errors` / `debug trace <code>`.
+#
+# `ref` is what the person who hit it gets told to quote, and reads CODE-XXXX:
+#
+#   WORKSHOP    a permission is missing              STRINGS    Discord refused or dropped out
+#   VANISHED    the user/channel/page isn't there    BLIZZARD   an outside API didn't answer
+#   OVERLOAD    a cooldown or rate limit             FOUNDRY    storage or the .jp files
+#   BLUEPRINT   the data was the wrong shape         PUPPET     unrecognised, outside any command
+#   MALFUNCTION unrecognised, during a command
+#
+# The four characters after it hash the kind, the command and where it was
+# raised, with ids blanked out — so the same fault always gets the same code,
+# whoever hits it. A repeat bumps `count` and `when` rather than adding a
+# second entry; `first` is when that code was seen for the first time.
+#
+# Nothing here is per-guild, so there are no sections — just the one list.
+# The bot rewrites this file, so comments survive only in this example copy.
+
+version: 1
+
+recent: [
+  {
+    ref: "WORKSHOP-K3F9",
+    code: "WORKSHOP",
+    when: 1757600000,
+    first: 1757100000,
+    count: 4,
+    source: "slash command",
+    command: "qr",
+    kind: "BotMissingPermissions",
+    text: "Bot requires Attach Files permission(s) to run this command.",
+    guild: "Some Server (1234567890)",
+    channel: "general (111222333444555666)",
+    user: "someone (777888999000111222)",
+    missing: ["attach_files"],
+    trace: ""
+  },
+  {
+    ref: "BLUEPRINT-0B7X",
+    code: "BLUEPRINT",
+    when: 1757599000,
+    first: 1757599000,
+    count: 1,
+    source: "event on_message",
+    command: "—",
+    kind: "KeyError",
+    text: "'content'",
+    guild: "—",
+    channel: "—",
+    user: "—",
+    missing: [],
+    trace: "Traceback (most recent call last):\n  ...\nKeyError: 'content'"
+  }
+]

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+
+  <!-- Page Title -->
+  <title>Shards · Sandrone</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Live shard status for Sandrone: guild counts and gateway latency for every shard, updated in real time.">
+  <meta name="author" content="Clove Twilight">
+  <meta name="robots" content="noindex, follow">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://sandrone.doughmination.gay/shards">
+
+  <!-- iOS Web App Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sandrone">
+  <link rel="apple-touch-icon" href="/assets/avatar.png">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#0b0a0d">
+
+  <!-- Icons, Styles and Fonts -->
+  <link rel="stylesheet" href="/assets/stylesheets/style.css">
+  <link rel="icon" href="/assets/avatar.png" type="image/png">
+  <link rel="preload" href="/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- Open Graph / Discord / Facebook -->
+  <meta property="og:site_name" content="Sandrone">
+  <meta property="og:title" content="Shards — Sandrone">
+  <meta property="og:description"
+    content="Live shard status for Sandrone: guild counts and gateway latency for every shard, updated in real time.">
+  <meta property="og:image" content="https://sandrone.doughmination.gay/assets/banner.png">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1206">
+  <meta property="og:image:alt" content="The Sandrone banner: the Seventh Fatui Harbinger's workshop.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sandrone.doughmination.gay/shards">
+  <meta property="og:locale" content="en_GB">
+</head>
+
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="/assets/avatar.png" alt="" width="32" height="32">
+      <span>Sandrone</span>
+    </a>
+    <nav>
+      <a href="/docs"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Docs</a>
+      <a href="/#commands"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/commands.svg)"></span>Commands</a>
+      <a href="https://github.com/doughmination/sandrone"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/code.svg)"></span>Source</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Workshop diagnostics</p>
+      <h1>Shards</h1>
+      <p class="subtitle">Every shard, watched in real time.</p>
+      <p class="lede">
+        Sandrone currently runs as a single process. This page lists each shard it is
+        responsible for, how many servers sit on it, and how long the gateway round trip
+        currently takes.
+      </p>
+    </div>
+  </section>
+
+  <main id="content" class="wrap">
+
+    <section aria-labelledby="shards-heading" id="shards">
+      <h2 id="shards-heading">Shard status</h2>
+      <p class="section-lede" id="shards-summary">Checking in with the workshop&hellip;</p>
+
+      <div class="cards" id="shard-grid" aria-live="polite"></div>
+
+      <p class="note" id="shards-updated" hidden></p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div class="footer-links">
+        <div>
+          <h4>Bot</h4>
+          <a href="/invite"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/plus.svg)"></span>Invite</a>
+          <a href="/support"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/message.svg)"></span>Support server</a>
+          <a href="/docs"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Documentation</a>
+        </div>
+        <div>
+          <h4>Source</h4>
+          <a href="https://github.com/doughmination/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/code.svg)"></span>GitHub</a>
+          <a href="https://codeberg.org/clove/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/git-branch.svg)"></span>Codeberg</a>
+          <a href="https://backup.doughmination.gay/clove/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/server.svg)"></span>dough-git</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="/terms"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/script-text.svg)"></span>Terms of Service</a>
+          <a href="/privacy"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy Policy</a>
+          <a href="https://github.com/doughmination/sandrone/blob/main/licence.md"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/tag.svg)"></span>Licence</a>
+        </div>
+      </div>
+      <p class="disclaimer">
+        "Sandrone" is a Genshin Impact character. This is an unofficial fan project, not
+        affiliated with or endorsed by HoYoverse.
+      </p>
+    </div>
+  </footer>
+
+  <script src="/assets/scripts/shards.js"></script>
+</body>
+
+</html>

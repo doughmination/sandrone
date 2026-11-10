@@ -1,0 +1,55 @@
+{
+  "version": "2.9.0",
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "start": "deno run --env-file=.env --allow-net --allow-env --allow-read --allow-write --allow-run --allow-sys src/main.ts",
+    "dev": "DEV_MODE=true deno run --env-file=.env --allow-net --allow-env --allow-read --allow-write --allow-run --allow-sys src/main.ts",
+    "test": "deno test --allow-env --allow-read --allow-write --allow-net --allow-run",
+    "check": "deno check src tests && deno lint && deno fmt --check"
+  },
+  "fmt": {
+    "lineWidth": 75,
+    "indentWidth": 2,
+    "semiColons": false,
+    "exclude": [
+      "web",
+      "data",
+      "img",
+      "node_modules",
+      "*.md"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      "web",
+      "node_modules"
+    ]
+  },
+  "test": {
+    "include": [
+      "tests"
+    ]
+  },
+  "imports": {
+    "@octokit/rest": "npm:@octokit/rest@^22.0.1",
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/encoding": "jsr:@std/encoding@^1.0.10",
+    "@std/fs": "jsr:@std/fs@^1.0.19",
+    "@std/http": "jsr:@std/http@^1.0.20",
+    "@std/path": "jsr:@std/path@^1.1.6",
+    "@std/toml": "jsr:@std/toml@^1.0.11",
+    "@types/node": "npm:@types/node@^26.6.6",
+    "chalk": "npm:chalk@^6.0.1",
+    "discord.js": "npm:discord.js@^14.28.1",
+    "dns-packet": "npm:dns-packet@^5.6.1",
+    "ffmpeg-static": "npm:ffmpeg-static@^5.3.0",
+    "jpcl-lang": "npm:jpcl-lang@^1.1.1",
+    "pkapi.js": "npm:pkapi.js@^7.5.1",
+    "ps-list": "npm:ps-list@^9.0.0",
+    "qrcode": "npm:qrcode@^1.5.4",
+    "rdap": "npm:rdap@^0.0.14",
+    "sharp": "npm:sharp@^0.35.5",
+    "wikijs": "npm:wikijs@^6.4.1",
+    "youtube-dl-exec": "npm:youtube-dl-exec@^3.1.19"
+  }
+}

@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+
+  <!-- Page Title -->
+  <title>Sandrone | All-in-One Discord Bot for Lookups, Tools and Media</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="An all-in-one Discord bot: lookups, developer tools, media embeds, pride flag avatars, YouTube downloads, and a puppet with opinions. No tracking, no user accounts.">
+  <meta name="keywords"
+    content="Discord bot, slash commands, WHOIS lookup, GitHub lookup, PluralKit, unit converter, JSON formatter, regex linter, offline translation, YouTube downloader, pride flag avatar, Sandrone, Genshin Impact">
+  <meta name="author" content="Clove Twilight">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://sandrone.doughmination.gay/">
+
+  <!-- iOS Web App Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sandrone">
+  <link rel="apple-touch-icon" href="/assets/avatar.png">
+
+  <!-- Theme Color -->
+  <meta name="theme-color" content="#0b0a0d">
+
+  <!-- Icons, Styles and Fonts -->
+  <link rel="stylesheet" href="/assets/stylesheets/style.css">
+  <link rel="icon" href="/assets/avatar.png" type="image/png">
+  <link rel="preload" href="/assets/fonts/IBMPlexSans-Regular.ttf" as="font" type="font/ttf" crossorigin>
+
+  <!-- Open Graph / Discord / Facebook -->
+  <meta property="og:site_name" content="Sandrone">
+  <meta property="og:title" content="Sandrone — Seventh Fatui Harbinger">
+  <meta property="og:description"
+    content="Lookups, developer tools, media embeds, pride flag avatars and YouTube downloads. No tracking, no user accounts.">
+  <meta property="og:image" content="https://sandrone.doughmination.gay/assets/banner.png">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1206">
+  <meta property="og:image:alt" content="The Sandrone banner: the Seventh Fatui Harbinger's workshop.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sandrone.doughmination.gay/">
+  <meta property="og:locale" content="en_GB">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sandrone — Seventh Fatui Harbinger">
+  <meta name="twitter:description"
+    content="Lookups, developer tools, media embeds, pride flag avatars and YouTube downloads. No tracking, no user accounts.">
+  <meta name="twitter:image" content="https://sandrone.doughmination.gay/assets/banner.png">
+  <meta name="twitter:image:alt" content="The Sandrone banner: the Seventh Fatui Harbinger's workshop.">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Sandrone",
+    "url": "https://sandrone.doughmination.gay/",
+    "description": "An all-in-one Discord bot: lookups, developer tools, media embeds, pride flag avatars and YouTube downloads.",
+    "inLanguage": "en-GB",
+    "author": {
+      "@type": "Person",
+      "name": "Clove Twilight"
+    }
+  }
+  </script>
+
+  <!-- Structured Data for the bot itself -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Sandrone",
+    "applicationCategory": "CommunicationApplication",
+    "applicationSubCategory": "Discord bot",
+    "operatingSystem": "Discord",
+    "url": "https://sandrone.doughmination.gay/",
+    "downloadUrl": "https://sandrone.doughmination.gay/invite",
+    "image": "https://sandrone.doughmination.gay/assets/banner.png",
+    "description": "An all-in-one Discord bot: lookups, text and developer tools, media embeds, pride flag avatars and YouTube downloads. Everything is a slash command, with no tracking or user accounts.",
+    "featureList": [
+      "GitHub, Codeberg, Wikipedia, Urban Dictionary and WHOIS lookups",
+      "Discord profile and PluralKit system lookups",
+      "Unit conversion, JSON formatting and regex linting",
+      "Offline translation via Argos",
+      "YouTube downloads as MP4 or MP3",
+      "Pride flag avatar rings, still or animated"
+    ],
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "GBP"
+    },
+    "license": "https://github.com/doughmination/sandrone/blob/main/licence.md",
+    "codeRepository": "https://github.com/doughmination/sandrone",
+    "author": {
+      "@type": "Person",
+      "name": "Clove Twilight"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="/">
+      <img src="/assets/avatar.png" alt="" width="32" height="32">
+      <span>Sandrone</span>
+    </a>
+    <nav>
+      <a href="/docs"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Docs</a>
+      <a href="#commands"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/commands.svg)"></span>Commands</a>
+      <a href="https://github.com/doughmination/sandrone"><span class="icon nav-icon" aria-hidden="true" style="--icon:url(/assets/icons/code.svg)"></span>Source</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Seventh Fatui Harbinger</p>
+      <h1>Sandrone</h1>
+      <p class="subtitle">The Marionette’s workshop is operational.</p>
+      <p class="lede">
+        An all-in-one Discord bot: lookups, text and developer tools, media embeds, pride flag
+        avatars, YouTube downloads, and a handful of things that exist purely for fun. Everything
+        is a slash command, and there's no tracking or user accounts.
+      </p>
+
+      <div class="cta">
+        <a class="button primary" href="/invite"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/plus.svg)"></span>Invite the bot</a>
+        <a class="button" href="/status"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/circle-question.svg)"></span>Status Page</a>
+      </div>
+
+      <p class="status" id="status" hidden>
+        <span class="dot"></span>
+        <span id="status-text"></span>
+      </p>
+    </div>
+  </section>
+
+  <main id="content" class="wrap">
+
+    <section aria-labelledby="what">
+      <h2 id="what">What she does</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>Lookups</h3>
+          <p>
+            GitHub users and repositories, Codeberg, Wikipedia summaries, Urban Dictionary,
+            Discord profiles and PluralKit systems — plus a real WHOIS client that speaks the
+            protocol on port 43 and follows referrals to the registrar.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Tools</h3>
+          <p>
+            Around 100 units across 12 categories, case conversion, JSON pretty-printing with a
+            caret under the syntax error, a regex linter that catches catastrophic backtracking,
+            QR codes, and translation that runs offline on the host.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Media</h3>
+          <p>
+            YouTube as MP4 or 192&nbsp;kbps MP3, X&nbsp;/&nbsp;Twitter and Bluesky posts embedded
+            properly with their video, and thirty pride flags wrapped around a profile picture —
+            still or spinning, one flag or two.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Moods</h3>
+          <p>
+            Sandrone has a personality layer nobody asked for. She refuses roughly one command in
+            ten, and occasionally posts something unprompted in whatever channel is busy. None of
+            it is stored and none of it survives a restart.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="commands-heading" id="commands">
+      <h2 id="commands-heading">Commands</h2>
+      <p class="section-lede">
+        A selection. The <a href="https://docs.doughmination.gay/projects/sandrone/commands/">command reference</a> documents every one of them,
+        including the options Discord fills in as you type.
+      </p>
+
+      <div class="groups">
+        <div class="group">
+          <h3>Bot</h3>
+          <dl>
+            <dt><code>/help</code></dt>
+            <dd>Everything currently loaded.</dd>
+            <dt><code>/stats</code></dt>
+            <dd>Ping, uptime, region, version.</dd>
+            <dt><code>/links</code></dt>
+            <dd>Every official link, in one panel.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>People</h3>
+          <dl>
+            <dt><code>/profile</code></dt>
+            <dd>Pronouns, bio, badges, connections.</dd>
+            <dt><code>/pfp</code></dt>
+            <dd>An avatar at full size, global or per-server.</dd>
+            <dt><code>/pksystem</code> <code>/pkfront</code></dt>
+            <dd>A PluralKit system, and who is fronting.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Lookups</h3>
+          <dl>
+            <dt><code>/github</code> <code>/repo</code></dt>
+            <dd>A user, or a repository from a bare URL.</dd>
+            <dt><code>/wikipedia</code></dt>
+            <dd>The lead section, with a thumbnail.</dd>
+            <dt><code>/whois</code></dt>
+            <dd>Domains and IPs, resolved to the registrar.</dd>
+            <dt><code>/dig</code></dt>
+            <dd>DNS records by type, from public resolvers.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Tools</h3>
+          <dl>
+            <dt><code>/convert</code></dt>
+            <dd>Units that narrow each other as you type.</dd>
+            <dt><code>/json</code> <code>/regex</code></dt>
+            <dd>Format it, or find out why it is wrong.</dd>
+            <dt><code>/translate</code></dt>
+            <dd>Offline, via Argos. Your text stays here.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Media</h3>
+          <dl>
+            <dt><code>/yt-dlp</code></dt>
+            <dd>Video or audio, attached where it fits.</dd>
+            <dt><code>/tweet</code> <code>/bluesky</code></dt>
+            <dd>Posts that actually embed, video included.</dd>
+            <dt><code>/pride</code></dt>
+            <dd>Thirty flags, still or animated.</dd>
+          </dl>
+        </div>
+
+        <div class="group">
+          <h3>Fun</h3>
+          <dl>
+            <dt><code>/kitty</code></dt>
+            <dd>A cat. That is the whole command.</dd>
+            <dt><code>/8ball</code> <code>/judge</code></dt>
+            <dd>A verdict. Do not expect kindness.</dd>
+            <dt><code>/explain-the-game</code></dt>
+            <dd>You just lost it.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <p class="note">
+        Works in servers, in DMs, and as a user install you can carry into any server.
+      </p>
+    </section>
+
+    <section aria-labelledby="privacy">
+      <h2 id="privacy">Privacy, briefly</h2>
+      <p class="section-lede">
+        Sandrone does not have a database. Nothing about you is stored, nothing is tracked, and
+        there is nothing to sell. Commands are handled in memory and the result is thrown away.
+      </p>
+      <p class="section-lede">
+        The one exception is <code>/yt-dlp</code>: a download too large to attach is kept on the
+        host for 24&nbsp;hours behind an unguessable link, then deleted automatically. The file is
+        the YouTube content itself — never anything about who asked for it.
+      </p>
+      <p class="more">
+        <a href="/privacy"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy policy</a>
+        · <a href="https://docs.doughmination.gay/projects/sandrone/downloads/"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/download.svg)"></span>Hosted downloads →</a>
+      </p>
+    </section>
+
+    <section class="panel" aria-labelledby="genuine">
+      <h2 id="genuine">Is this the right bot?</h2>
+      <p class="section-lede">
+        Discord bots get impersonated. The avatar, the name and the “about me” can all be copied
+        exactly — the application ID cannot.
+      </p>
+
+      <p class="appid">
+        <span>Application ID</span>
+        <code>1539185764904996974</code>
+      </p>
+
+      <p class="section-lede">Sandrone only ever uses three sets of links of its own:</p>
+      <ul class="domains">
+        <li><code>discord.com</code> <code>discord.gg</code><span>Discord’s own — the invite and the support server.</span></li>
+        <li><code>sandrone.is-a.bot</code><span>The short link. It redirects here, to <code>sandrone.doughmination.gay</code>.</span></li>
+        <li><code>sandrone.doughmination.gay</code><span>This site, and where <code>/yt-dlp</code> serves an oversized download.</span></li>
+      </ul>
+
+      <p class="warn">
+        She will never ask for a password, a token or a 2FA code, never ask you to “re-verify”
+        your account, and never send you a QR code to scan with the Discord app. If something
+        claiming to be Sandrone does any of that, it is not this bot.
+      </p>
+      <p><a class="more" href="https://docs.doughmination.gay/projects/sandrone/official-links/"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/search.svg)"></span>How to check the account itself →</a></p>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <div class="footer-links">
+        <div>
+          <h4>Bot</h4>
+          <a href="/invite"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/plus.svg)"></span>Invite</a>
+          <a href="/support"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/message.svg)"></span>Support server</a>
+          <a href="/docs"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/notes.svg)"></span>Documentation</a>
+        </div>
+        <div>
+          <h4>Source</h4>
+          <a href="https://github.com/doughmination/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/code.svg)"></span>GitHub</a>
+          <a href="https://codeberg.org/clove/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/git-branch.svg)"></span>Codeberg</a>
+          <a href="https://backup.doughmination.gay/clove/sandrone"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/server.svg)"></span>dough-git</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="/terms"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/script-text.svg)"></span>Terms of Service</a>
+          <a href="/privacy"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/shield.svg)"></span>Privacy Policy</a>
+          <a href="https://github.com/doughmination/sandrone/blob/main/licence.md"><span class="icon" aria-hidden="true" style="--icon:url(/assets/icons/tag.svg)"></span>Licence</a>
+        </div>
+      </div>
+      <p class="disclaimer">
+        “Sandrone” is a Genshin Impact character. This is an unofficial fan project, not
+        affiliated with or endorsed by HoYoverse.
+      </p>
+    </div>
+  </footer>
+
+  <script src="/assets/scripts/status.js"></script>
+</body>
+
+</html>

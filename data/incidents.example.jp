@@ -1,6 +1,6 @@
-# Per-guild incident settings. Written by `incidents ignore` / `unignore`.
-# Section names are guild IDs; the bot rewrites this file, so comments here
-# are lost on the first save — keep notes in this example copy only.
+~* Per-guild incident settings. Written by `incidents ignore` / `unignore`.
+ Section names are guild IDs; the bot rewrites this file, so comments here
+ are lost on the first save — keep notes in this example copy only. *~
 
 version: 1
 

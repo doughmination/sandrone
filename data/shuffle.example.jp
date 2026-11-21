@@ -1,14 +1,14 @@
-# Per-guild shuffle bags, written by sandrone/mood.py's ShuffleBag. Each bag
-# hands out every line once before repeating, and keeps its state here so a
-# restart doesn't reset it and you can see exactly what's left to draw.
-#
-# Section names are guild IDs; [dm] holds draws made outside a guild. For each
-# bag (incident, sassy, eightball) there are two keys:
-#
-#   <bag>_remaining   lines still to come; the next draw is the LAST one
-#   <bag>_last        the line drawn most recently
-#
-# The bot rewrites this file, so comments survive only in this example copy.
+~* Per-guild shuffle bags, written by sandrone/mood.py's ShuffleBag. Each bag
+ hands out every line once before repeating, and keeps its state here so a
+ restart doesn't reset it and you can see exactly what's left to draw.
+
+ Section names are guild IDs; [dm] holds draws made outside a guild. For each
+ bag (incident, sassy, eightball) there are two keys:
+
+   <bag>_remaining   lines still to come; the next draw is the LAST one
+   <bag>_last        the line drawn most recently
+
+ The bot rewrites this file, so comments survive only in this example copy. *~
 
 version: 1
 
